@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Product } from "../types";
 
-// ✅ Vite-safe API key access
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_API_KEY);
+// ✅ Vite-safe API key access (configured in vite.config.ts)
+const genAI = new GoogleGenerativeAI(process.env.API_KEY as string);
 
 /**
  * Chat with the Shop Assistant.
@@ -83,5 +83,33 @@ export const generateProductDescription = async (
   } catch (error) {
     console.error("Gemini Description Gen Error:", error);
     return "Error generating description.";
+  }
+};
+
+/**
+ * Generates a simple brand logo as SVG using Gemini.
+ */
+export const generateBrandLogo = async (brandName: string): Promise<string> => {
+  try {
+    const prompt = `Create a simple, modern, minimalist SVG logo for a brand named "${brandName}". 
+    The logo should be square (aspect ratio 1:1).
+    Use a modern color palette.
+    Return ONLY the raw <svg>...</svg> code. Do not include markdown code blocks or any other text.`;
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    // Clean up the response to get just the SVG
+    const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/);
+    const svgContent = svgMatch ? svgMatch[0] : text;
+
+    // Convert to base64 data URI
+    // unescape(encodeURIComponent(str)) handles unicode characters for btoa
+    const base64Svg = btoa(unescape(encodeURIComponent(svgContent)));
+    return `data:image/svg+xml;base64,${base64Svg}`;
+  } catch (error) {
+    console.error("Gemini Logo Gen Error:", error);
+    return "";
   }
 };
