@@ -18,13 +18,13 @@ interface ShopContextType {
   carouselSlides: CarouselSlide[];
   orders: Order[];
   discounts: DiscountCode[];
-  
+
   // Settings
   shippingFee: number;
   updateShippingFee: (fee: number) => Promise<void>;
   storeLogo: string;
   updateStoreLogo: (logo: string) => Promise<void>;
-  
+
   // UI State
   isCartOpen: boolean;
   theme: Theme;
@@ -49,7 +49,7 @@ interface ShopContextType {
   deleteSlide: (id: string) => Promise<void>;
   placeOrder: (orderData: Omit<Order, 'id' | 'date' | 'status'>) => Promise<void>;
   updateOrderStatus: (id: string, status: Order['status']) => Promise<void>;
-  
+
   addToCart: (product: Product, variant?: ProductVariant) => void;
   removeFromCart: (id: string) => void;
   updateCartQuantity: (id: string, delta: number) => void;
@@ -66,11 +66,11 @@ interface ShopContextType {
   addDiscount: (discount: Omit<DiscountCode, 'id'>) => Promise<void>;
   deleteDiscount: (id: string) => Promise<void>;
   toggleDiscountStatus: (id: string, currentStatus: boolean) => Promise<void>;
-  
+
   // Demo Data
   isDemoActive: boolean;
   toggleDemoData: () => void;
-  
+
   totalAmount: number; // Subtotal (sum of item prices)
   discountAmount: number; // Calculated discount
   finalTotal: number; // Subtotal - Discount
@@ -82,7 +82,7 @@ interface ShopProviderProps {
   children: ReactNode;
 }
 
-const DEFAULT_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23f97316;stop-opacity:1' /%3E%3Cstop offset='50%25' style='stop-color:%23ec4899;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%239333ea;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='25' fill='url(%23grad)' /%3E%3Ctext x='50' y='62' font-family='Arial, sans-serif' font-weight='bold' font-size='60' fill='white' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E";
+const DEFAULT_LOGO = "/logo.png";
 
 // Helper to map database lowercase columns to camelCase Order interface
 const mapOrderFromDB = (data: any): Order => ({
@@ -116,7 +116,7 @@ const mapDiscountFromDB = (d: any): DiscountCode => ({
 const mapProductFromDB = (p: any): Product => {
   // If images array exists in DB, use it. Otherwise, fallback to single image or empty array.
   let images = p.images || (p.image ? [p.image] : []);
-  
+
   // Ensure the primary 'image' property is set for backward compatibility
   // If 'images' array has items, use the first one. Else use the legacy 'image' field.
   let mainImage = p.image;
@@ -128,11 +128,11 @@ const mapProductFromDB = (p: any): Product => {
   let variants: ProductVariant[] = [];
   // Check if variants property exists at all on the returned object
   if (Object.prototype.hasOwnProperty.call(p, 'variants') && p.variants) {
-     if (typeof p.variants === 'string') {
-        try { variants = JSON.parse(p.variants); } catch (e) { console.error("Error parsing variants JSON", e); }
-     } else if (Array.isArray(p.variants)) {
-        variants = p.variants;
-     }
+    if (typeof p.variants === 'string') {
+      try { variants = JSON.parse(p.variants); } catch (e) { console.error("Error parsing variants JSON", e); }
+    } else if (Array.isArray(p.variants)) {
+      variants = p.variants;
+    }
   }
 
   return {
@@ -161,7 +161,7 @@ const DEMO_DEVICES = ['iPhone 15', 'iPhone 14', 'Samsung S24', 'Pixel 8', 'iPhon
 
 export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { addToast } = useToast();
-  
+
   // --- STATE ---
   // Initialize with fallback data immediately if in offline/demo mode to skip splash screen
   const [products, setProducts] = useState<Product[]>(() => isSupabaseConfigured ? [] : INITIAL_PRODUCTS);
@@ -170,7 +170,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [discounts, setDiscounts] = useState<DiscountCode[]>(INITIAL_DISCOUNTS);
   const [shippingFee, setShippingFee] = useState<number>(5000);
-  
+
   // Persistent Logo State: Try local storage first, then default
   const [storeLogo, setStoreLogo] = useState<string>(() => {
     try {
@@ -181,10 +181,10 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   });
 
   const [supaConnectionError, setSupaConnectionError] = useState<string | null>(null);
-  
+
   // Only start loading state if we are actually connected to Supabase
   const [isAppLoading, setIsAppLoading] = useState(isSupabaseConfigured);
-  
+
   // Local-only state
   const [cart, setCart] = useState<CartItem[]>([]);
   const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null);
@@ -211,7 +211,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
-  
+
   // Update Favicon based on store logo
   useEffect(() => {
     const updateFavicon = (url: string) => {
@@ -228,35 +228,35 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
 
   // Helper to refresh brands specifically
   const refreshBrands = async () => {
-     if (isSupabaseConfigured) {
-         const { data, error } = await supabase.from('brands').select('*').order('id', { ascending: true });
-         if (error) console.error("Error refreshing brands:", error);
-         if (data) {
-             setBrands(data.map(b => ({ ...b, id: String(b.id) })) as Brand[]);
-         }
-     }
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase.from('brands').select('*').order('id', { ascending: true });
+      if (error) console.error("Error refreshing brands:", error);
+      if (data) {
+        setBrands(data.map(b => ({ ...b, id: String(b.id) })) as Brand[]);
+      }
+    }
   };
 
   // Helper to refresh products
   const refreshProducts = async () => {
     if (isSupabaseConfigured) {
-        const { data, error } = await supabase.from('products').select('*').order('id', { ascending: false });
-        if (error) console.error("Error refreshing products:", error);
-        if (data) {
-            setProducts(data.map(mapProductFromDB));
-        }
+      const { data, error } = await supabase.from('products').select('*').order('id', { ascending: false });
+      if (error) console.error("Error refreshing products:", error);
+      if (data) {
+        setProducts(data.map(mapProductFromDB));
+      }
     }
   };
-  
+
   // Helper to refresh discounts
   const refreshDiscounts = async () => {
-     if (isSupabaseConfigured) {
-       const { data, error } = await supabase.from('discounts').select('*').order('id', { ascending: false });
-       if (error) console.error("Error refreshing discounts:", error);
-       if (data) {
-         setDiscounts(data.map(mapDiscountFromDB));
-       }
-     }
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase.from('discounts').select('*').order('id', { ascending: false });
+      if (error) console.error("Error refreshing discounts:", error);
+      if (data) {
+        setDiscounts(data.map(mapDiscountFromDB));
+      }
+    }
   };
 
   // --- INITIAL LOAD ---
@@ -279,15 +279,15 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         ]);
 
         if (productsRes.error) throw productsRes.error; // Critical error check
-        
+
         // 1. Products
         if (productsRes.data) {
-            setProducts(productsRes.data.map(mapProductFromDB));
+          setProducts(productsRes.data.map(mapProductFromDB));
         }
 
         // 2. Brands
         if (brandsRes.data) {
-            setBrands(brandsRes.data.map(b => ({ ...b, id: String(b.id) })) as Brand[]);
+          setBrands(brandsRes.data.map(b => ({ ...b, id: String(b.id) })) as Brand[]);
         }
 
         // 3. Slides
@@ -300,40 +300,40 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
 
         // 5. Settings
         if (settingsRes.data) {
-           if (settingsRes.data.shipping_fee) setShippingFee(settingsRes.data.shipping_fee);
-           if (settingsRes.data.logo) {
-             setStoreLogo(settingsRes.data.logo);
-             // Sync DB logo to localStorage
-             localStorage.setItem('storeLogo', settingsRes.data.logo);
-           }
+          if (settingsRes.data.shipping_fee) setShippingFee(settingsRes.data.shipping_fee);
+          if (settingsRes.data.logo) {
+            setStoreLogo(settingsRes.data.logo);
+            // Sync DB logo to localStorage
+            localStorage.setItem('storeLogo', settingsRes.data.logo);
+          }
         }
 
         // 6. Discounts
         if (discountsRes.data) {
-           setDiscounts(discountsRes.data.map(mapDiscountFromDB));
+          setDiscounts(discountsRes.data.map(mapDiscountFromDB));
         }
-        
+
         setSupaConnectionError(null);
 
       } catch (error: any) {
         // Extract meaningful error message
         let errorMsg = "Unknown error occurred";
         if (error instanceof Error) {
-            errorMsg = error.message;
+          errorMsg = error.message;
         } else if (typeof error === 'object' && error !== null) {
-            // PostgrestError or similar
-            errorMsg = error.message || error.details || error.hint || JSON.stringify(error);
+          // PostgrestError or similar
+          errorMsg = error.message || error.details || error.hint || JSON.stringify(error);
         } else {
-            errorMsg = String(error);
+          errorMsg = String(error);
         }
-        
+
         console.error("Supabase load error:", errorMsg);
 
         // Only show error if it's a connection/URL issue, not just empty tables
         if (errorMsg.includes('fetch') || errorMsg.includes('URL') || errorMsg.includes('apikey')) {
-           setSupaConnectionError(errorMsg);
+          setSupaConnectionError(errorMsg);
         }
-        
+
         // Fallback to local data on error
         setProducts(INITIAL_PRODUCTS);
         setBrands(INITIAL_BRANDS);
@@ -355,8 +355,8 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     // Database expects snake_case for some columns if manually created, but we use map function
     // For insertion, we need to map back to DB schema if needed. 
     const dbProduct = {
-       ...rest,
-       sale_price: salePrice
+      ...rest,
+      sale_price: salePrice
     };
 
     if (isSupabaseConfigured) {
@@ -365,18 +365,18 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         // Check for specific schema mismatch regarding 'images' or 'colors' or 'variants'
         const lowerMsg = (error.message || '').toLowerCase();
         if (error.code === '42703' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku')) {
-           console.warn("Schema mismatch detected: column missing. Retrying without advanced fields.");
-           addToast("Warning: Database Schema Outdated. Saved without complex data.", 'warning');
-           
-           // Remove the problematic fields and try again
-           // Ensure 'image' (singular) is populated for thumbnail compatibility
-           const { images, colors, variants, sale_price, sku, ...legacyProduct } = dbProduct;
-           const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
-           
-           const { error: retryError } = await supabase.from('products').insert([safeProduct]);
-           if (retryError) throw retryError;
+          console.warn("Schema mismatch detected: column missing. Retrying without advanced fields.");
+          addToast("Warning: Database Schema Outdated. Saved without complex data.", 'warning');
+
+          // Remove the problematic fields and try again
+          // Ensure 'image' (singular) is populated for thumbnail compatibility
+          const { images, colors, variants, sale_price, sku, ...legacyProduct } = dbProduct;
+          const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
+
+          const { error: retryError } = await supabase.from('products').insert([safeProduct]);
+          if (retryError) throw retryError;
         } else {
-           throw error;
+          throw error;
         }
       }
       await refreshProducts();
@@ -405,18 +405,18 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         // Check for specific schema mismatch
         const lowerMsg = (error.message || '').toLowerCase();
         if (error.code === '42703' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku')) {
-           console.warn("Schema mismatch detected: column missing. Retrying update without advanced fields.");
-           addToast("Warning: Database Schema Outdated. Updated without complex data.", 'warning');
+          console.warn("Schema mismatch detected: column missing. Retrying update without advanced fields.");
+          addToast("Warning: Database Schema Outdated. Updated without complex data.", 'warning');
 
-           // Remove the problematic fields and try again
-           // Ensure 'image' is set
-           const { images, colors, variants, sale_price, sku, ...legacyProduct } = dbProduct;
-           const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
+          // Remove the problematic fields and try again
+          // Ensure 'image' is set
+          const { images, colors, variants, sale_price, sku, ...legacyProduct } = dbProduct;
+          const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
 
-           const { error: retryError } = await supabase.from('products').update(safeProduct).eq('id', safeProduct.id);
-           if (retryError) throw retryError;
+          const { error: retryError } = await supabase.from('products').update(safeProduct).eq('id', safeProduct.id);
+          if (retryError) throw retryError;
         } else {
-           throw error;
+          throw error;
         }
       }
       await refreshProducts();
@@ -431,9 +431,9 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     if (isSupabaseConfigured) {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) {
-         console.error(error);
-         addToast('Failed to delete product', 'error');
-         return;
+        console.error(error);
+        addToast('Failed to delete product', 'error');
+        return;
       }
       await refreshProducts();
       addToast('Product deleted', 'success');
@@ -467,7 +467,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       addToast('Brand deleted locally (Demo)', 'success');
     }
   };
-  
+
   const addDiscount = async (discount: Omit<DiscountCode, 'id'>) => {
     if (isSupabaseConfigured) {
       // Postgres column names are likely lowercase
@@ -523,9 +523,9 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     if (isSupabaseConfigured) {
       const { error } = await supabase.from('slides').insert([slide]);
       if (error) {
-         console.error(error);
-         addToast('Failed to add slide', 'error');
-         return;
+        console.error(error);
+        addToast('Failed to add slide', 'error');
+        return;
       }
       const { data } = await supabase.from('slides').select('*');
       if (data) setCarouselSlides(data);
@@ -540,9 +540,9 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     if (isSupabaseConfigured) {
       const { error } = await supabase.from('slides').update(slide).eq('id', slide.id);
       if (error) {
-         console.error(error);
-         addToast('Failed to update slide', 'error');
-         return;
+        console.error(error);
+        addToast('Failed to update slide', 'error');
+        return;
       }
       const { data } = await supabase.from('slides').select('*');
       if (data) setCarouselSlides(data);
@@ -585,88 +585,88 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     };
 
     if (isSupabaseConfigured) {
-       const dbPayload = {
-         ...newOrder,
-         items: newOrder.items // supabase-js handles JSON conversion
-       };
-       const { customerName, totalAmount, shippingFee, discountAmount, discountCode, orderNumber, ...cleanPayload } = dbPayload as any;
+      const dbPayload = {
+        ...newOrder,
+        items: newOrder.items // supabase-js handles JSON conversion
+      };
+      const { customerName, totalAmount, shippingFee, discountAmount, discountCode, orderNumber, ...cleanPayload } = dbPayload as any;
 
-       const { error } = await supabase.from('orders').insert([cleanPayload]);
-       if (error) {
-         throw error;
-       }
-       
-       // Update stock
-       for (const item of orderData.items) {
-          const product = products.find(p => p.id === item.id);
-          if (product) {
-             let newStock = product.stock;
-             let variantsToUpdate = product.variants;
-             
-             // Update variant stock if applicable
-             if (item.selectedVariant && variantsToUpdate) {
-                variantsToUpdate = variantsToUpdate.map(v => {
-                   if (v.id === item.selectedVariant?.id) {
-                      return { ...v, stock: Math.max(0, v.stock - item.quantity) };
-                   }
-                   return v;
-                });
-                // Recalculate total stock based on variants
-                newStock = variantsToUpdate.reduce((sum, v) => sum + v.stock, 0);
-                
-                // We update both the variants JSON and the global stock number
-                await supabase.from('products').update({ 
-                   stock: newStock,
-                   variants: variantsToUpdate
-                }).eq('id', item.id);
+      const { error } = await supabase.from('orders').insert([cleanPayload]);
+      if (error) {
+        throw error;
+      }
 
-             } else {
-                // Fallback global stock update
-                newStock = Math.max(0, product.stock - item.quantity);
-                await supabase.from('products').update({ stock: newStock }).eq('id', item.id);
-             }
+      // Update stock
+      for (const item of orderData.items) {
+        const product = products.find(p => p.id === item.id);
+        if (product) {
+          let newStock = product.stock;
+          let variantsToUpdate = product.variants;
+
+          // Update variant stock if applicable
+          if (item.selectedVariant && variantsToUpdate) {
+            variantsToUpdate = variantsToUpdate.map(v => {
+              if (v.id === item.selectedVariant?.id) {
+                return { ...v, stock: Math.max(0, v.stock - item.quantity) };
+              }
+              return v;
+            });
+            // Recalculate total stock based on variants
+            newStock = variantsToUpdate.reduce((sum, v) => sum + v.stock, 0);
+
+            // We update both the variants JSON and the global stock number
+            await supabase.from('products').update({
+              stock: newStock,
+              variants: variantsToUpdate
+            }).eq('id', item.id);
+
+          } else {
+            // Fallback global stock update
+            newStock = Math.max(0, product.stock - item.quantity);
+            await supabase.from('products').update({ stock: newStock }).eq('id', item.id);
           }
-       }
-       
-       // Refresh orders and products
-       const { data: ordersData } = await supabase.from('orders').select('*').order('date', { ascending: false });
-       if (ordersData) setOrders(ordersData.map(mapOrderFromDB));
-       await refreshProducts();
+        }
+      }
+
+      // Refresh orders and products
+      const { data: ordersData } = await supabase.from('orders').select('*').order('date', { ascending: false });
+      if (ordersData) setOrders(ordersData.map(mapOrderFromDB));
+      await refreshProducts();
 
     } else {
-       // Local
-       const localOrder: Order = {
-          id: Date.now().toString(),
-          customerName: orderData.customerName,
-          phone: orderData.phone,
-          city: orderData.city,
-          address: orderData.address,
-          items: orderData.items,
-          totalAmount: orderData.totalAmount,
-          shippingFee: orderData.shippingFee,
-          discountAmount: orderData.discountAmount,
-          discountCode: orderData.discountCode,
-          status: 'Processing',
-          date: Date.now(),
-          orderNumber: orderData.orderNumber
-       };
-       setOrders(prev => [localOrder, ...prev]);
-       
-       // Update local stock
-       setProducts(prev => prev.map(p => {
-          const item = orderData.items.find(i => i.id === p.id);
-          if (item) {
-             if (item.selectedVariant && p.variants) {
-                const updatedVariants = p.variants.map(v => {
-                  if(v.id === item.selectedVariant?.id) return { ...v, stock: Math.max(0, v.stock - item.quantity) };
-                  return v;
-                });
-                return { ...p, variants: updatedVariants, stock: updatedVariants.reduce((a,b) => a + b.stock, 0) };
-             }
-             return { ...p, stock: Math.max(0, p.stock - item.quantity) };
+      // Local
+      const localOrder: Order = {
+        id: Date.now().toString(),
+        customerName: orderData.customerName,
+        phone: orderData.phone,
+        city: orderData.city,
+        address: orderData.address,
+        items: orderData.items,
+        totalAmount: orderData.totalAmount,
+        shippingFee: orderData.shippingFee,
+        discountAmount: orderData.discountAmount,
+        discountCode: orderData.discountCode,
+        status: 'Processing',
+        date: Date.now(),
+        orderNumber: orderData.orderNumber
+      };
+      setOrders(prev => [localOrder, ...prev]);
+
+      // Update local stock
+      setProducts(prev => prev.map(p => {
+        const item = orderData.items.find(i => i.id === p.id);
+        if (item) {
+          if (item.selectedVariant && p.variants) {
+            const updatedVariants = p.variants.map(v => {
+              if (v.id === item.selectedVariant?.id) return { ...v, stock: Math.max(0, v.stock - item.quantity) };
+              return v;
+            });
+            return { ...p, variants: updatedVariants, stock: updatedVariants.reduce((a, b) => a + b.stock, 0) };
           }
-          return p;
-       }));
+          return { ...p, stock: Math.max(0, p.stock - item.quantity) };
+        }
+        return p;
+      }));
     }
   };
 
@@ -699,11 +699,11 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       addToast('Shipping fee updated', 'success');
     }
   };
-  
+
   const updateStoreLogo = async (logo: string) => {
     // 1. Update State
     setStoreLogo(logo);
-    
+
     // 2. Persist to Local Storage (Immediate fallback)
     try {
       localStorage.setItem('storeLogo', logo);
@@ -714,7 +714,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     // 3. Persist to Supabase
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.from('store_settings').select('id').limit(1);
-      
+
       // If table is empty or error accessing it, handle graceful insertion attempt
       if (data && data.length > 0) {
         await supabase.from('store_settings').update({ logo: logo }).eq('id', data[0].id);
@@ -734,29 +734,29 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       // Create a composite key for product + variant
       // Ensure variant id exists if variant is passed
       const compositeId = (variant && variant.id) ? `${product.id}-${variant.id}` : product.id;
-      
+
       const existing = prev.find(item => {
-         const itemCompositeId = (item.selectedVariant && item.selectedVariant.id) ? `${item.id}-${item.selectedVariant.id}` : item.id;
-         return itemCompositeId === compositeId;
+        const itemCompositeId = (item.selectedVariant && item.selectedVariant.id) ? `${item.id}-${item.selectedVariant.id}` : item.id;
+        return itemCompositeId === compositeId;
       });
 
       if (existing) {
         return prev.map(item => {
-           const itemCompositeId = (item.selectedVariant && item.selectedVariant.id) ? `${item.id}-${item.selectedVariant.id}` : item.id;
-           return itemCompositeId === compositeId ? { ...item, quantity: item.quantity + 1 } : item;
+          const itemCompositeId = (item.selectedVariant && item.selectedVariant.id) ? `${item.id}-${item.selectedVariant.id}` : item.id;
+          return itemCompositeId === compositeId ? { ...item, quantity: item.quantity + 1 } : item;
         });
       }
-      
+
       // Override main image with variant image if available for cart display
       // If variant has an image, use it. Otherwise keep product.image.
       // IMPORTANT: Ensure we don't accidentally use an empty string if variant.image is missing
       const displayImage = (variant && variant.image) ? variant.image : product.image;
 
-      return [...prev, { 
-        ...product, 
-        image: displayImage, 
-        quantity: 1, 
-        selectedVariant: variant 
+      return [...prev, {
+        ...product,
+        image: displayImage,
+        quantity: 1,
+        selectedVariant: variant
       }];
     });
     setIsCartOpen(true);
@@ -786,13 +786,13 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const toggleCart = () => setIsCartOpen(!isCartOpen);
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const toggleLanguage = () => setLanguage(prev => prev === 'en' ? 'ar' : 'en');
-  
+
   // Translation Helper
   const t = (key: keyof typeof TRANSLATIONS.en) => {
     const translation = TRANSLATIONS[language][key];
     return translation || TRANSLATIONS['en'][key] || key;
   };
-  
+
   const toggleWishlist = (productId: string) => {
     setWishlist(prev => {
       if (prev.includes(productId)) {
@@ -805,50 +805,50 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   };
 
   const toggleDemoData = async () => {
-     if (isDemoActive) {
-       setIsDemoActive(false);
-       if (!isSupabaseConfigured) setProducts(INITIAL_PRODUCTS);
-       return;
-     }
+    if (isDemoActive) {
+      setIsDemoActive(false);
+      if (!isSupabaseConfigured) setProducts(INITIAL_PRODUCTS);
+      return;
+    }
 
-     setIsDemoActive(true);
-     // Generate dummy products
-     const demoProducts: Product[] = [];
-     const brandList = brands.length > 0 ? brands : INITIAL_BRANDS;
-     
-     for (let i = 0; i < 30; i++) {
-        const brand = brandList[Math.floor(Math.random() * brandList.length)];
-        const category = DEMO_CATEGORIES[Math.floor(Math.random() * DEMO_CATEGORIES.length)];
-        const device = DEMO_DEVICES[Math.floor(Math.random() * DEMO_DEVICES.length)];
-        const img = DEMO_IMAGES[Math.floor(Math.random() * DEMO_IMAGES.length)];
-        const hasSale = Math.random() > 0.7;
-        const basePrice = Math.floor(Math.random() * 50) * 1000 + 15000;
-        
-        demoProducts.push({
-          id: `demo-${Date.now()}-${i}`,
-          name: `${brand.name} ${category} Case ${i+1}`,
-          sku: `DEMO-SKU-${i+1}`,
-          price: basePrice,
-          salePrice: hasSale ? Math.floor(basePrice * 0.8) : undefined,
-          description: `High quality ${category.toLowerCase()} case for ${device}.`,
-          category: category,
-          device: device,
-          brand: brand.name,
-          image: img,
-          images: [img],
-          rating: 4 + Math.random(),
-          stock: Math.floor(Math.random() * 50) + 5,
-          colors: ['#000000'],
-          variants: []
-        });
-     }
-     
-     if (isSupabaseConfigured) {
-        // Just set state, don't write to DB to avoid pollution
-        setProducts(demoProducts);
-     } else {
-        setProducts(demoProducts);
-     }
+    setIsDemoActive(true);
+    // Generate dummy products
+    const demoProducts: Product[] = [];
+    const brandList = brands.length > 0 ? brands : INITIAL_BRANDS;
+
+    for (let i = 0; i < 30; i++) {
+      const brand = brandList[Math.floor(Math.random() * brandList.length)];
+      const category = DEMO_CATEGORIES[Math.floor(Math.random() * DEMO_CATEGORIES.length)];
+      const device = DEMO_DEVICES[Math.floor(Math.random() * DEMO_DEVICES.length)];
+      const img = DEMO_IMAGES[Math.floor(Math.random() * DEMO_IMAGES.length)];
+      const hasSale = Math.random() > 0.7;
+      const basePrice = Math.floor(Math.random() * 50) * 1000 + 15000;
+
+      demoProducts.push({
+        id: `demo-${Date.now()}-${i}`,
+        name: `${brand.name} ${category} Case ${i + 1}`,
+        sku: `DEMO-SKU-${i + 1}`,
+        price: basePrice,
+        salePrice: hasSale ? Math.floor(basePrice * 0.8) : undefined,
+        description: `High quality ${category.toLowerCase()} case for ${device}.`,
+        category: category,
+        device: device,
+        brand: brand.name,
+        image: img,
+        images: [img],
+        rating: 4 + Math.random(),
+        stock: Math.floor(Math.random() * 50) + 5,
+        colors: ['#000000'],
+        variants: []
+      });
+    }
+
+    if (isSupabaseConfigured) {
+      // Just set state, don't write to DB to avoid pollution
+      setProducts(demoProducts);
+    } else {
+      setProducts(demoProducts);
+    }
   };
 
   // --- CART CALCULATIONS ---
@@ -865,10 +865,10 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       addToast('Invalid discount code', 'error');
       return;
     }
-    
+
     if (discount.minOrderAmount && totalAmount < discount.minOrderAmount) {
-       addToast(`Minimum spend of IQD ${discount.minOrderAmount.toLocaleString()} required`, 'warning');
-       return;
+      addToast(`Minimum spend of IQD ${discount.minOrderAmount.toLocaleString()} required`, 'warning');
+      return;
     }
 
     setAppliedDiscount(discount);
@@ -883,21 +883,21 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   // Calculate discount amount
   let discountAmount = 0;
   if (appliedDiscount) {
-     if (appliedDiscount.type === 'percentage') {
-       discountAmount = totalAmount * (appliedDiscount.value / 100);
-     } else {
-       discountAmount = appliedDiscount.value;
-     }
-     
-     // Cannot exceed total
-     if (discountAmount > totalAmount) discountAmount = totalAmount;
+    if (appliedDiscount.type === 'percentage') {
+      discountAmount = totalAmount * (appliedDiscount.value / 100);
+    } else {
+      discountAmount = appliedDiscount.value;
+    }
+
+    // Cannot exceed total
+    if (discountAmount > totalAmount) discountAmount = totalAmount;
   }
 
   // Ensure discount conditions are still met if items are removed
   useEffect(() => {
     if (appliedDiscount && appliedDiscount.minOrderAmount && totalAmount < appliedDiscount.minOrderAmount) {
-       setAppliedDiscount(null);
-       addToast('Discount removed: Minimum spend not met', 'warning');
+      setAppliedDiscount(null);
+      addToast('Discount removed: Minimum spend not met', 'warning');
     }
   }, [totalAmount, appliedDiscount, addToast]);
 
