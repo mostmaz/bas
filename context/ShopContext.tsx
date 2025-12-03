@@ -33,7 +33,7 @@ interface ShopContextType {
 
   // Actions
   refreshBrands: () => Promise<void>;
-  refreshProducts: () => Promise<void>;
+  refreshProducts: (silent?: boolean) => Promise<void>;
   addProduct: (product: Omit<Product, 'id' | 'rating'> & { id?: string, rating?: number }) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -193,7 +193,8 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
 
   // --- ACTIONS ---
 
-  const refreshProducts = async () => {
+  const refreshProducts = async (silent = false) => {
+    if (!silent) setIsAppLoading(true);
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase
@@ -224,6 +225,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         }
       }
     }
+    if (!silent) setIsAppLoading(false);
   };
 
   const refreshBrands = async () => {
@@ -529,7 +531,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
 
       const { data: ordersData } = await supabase.from('orders').select('*').order('date', { ascending: false });
       if (ordersData) setOrders(ordersData.map(mapOrderFromDB));
-      await refreshProducts();
+      await refreshProducts(true);
 
     } else {
       const localOrder: Order = {
