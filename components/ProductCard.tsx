@@ -14,24 +14,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart, wishlist, toggleWishlist } = useShop();
   const navigate = useNavigate();
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   const handleNavigate = () => {
     navigate(`/product/${product.id}`);
   };
 
   const isWishlisted = wishlist.includes(product.id);
-  
+
   // Determine display colors (Legacy 'colors' or new 'variants')
   // Filter out variants with 0 stock
-  const displayColors = product.variants 
-      ? product.variants.filter(v => v.stock > 0).map(v => v.color)
-      : product.colors || [];
+  const displayColors = product.variants
+    ? product.variants.filter(v => v.stock > 0).map(v => v.color)
+    : product.colors || [];
 
   const uniqueDisplayColors = Array.from(new Set(displayColors));
 
   // Calculate discount percentage
-  const discountPercent = product.salePrice 
-    ? Math.round(((product.price - product.salePrice) / product.price) * 100) 
+  const discountPercent = product.salePrice
+    ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
   return (
@@ -42,12 +43,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <img
               src={product.image}
               alt={product.name}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110 opacity-95 dark:opacity-90 group-hover:opacity-100"
+              loading="eager"
+              decoding="sync"
+              onLoad={() => setIsImageLoaded(true)}
+              className={`h-full w-full object-cover object-center transition-all duration-700 ${isImageLoaded ? 'opacity-95 dark:opacity-90 group-hover:scale-110 group-hover:opacity-100' : 'opacity-0 scale-100'}`}
             />
+            {!isImageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800 animate-pulse">
+                <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-600 rounded-full animate-spin"></div>
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
+
             {/* Sale Badge */}
             {product.salePrice && (
               <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full shadow-lg">
@@ -56,7 +63,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             )}
           </div>
         </div>
-        
+
         {/* Quick Actions */}
         <div className="absolute top-[55%] right-2 sm:right-4 z-10 flex flex-col gap-2 sm:gap-3 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           <button
@@ -86,11 +93,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               e.preventDefault();
               toggleWishlist(product.id);
             }}
-            className={`flex items-center justify-center rounded-full p-2 sm:p-3 shadow-lg shadow-black/20 transition-all delay-100 hover:scale-110 active:scale-95 ${
-              isWishlisted 
-                ? 'bg-red-500 text-white hover:bg-red-600' 
-                : 'bg-white text-slate-900 hover:bg-red-500 hover:text-white'
-            }`}
+            className={`flex items-center justify-center rounded-full p-2 sm:p-3 shadow-lg shadow-black/20 transition-all delay-100 hover:scale-110 active:scale-95 ${isWishlisted
+              ? 'bg-red-500 text-white hover:bg-red-600'
+              : 'bg-white text-slate-900 hover:bg-red-500 hover:text-white'
+              }`}
             aria-label="Add to wishlist"
             title="Wishlist"
           >
@@ -107,48 +113,48 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   {product.name}
                 </h3>
               </div>
-              
+
               {/* Color Indicators */}
               {uniqueDisplayColors.length > 0 && (
                 <div className="flex items-center gap-1.5 mt-2">
-                   <div className="flex -space-x-1">
+                  <div className="flex -space-x-1">
                     {uniqueDisplayColors.slice(0, 4).map((color, idx) => (
-                      <div 
-                        key={idx} 
-                        className="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full border border-slate-200 dark:border-slate-600 shadow-sm" 
+                      <div
+                        key={idx}
+                        className="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full border border-slate-200 dark:border-slate-600 shadow-sm"
                         style={{ backgroundColor: color }}
                         title={color}
                       />
                     ))}
                   </div>
                   {uniqueDisplayColors.length > 4 && (
-                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">+{uniqueDisplayColors.length - 4}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">+{uniqueDisplayColors.length - 4}</span>
                   )}
                 </div>
               )}
             </div>
             <div className="flex flex-col items-end mt-1 sm:mt-0">
-               {product.salePrice ? (
-                 <>
-                   <p className="text-[10px] sm:text-xs text-slate-400 line-through mb-0.5">IQD {product.price.toLocaleString()}</p>
-                   <p className="self-start text-[10px] sm:text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg border border-red-100 dark:border-red-900/20 whitespace-nowrap">
-                     IQD {product.salePrice.toLocaleString()}
-                   </p>
-                 </>
-               ) : (
-                 <p className="self-start text-[10px] sm:text-sm font-bold text-slate-900 dark:text-white bg-amber-100 dark:bg-amber-500/10 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg border border-amber-200 dark:border-amber-500/20 whitespace-nowrap">
-                   IQD {product.price.toLocaleString()}
-                 </p>
-               )}
+              {product.salePrice ? (
+                <>
+                  <p className="text-[10px] sm:text-xs text-slate-400 line-through mb-0.5">IQD {product.price.toLocaleString()}</p>
+                  <p className="self-start text-[10px] sm:text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg border border-red-100 dark:border-red-900/20 whitespace-nowrap">
+                    IQD {product.salePrice.toLocaleString()}
+                  </p>
+                </>
+              ) : (
+                <p className="self-start text-[10px] sm:text-sm font-bold text-slate-900 dark:text-white bg-amber-100 dark:bg-amber-500/10 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg border border-amber-200 dark:border-amber-500/20 whitespace-nowrap">
+                  IQD {product.price.toLocaleString()}
+                </p>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <ProductQuickViewModal 
-        isOpen={isQuickViewOpen} 
-        onClose={() => setIsQuickViewOpen(false)} 
-        product={product} 
+      <ProductQuickViewModal
+        isOpen={isQuickViewOpen}
+        onClose={() => setIsQuickViewOpen(false)}
+        product={product}
       />
     </>
   );

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BasCavarat</string>
+    <string name="title_activity_main">BasCavarat</string>
+    <string name="package_name">com.bascavarat.app</string>
+    <string name="custom_url_scheme">com.bascavarat.app</string>
+</resources>
