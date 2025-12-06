@@ -193,6 +193,11 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const [isDemoActive, setIsDemoActive] = useState(false);
 
   useEffect(() => {
+    if (isSupabaseConfigured) {
+      addToast("Online Mode: Connecting to Supabase...", "info");
+    } else {
+      addToast("Offline Mode: Using Demo Data", "warning");
+    }
     refreshProducts();
     refreshBrands();
     refreshDiscounts();
@@ -216,10 +221,13 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
+
         if (data && data.length > 0) {
           setProducts(data.map(mapProductFromDB));
         } else {
-          setProducts(INITIAL_PRODUCTS);
+          // Connected but empty - Do NOT show demo data
+          setProducts([]);
+          addToast("Database connected but empty. Add products in Admin Dashboard.", "info");
         }
       } catch (err: any) {
         console.error("Fetch Error:", err);
@@ -229,11 +237,12 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
           if (data && data.length > 0) {
             setProducts(data.map(mapProductFromDB));
           } else {
-            setProducts(INITIAL_PRODUCTS);
+            setProducts([]);
+            addToast("Database connected but empty (Fallback).", "info");
           }
         } catch (fallbackErr: any) {
           console.error("Fallback Fetch Error:", fallbackErr);
-          addToast(`Error loading products: ${fallbackErr.message || 'Unknown error'}`, 'error');
+          addToast(`Connection Failed: ${fallbackErr.message || 'Check internet or API keys'}`, 'error');
           setProducts(INITIAL_PRODUCTS);
         }
       }
