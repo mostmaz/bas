@@ -147,6 +147,7 @@ alter table products add column if not exists colors text[];
 alter table products add column if not exists variants jsonb;
 alter table products add column if not exists sale_price numeric;
 alter table products add column if not exists sku text;
+alter table products add column if not exists created_at timestamptz default now();
 
 -- 2. Ensure Brands table has logo
 alter table brands add column if not exists logo text;
@@ -162,6 +163,7 @@ alter table orders add column if not exists ordernumber text;
 -- 5. Create tables if they don't exist (Safety)
 create table if not exists products (
   id text primary key default gen_random_uuid()::text,
+  created_at timestamptz default now(),
   name text,
   sku text,
   price numeric,
