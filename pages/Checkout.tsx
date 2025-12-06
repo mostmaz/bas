@@ -1,6 +1,4 @@
 
-
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
@@ -17,7 +15,7 @@ export const Checkout: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    
+
     const formData = new FormData(e.target as HTMLFormElement);
     const orderData = {
       customerName: formData.get('name') as string,
@@ -34,22 +32,24 @@ export const Checkout: React.FC = () => {
 
     try {
       await placeOrder(orderData);
+      // Wait for 1.5 seconds before showing success page
+      await new Promise(resolve => setTimeout(resolve, 1500));
       clearCart();
       navigate('/order-success');
     } catch (error: any) {
       console.error("Order failed", error);
-      
+
       let errorMessage = "Failed to place order. Please try again.";
-      
+
       // Handle specific Supabase errors
       if (error?.code === 'PGRST204' || (error?.message && error.message.includes('column'))) {
-         errorMessage = "Database Error: Missing columns in 'orders' table. Please run the DB Setup script in Admin Dashboard.";
+        errorMessage = "Database Error: Missing columns in 'orders' table. Please run the DB Setup script in Admin Dashboard.";
       } else if (error?.message) {
-         errorMessage = `Error: ${error.message}`;
+        errorMessage = `Error: ${error.message}`;
       } else if (error?.hint) {
-         errorMessage = `Error: ${error.hint}`;
+        errorMessage = `Error: ${error.hint}`;
       }
-      
+
       alert(errorMessage);
       setIsProcessing(false);
     }
@@ -78,19 +78,19 @@ export const Checkout: React.FC = () => {
             <span>{t('cashOnDelivery')}</span>
           </div>
         </div>
-        
+
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start">
-          
+
           {/* Shipping Form */}
           <div className="lg:col-span-7">
             <form onSubmit={handleSubmit} className="space-y-8">
-              
+
               {/* Contact Info */}
               <div className="bg-white dark:bg-slate-900 shadow-sm rounded-xl p-6 border border-slate-200 dark:border-slate-800">
                 <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-6 flex items-center">
                   <MapPin className="mr-2 rtl:ml-2 rtl:mr-0 h-5 w-5 text-purple-600" /> {t('deliveryDetails')}
                 </h2>
-                
+
                 <div className="grid grid-cols-1 gap-y-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('fullName')}</label>
@@ -98,11 +98,11 @@ export const Checkout: React.FC = () => {
                       <div className="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto pl-3 rtl:pr-3 flex items-center pointer-events-none">
                         <User className="h-5 w-5 text-slate-400" />
                       </div>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         name="name"
-                        required 
-                        className="block w-full pl-10 rtl:pr-10 rtl:pl-3 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors" 
+                        required
+                        className="block w-full pl-10 rtl:pr-10 rtl:pl-3 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors"
                         placeholder={t('fullName')}
                       />
                     </div>
@@ -114,11 +114,11 @@ export const Checkout: React.FC = () => {
                       <div className="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto pl-3 rtl:pr-3 flex items-center pointer-events-none">
                         <Phone className="h-5 w-5 text-slate-400" />
                       </div>
-                      <input 
-                        type="tel" 
+                      <input
+                        type="tel"
                         name="phone"
-                        required 
-                        className="block w-full pl-10 rtl:pr-10 rtl:pl-3 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors" 
+                        required
+                        className="block w-full pl-10 rtl:pr-10 rtl:pl-3 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors"
                         placeholder="0770 XXX XXXX"
                       />
                     </div>
@@ -126,22 +126,22 @@ export const Checkout: React.FC = () => {
 
                   <div>
                     <label htmlFor="city" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('city')}</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       name="city"
-                      required 
-                      className="block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors" 
+                      required
+                      className="block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors"
                       placeholder={t('city')}
                     />
                   </div>
 
                   <div>
                     <label htmlFor="address" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('address')}</label>
-                    <textarea 
+                    <textarea
                       name="address"
                       rows={3}
-                      required 
-                      className="block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors" 
+                      required
+                      className="block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors"
                       placeholder={t('address')}
                     />
                   </div>
@@ -170,8 +170,8 @@ export const Checkout: React.FC = () => {
               <div className="p-6">
                 <ul className="divide-y divide-slate-100 dark:divide-slate-800 mb-6">
                   {cart.map((item) => {
-                     const price = item.salePrice || item.price;
-                     return (
+                    const price = item.salePrice || item.price;
+                    return (
                       <li key={item.id} className="flex py-4">
                         <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
                           <img src={item.image} alt={item.name} className="h-full w-full object-cover object-center" />
@@ -189,7 +189,7 @@ export const Checkout: React.FC = () => {
                           </div>
                         </div>
                       </li>
-                     );
+                    );
                   })}
                 </ul>
 
@@ -200,13 +200,13 @@ export const Checkout: React.FC = () => {
                   </div>
                   {discountAmount > 0 && (
                     <div className="flex items-center justify-between text-sm text-green-600 dark:text-green-400">
-                       <p className="flex items-center gap-1"><Tag className="h-3 w-3" /> Discount {appliedDiscount && `(${appliedDiscount.code})`}</p>
-                       <p>- IQD {discountAmount.toLocaleString()}</p>
+                      <p className="flex items-center gap-1"><Tag className="h-3 w-3" /> Discount {appliedDiscount && `(${appliedDiscount.code})`}</p>
+                      <p>- IQD {discountAmount.toLocaleString()}</p>
                     </div>
                   )}
                   <div className="flex items-center justify-between text-sm">
                     <p className="text-slate-600 dark:text-slate-400 flex items-center">
-                       <Truck className="h-4 w-4 mr-1 rtl:ml-1 rtl:mr-0 text-slate-400" /> {t('shipping')}
+                      <Truck className="h-4 w-4 mr-1 rtl:ml-1 rtl:mr-0 text-slate-400" /> {t('shipping')}
                     </p>
                     <p className="font-medium text-slate-900 dark:text-white">IQD {shippingFee.toLocaleString()}</p>
                   </div>

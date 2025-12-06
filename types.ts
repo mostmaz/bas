@@ -62,6 +62,11 @@ export interface Brand {
   logo?: string;
 }
 
+export interface Device {
+  id: string;
+  name: string;
+}
+
 export interface Order {
   id: string;
   customerName: string;

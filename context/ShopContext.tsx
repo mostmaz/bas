@@ -1,11 +1,6 @@
-
-
-
-
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Product, CartItem, CarouselSlide, Theme, Language, Order, Brand, ProductVariant, DiscountCode } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_BRANDS, INITIAL_SLIDES, TRANSLATIONS, INITIAL_DISCOUNTS } from '../constants';
+import { Product, CartItem, CarouselSlide, Theme, Language, Order, Brand, ProductVariant, DiscountCode, Device } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_BRANDS, INITIAL_SLIDES, TRANSLATIONS, INITIAL_DISCOUNTS, DEVICES } from '../constants';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { useToast } from './ToastContext';
 
@@ -15,6 +10,7 @@ interface ShopContextType {
   cart: CartItem[];
   wishlist: string[];
   brands: Brand[];
+  devices: Device[];
   carouselSlides: CarouselSlide[];
   orders: Order[];
   discounts: DiscountCode[];
@@ -38,12 +34,15 @@ interface ShopContextType {
 
   // Actions
   refreshBrands: () => Promise<void>;
-  refreshProducts: () => Promise<void>;
+  refreshProducts: (silent?: boolean) => Promise<void>;
+  refreshDevices: () => Promise<void>;
   addProduct: (product: Omit<Product, 'id' | 'rating'> & { id?: string, rating?: number }) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   addBrand: (name: string, logo?: string) => Promise<void>;
   deleteBrand: (id: string) => Promise<void>;
+  addDevice: (name: string) => Promise<void>;
+  deleteDevice: (id: string) => Promise<void>;
   addSlide: (slide: CarouselSlide) => Promise<void>;
   updateSlide: (slide: CarouselSlide) => Promise<void>;
   deleteSlide: (id: string) => Promise<void>;
@@ -126,7 +125,6 @@ const mapProductFromDB = (p: any): Product => {
 
   // Handle variants JSONB safely
   let variants: ProductVariant[] = [];
-  // Check if variants property exists at all on the returned object
   if (Object.prototype.hasOwnProperty.call(p, 'variants') && p.variants) {
     if (typeof p.variants === 'string') {
       try { variants = JSON.parse(p.variants); } catch (e) { console.error("Error parsing variants JSON", e); }
@@ -163,15 +161,18 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { addToast } = useToast();
 
   // --- STATE ---
-  // Initialize with fallback data immediately if in offline/demo mode to skip splash screen
   const [products, setProducts] = useState<Product[]>(() => isSupabaseConfigured ? [] : INITIAL_PRODUCTS);
   const [brands, setBrands] = useState<Brand[]>(() => isSupabaseConfigured ? [] : INITIAL_BRANDS);
+  // Initialize devices with the constant values mapped to Device objects
+  const [devices, setDevices] = useState<Device[]>(() =>
+    DEVICES.filter(d => d !== 'All').map((d, i) => ({ id: i.toString(), name: d }))
+  );
   const [carouselSlides, setCarouselSlides] = useState<CarouselSlide[]>(() => isSupabaseConfigured ? [] : INITIAL_SLIDES);
   const [orders, setOrders] = useState<Order[]>([]);
   const [discounts, setDiscounts] = useState<DiscountCode[]>(INITIAL_DISCOUNTS);
   const [shippingFee, setShippingFee] = useState<number>(5000);
 
-  // Persistent Logo State: Try local storage first, then default
+  // Persistent Logo State
   const [storeLogo, setStoreLogo] = useState<string>(() => {
     try {
       return localStorage.getItem('storeLogo') || DEFAULT_LOGO;
@@ -180,204 +181,130 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     }
   });
 
-  const [supaConnectionError, setSupaConnectionError] = useState<string | null>(null);
-
-  // Only start loading state if we are actually connected to Supabase
-  const [isAppLoading, setIsAppLoading] = useState(isSupabaseConfigured);
-
-  // Local-only state
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null);
-  const [wishlist, setWishlist] = useState<string[]>(() => {
-    const saved = localStorage.getItem('wishlist');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>('light');
   const [language, setLanguage] = useState<Language>('en');
   const [searchQuery, setSearchQuery] = useState('');
+  const [supaConnectionError, setSupaConnectionError] = useState<string | null>(null);
+  const [isAppLoading, setIsAppLoading] = useState(false);
+  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null);
   const [isDemoActive, setIsDemoActive] = useState(false);
 
-  // Apply Theme and Language Effects
   useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
-    root.dir = language === 'ar' ? 'rtl' : 'ltr';
-    root.lang = language;
-  }, [theme, language]);
-
-  // Persist Wishlist
-  useEffect(() => {
-    localStorage.setItem('wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
-
-  // Update Favicon based on store logo
-  useEffect(() => {
-    const updateFavicon = (url: string) => {
-      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.head.appendChild(link);
-      }
-      link.href = url;
-    };
-    updateFavicon(storeLogo);
-  }, [storeLogo]);
-
-  // Helper to refresh brands specifically
-  const refreshBrands = async () => {
-    if (isSupabaseConfigured) {
-      const { data, error } = await supabase.from('brands').select('*').order('id', { ascending: true });
-      if (error) console.error("Error refreshing brands:", error);
-      if (data) {
-        setBrands(data.map(b => ({ ...b, id: String(b.id) })) as Brand[]);
-      }
-    }
-  };
-
-  // Helper to refresh products
-  const refreshProducts = async () => {
-    if (isSupabaseConfigured) {
-      const { data, error } = await supabase.from('products').select('*').order('id', { ascending: false });
-      if (error) console.error("Error refreshing products:", error);
-      if (data) {
-        setProducts(data.map(mapProductFromDB));
-      }
-    }
-  };
-
-  // Helper to refresh discounts
-  const refreshDiscounts = async () => {
-    if (isSupabaseConfigured) {
-      const { data, error } = await supabase.from('discounts').select('*').order('id', { ascending: false });
-      if (error) console.error("Error refreshing discounts:", error);
-      if (data) {
-        setDiscounts(data.map(mapDiscountFromDB));
-      }
-    }
-  };
-
-  // --- INITIAL LOAD ---
-  useEffect(() => {
-    // If offline/demo mode, data is already initialized via useState defaults.
-    // Return early to avoid async overhead and keep app interactive immediately.
-    if (!isSupabaseConfigured) return;
-
-    const loadData = async () => {
-      setIsAppLoading(true);
-      try {
-        // Parallel fetching to reduce loading time
-        const [productsRes, brandsRes, slidesRes, ordersRes, settingsRes, discountsRes] = await Promise.all([
-          supabase.from('products').select('*').order('id', { ascending: false }),
-          supabase.from('brands').select('*').order('id', { ascending: true }),
-          supabase.from('slides').select('*'),
-          supabase.from('orders').select('*').order('date', { ascending: false }),
-          supabase.from('store_settings').select('*').single(),
-          supabase.from('discounts').select('*')
-        ]);
-
-        if (productsRes.error) throw productsRes.error; // Critical error check
-
-        // 1. Products
-        if (productsRes.data) {
-          setProducts(productsRes.data.map(mapProductFromDB));
-        }
-
-        // 2. Brands
-        if (brandsRes.data) {
-          setBrands(brandsRes.data.map(b => ({ ...b, id: String(b.id) })) as Brand[]);
-        }
-
-        // 3. Slides
-        if (slidesRes.data) setCarouselSlides(slidesRes.data);
-
-        // 4. Orders
-        if (ordersRes.data) {
-          setOrders(ordersRes.data.map(mapOrderFromDB));
-        }
-
-        // 5. Settings
-        if (settingsRes.data) {
-          if (settingsRes.data.shipping_fee) setShippingFee(settingsRes.data.shipping_fee);
-          if (settingsRes.data.logo) {
-            setStoreLogo(settingsRes.data.logo);
-            // Sync DB logo to localStorage
-            localStorage.setItem('storeLogo', settingsRes.data.logo);
-          }
-        }
-
-        // 6. Discounts
-        if (discountsRes.data) {
-          setDiscounts(discountsRes.data.map(mapDiscountFromDB));
-        }
-
-        setSupaConnectionError(null);
-
-      } catch (error: any) {
-        // Extract meaningful error message
-        let errorMsg = "Unknown error occurred";
-        if (error instanceof Error) {
-          errorMsg = error.message;
-        } else if (typeof error === 'object' && error !== null) {
-          // PostgrestError or similar
-          errorMsg = error.message || error.details || error.hint || JSON.stringify(error);
-        } else {
-          errorMsg = String(error);
-        }
-
-        console.error("Supabase load error:", errorMsg);
-
-        // Only show error if it's a connection/URL issue, not just empty tables
-        if (errorMsg.includes('fetch') || errorMsg.includes('URL') || errorMsg.includes('apikey')) {
-          setSupaConnectionError(errorMsg);
-        }
-
-        // Fallback to local data on error
-        setProducts(INITIAL_PRODUCTS);
-        setBrands(INITIAL_BRANDS);
-        setCarouselSlides(INITIAL_SLIDES);
-        setDiscounts(INITIAL_DISCOUNTS);
-      } finally {
-        setIsAppLoading(false);
-      }
-    };
-
-    loadData();
+    refreshProducts();
+    refreshBrands();
+    refreshDiscounts();
+    refreshDevices();
   }, []);
 
+  useEffect(() => {
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+  }, [language]);
 
   // --- ACTIONS ---
 
-  const addProduct = async (product: Omit<Product, 'id' | 'rating'> & { id?: string, rating?: number }) => {
-    const { salePrice, ...rest } = product;
-    // Database expects snake_case for some columns if manually created, but we use map function
-    // For insertion, we need to map back to DB schema if needed. 
-    const dbProduct = {
-      ...rest,
-      sale_price: salePrice
-    };
-
+  const refreshProducts = async (silent = false) => {
+    if (!silent) setIsAppLoading(true);
     if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setProducts(data.map(mapProductFromDB));
+        } else {
+          setProducts(INITIAL_PRODUCTS);
+        }
+      } catch (err: any) {
+        console.error("Fetch Error:", err);
+        try {
+          const { data, error: fallbackError } = await supabase.from('products').select('*');
+          if (fallbackError) throw fallbackError;
+          if (data && data.length > 0) {
+            setProducts(data.map(mapProductFromDB));
+          } else {
+            setProducts(INITIAL_PRODUCTS);
+          }
+        } catch (fallbackErr: any) {
+          console.error("Fallback Fetch Error:", fallbackErr);
+          addToast(`Error loading products: ${fallbackErr.message || 'Unknown error'}`, 'error');
+          setProducts(INITIAL_PRODUCTS);
+        }
+      }
+    }
+    if (!silent) setIsAppLoading(false);
+  };
+
+  const refreshBrands = async () => {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from('brands').select('*');
+        if (error) throw error;
+        if (data) setBrands(data);
+      } catch (error) {
+        console.error("Error loading brands:", error);
+      }
+    }
+  };
+
+  const refreshDevices = async () => {
+    if (isSupabaseConfigured) {
+      try {
+        // Check if devices table exists by trying to select from it
+        const { data, error } = await supabase.from('devices').select('*');
+        if (error) {
+          // If table doesn't exist or error, fallback to local defaults but don't crash
+          console.warn("Could not load devices from DB (table might be missing)", error);
+          return;
+        }
+        if (data) setDevices(data);
+      } catch (error) {
+        console.error("Error loading devices:", error);
+      }
+    }
+  };
+
+  const refreshDiscounts = async () => {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from('discounts').select('*');
+        if (error) throw error;
+        if (data) setDiscounts(data.map(mapDiscountFromDB));
+      } catch (error) {
+        console.error("Error loading discounts:", error);
+      }
+    }
+  };
+
+  const addProduct = async (product: Omit<Product, 'id' | 'rating'> & { id?: string, rating?: number }) => {
+    if (isSupabaseConfigured) {
+      const dbProduct = {
+        name: product.name,
+        price: product.price,
+        description: product.description,
+        category: product.category,
+        image: product.image,
+        brand: product.brand,
+        device: product.device,
+        stock: product.stock,
+        images: product.images,
+        colors: product.colors,
+        variants: product.variants,
+        sale_price: product.salePrice,
+        sku: product.sku
+      };
+
       const { error } = await supabase.from('products').insert([dbProduct]);
       if (error) {
-        // Check for specific schema mismatch regarding 'images' or 'colors' or 'variants'
-        const lowerMsg = (error.message || '').toLowerCase();
-        if (error.code === '42703' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku')) {
-          console.warn("Schema mismatch detected: column missing. Retrying without advanced fields.");
-          addToast("Warning: Database Schema Outdated. Saved without complex data.", 'warning');
-
-          // Remove the problematic fields and try again
-          // Ensure 'image' (singular) is populated for thumbnail compatibility
-          const { images, colors, variants, sale_price, sku, ...legacyProduct } = dbProduct;
-          const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
-
-          const { error: retryError } = await supabase.from('products').insert([safeProduct]);
-          if (retryError) throw retryError;
-        } else {
-          throw error;
-        }
+        console.error(error);
+        addToast('Failed to add product', 'error');
+        return;
       }
       await refreshProducts();
       addToast('Product added successfully', 'success');
@@ -385,38 +312,52 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       const newProduct: Product = {
         ...product,
         id: product.id || Date.now().toString(),
-        rating: product.rating || 0,
-        images: product.images || (product.image ? [product.image] : []),
-        colors: product.colors || [],
-        variants: product.variants || []
+        rating: product.rating || 0
       };
-      setProducts(prev => [newProduct, ...prev]);
+      setProducts(prev => [...prev, newProduct]);
       addToast('Product added locally (Demo)', 'success');
     }
   };
 
   const updateProduct = async (product: Product) => {
-    const { salePrice, ...rest } = product;
-    const dbProduct = { ...rest, sale_price: salePrice };
-
     if (isSupabaseConfigured) {
+      const dbProduct = {
+        name: product.name,
+        price: product.price,
+        description: product.description,
+        category: product.category,
+        image: product.image,
+        brand: product.brand,
+        device: product.device,
+        stock: product.stock,
+        images: product.images,
+        colors: product.colors,
+        variants: product.variants,
+        sale_price: product.salePrice,
+        sku: product.sku
+      };
+
       const { error } = await supabase.from('products').update(dbProduct).eq('id', product.id);
+
       if (error) {
-        // Check for specific schema mismatch
         const lowerMsg = (error.message || '').toLowerCase();
         if (error.code === '42703' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku')) {
           console.warn("Schema mismatch detected: column missing. Retrying update without advanced fields.");
           addToast("Warning: Database Schema Outdated. Updated without complex data.", 'warning');
 
-          // Remove the problematic fields and try again
-          // Ensure 'image' is set
           const { images, colors, variants, sale_price, sku, ...legacyProduct } = dbProduct;
           const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
 
-          const { error: retryError } = await supabase.from('products').update(safeProduct).eq('id', safeProduct.id);
-          if (retryError) throw retryError;
+          const { error: retryError } = await supabase.from('products').update(safeProduct).eq('id', product.id);
+          if (retryError) {
+            console.error(retryError);
+            addToast('Failed to update product', 'error');
+            return;
+          }
         } else {
-          throw error;
+          console.error(error);
+          addToast('Failed to update product', 'error');
+          return;
         }
       }
       await refreshProducts();
@@ -468,15 +409,52 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     }
   };
 
+  const addDevice = async (name: string) => {
+    if (isSupabaseConfigured) {
+      // Try to insert into devices table. If it fails (table missing), fallback to local state only for this session
+      const { error } = await supabase.from('devices').insert([{ name }]);
+      if (error) {
+        console.error("Failed to add device to DB:", error);
+        // Fallback: Add locally so UI updates, but warn user
+        const newDevice: Device = { id: Date.now().toString(), name };
+        setDevices(prev => [...prev, newDevice]);
+        addToast('Device added locally (DB table missing?)', 'warning');
+      } else {
+        await refreshDevices();
+        addToast('Device added successfully', 'success');
+      }
+    } else {
+      const newDevice: Device = { id: Date.now().toString(), name };
+      setDevices(prev => [...prev, newDevice]);
+      addToast('Device added locally', 'success');
+    }
+  };
+
+  const deleteDevice = async (id: string) => {
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.from('devices').delete().eq('id', id);
+      if (error) {
+        console.error("Failed to delete device from DB:", error);
+        setDevices(prev => prev.filter(d => d.id !== id));
+        addToast('Device deleted locally (DB error)', 'warning');
+      } else {
+        await refreshDevices();
+        addToast('Device deleted', 'success');
+      }
+    } else {
+      setDevices(prev => prev.filter(d => d.id !== id));
+      addToast('Device deleted locally', 'success');
+    }
+  };
+
   const addDiscount = async (discount: Omit<DiscountCode, 'id'>) => {
     if (isSupabaseConfigured) {
-      // Postgres column names are likely lowercase
       const dbDiscount = {
         code: discount.code,
         type: discount.type,
         value: discount.value,
-        minorderamount: discount.minOrderAmount,
-        isactive: discount.isActive
+        minOrderAmount: discount.minOrderAmount,
+        isActive: discount.isActive
       };
       const { error } = await supabase.from('discounts').insert([dbDiscount]);
       if (error) throw error;
@@ -504,7 +482,6 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const toggleDiscountStatus = async (id: string, currentStatus: boolean) => {
     const newStatus = !currentStatus;
     if (isSupabaseConfigured) {
-      // Use lowercase 'isactive' for DB update
       const { error } = await supabase.from('discounts').update({ isactive: newStatus }).eq('id', id);
       if (error) {
         console.error("Error toggling discount:", error);
@@ -573,9 +550,8 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const placeOrder = async (orderData: Omit<Order, 'id' | 'date' | 'status'>) => {
     const newOrder = {
       ...orderData,
-      status: 'Processing',
+      status: 'Processing' as const,
       date: Date.now(),
-      // Prepare for DB insertion
       customername: orderData.customerName,
       totalamount: orderData.totalAmount,
       shippingfee: orderData.shippingFee,
@@ -587,23 +563,19 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     if (isSupabaseConfigured) {
       const dbPayload = {
         ...newOrder,
-        items: newOrder.items // supabase-js handles JSON conversion
+        items: newOrder.items
       };
       const { customerName, totalAmount, shippingFee, discountAmount, discountCode, orderNumber, ...cleanPayload } = dbPayload as any;
 
       const { error } = await supabase.from('orders').insert([cleanPayload]);
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      // Update stock
-      for (const item of orderData.items) {
+      const updatePromises = orderData.items.map(async (item) => {
         const product = products.find(p => p.id === item.id);
         if (product) {
           let newStock = product.stock;
           let variantsToUpdate = product.variants;
 
-          // Update variant stock if applicable
           if (item.selectedVariant && variantsToUpdate) {
             variantsToUpdate = variantsToUpdate.map(v => {
               if (v.id === item.selectedVariant?.id) {
@@ -611,30 +583,27 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
               }
               return v;
             });
-            // Recalculate total stock based on variants
             newStock = variantsToUpdate.reduce((sum, v) => sum + v.stock, 0);
 
-            // We update both the variants JSON and the global stock number
-            await supabase.from('products').update({
+            return supabase.from('products').update({
               stock: newStock,
               variants: variantsToUpdate
             }).eq('id', item.id);
 
           } else {
-            // Fallback global stock update
             newStock = Math.max(0, product.stock - item.quantity);
-            await supabase.from('products').update({ stock: newStock }).eq('id', item.id);
+            return supabase.from('products').update({ stock: newStock }).eq('id', item.id);
           }
         }
-      }
+      });
 
-      // Refresh orders and products
+      await Promise.all(updatePromises);
+
       const { data: ordersData } = await supabase.from('orders').select('*').order('date', { ascending: false });
       if (ordersData) setOrders(ordersData.map(mapOrderFromDB));
-      await refreshProducts();
+      await refreshProducts(true);
 
     } else {
-      // Local
       const localOrder: Order = {
         id: Date.now().toString(),
         customerName: orderData.customerName,
@@ -652,7 +621,6 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       };
       setOrders(prev => [localOrder, ...prev]);
 
-      // Update local stock
       setProducts(prev => prev.map(p => {
         const item = orderData.items.find(i => i.id === p.id);
         if (item) {
@@ -701,25 +669,18 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   };
 
   const updateStoreLogo = async (logo: string) => {
-    // 1. Update State
     setStoreLogo(logo);
-
-    // 2. Persist to Local Storage (Immediate fallback)
     try {
       localStorage.setItem('storeLogo', logo);
     } catch (e) {
       console.error("Local storage quota exceeded or failed", e);
     }
 
-    // 3. Persist to Supabase
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.from('store_settings').select('id').limit(1);
-
-      // If table is empty or error accessing it, handle graceful insertion attempt
       if (data && data.length > 0) {
         await supabase.from('store_settings').update({ logo: logo }).eq('id', data[0].id);
       } else {
-        // Table likely empty or error. Try insert.
         await supabase.from('store_settings').insert([{ logo: logo }]);
       }
       addToast('Store logo updated', 'success');
@@ -728,13 +689,9 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     }
   };
 
-  // --- LOCAL SHOPPING CART ---
   const addToCart = (product: Product, variant?: ProductVariant) => {
     setCart(prev => {
-      // Create a composite key for product + variant
-      // Ensure variant id exists if variant is passed
       const compositeId = (variant && variant.id) ? `${product.id}-${variant.id}` : product.id;
-
       const existing = prev.find(item => {
         const itemCompositeId = (item.selectedVariant && item.selectedVariant.id) ? `${item.id}-${item.selectedVariant.id}` : item.id;
         return itemCompositeId === compositeId;
@@ -747,11 +704,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         });
       }
 
-      // Override main image with variant image if available for cart display
-      // If variant has an image, use it. Otherwise keep product.image.
-      // IMPORTANT: Ensure we don't accidentally use an empty string if variant.image is missing
       const displayImage = (variant && variant.image) ? variant.image : product.image;
-
       return [...prev, {
         ...product,
         image: displayImage,
@@ -764,8 +717,6 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   };
 
   const removeFromCart = (id: string) => {
-    // Current simple implementation removes by product ID
-    // Ideally this should use the unique composite ID or index
     setCart(prev => prev.filter(item => item.id !== id));
   };
 
@@ -787,7 +738,6 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const toggleLanguage = () => setLanguage(prev => prev === 'en' ? 'ar' : 'en');
 
-  // Translation Helper
   const t = (key: keyof typeof TRANSLATIONS.en) => {
     const translation = TRANSLATIONS[language][key];
     return translation || TRANSLATIONS['en'][key] || key;
@@ -804,6 +754,25 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     });
   };
 
+  const applyDiscount = (code: string) => {
+    const discount = discounts.find(d => d.code === code && d.isActive);
+    if (discount) {
+      if (discount.minOrderAmount && totalAmount < discount.minOrderAmount) {
+        addToast(`Minimum order amount of ${discount.minOrderAmount} not met`, 'error');
+        return;
+      }
+      setAppliedDiscount(discount);
+      addToast('Discount applied', 'success');
+    } else {
+      addToast('Invalid or inactive discount code', 'error');
+    }
+  };
+
+  const removeDiscount = () => {
+    setAppliedDiscount(null);
+    addToast('Discount removed', 'info');
+  };
+
   const toggleDemoData = async () => {
     if (isDemoActive) {
       setIsDemoActive(false);
@@ -812,7 +781,6 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     }
 
     setIsDemoActive(true);
-    // Generate dummy products
     const demoProducts: Product[] = [];
     const brandList = brands.length > 0 ? brands : INITIAL_BRANDS;
 
@@ -842,45 +810,15 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         variants: []
       });
     }
-
-    if (isSupabaseConfigured) {
-      // Just set state, don't write to DB to avoid pollution
-      setProducts(demoProducts);
-    } else {
-      setProducts(demoProducts);
-    }
+    setProducts(demoProducts);
+    addToast('Demo data generated', 'success');
   };
 
-  // --- CART CALCULATIONS ---
-  // Subtotal uses salePrice if available
-  const totalAmount = cart.reduce((acc, item) => {
-    const priceToUse = item.salePrice || item.price;
-    return acc + priceToUse * item.quantity;
+  const totalAmount = cart.reduce((sum, item) => {
+    const price = item.salePrice || item.price;
+    return sum + (price * item.quantity);
   }, 0);
 
-  // Discount Logic
-  const applyDiscount = (code: string) => {
-    const discount = discounts.find(d => d.code.toUpperCase() === code.toUpperCase() && d.isActive);
-    if (!discount) {
-      addToast('Invalid discount code', 'error');
-      return;
-    }
-
-    if (discount.minOrderAmount && totalAmount < discount.minOrderAmount) {
-      addToast(`Minimum spend of IQD ${discount.minOrderAmount.toLocaleString()} required`, 'warning');
-      return;
-    }
-
-    setAppliedDiscount(discount);
-    addToast('Discount applied!', 'success');
-  };
-
-  const removeDiscount = () => {
-    setAppliedDiscount(null);
-    addToast('Discount removed', 'info');
-  };
-
-  // Calculate discount amount
   let discountAmount = 0;
   if (appliedDiscount) {
     if (appliedDiscount.type === 'percentage') {
@@ -888,12 +826,9 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     } else {
       discountAmount = appliedDiscount.value;
     }
-
-    // Cannot exceed total
     if (discountAmount > totalAmount) discountAmount = totalAmount;
   }
 
-  // Ensure discount conditions are still met if items are removed
   useEffect(() => {
     if (appliedDiscount && appliedDiscount.minOrderAmount && totalAmount < appliedDiscount.minOrderAmount) {
       setAppliedDiscount(null);
@@ -905,12 +840,13 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
 
   return (
     <ShopContext.Provider value={{
-      products, cart, wishlist, brands, carouselSlides, orders, discounts,
+      products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
       shippingFee, updateShippingFee, storeLogo, updateStoreLogo,
       isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading,
-      refreshBrands, refreshProducts,
+      refreshBrands, refreshProducts, refreshDevices,
       addProduct, updateProduct, deleteProduct,
       addBrand, deleteBrand,
+      addDevice, deleteDevice,
       addSlide, updateSlide, deleteSlide,
       placeOrder, updateOrderStatus,
       addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,

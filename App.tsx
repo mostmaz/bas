@@ -31,14 +31,14 @@ const PageLoader = () => (
 const SplashScreen = ({ logo }: { logo: string }) => (
   <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white dark:bg-slate-950 transition-colors duration-500">
     <div className="relative flex items-center justify-center mb-8">
-        <div className="absolute inset-0 bg-purple-500 blur-3xl opacity-20 rounded-full animate-pulse"></div>
-        <div className="w-24 h-24 rounded-3xl overflow-hidden flex items-center justify-center shadow-2xl shadow-pink-500/30 animate-float">
-          <img 
-            src={logo} 
-            alt="BasCavarat Logo"
-            className="w-full h-full object-cover"
-          />
-        </div>
+      <div className="absolute inset-0 bg-purple-500 blur-3xl opacity-20 rounded-full animate-pulse"></div>
+      <div className="w-24 h-24 rounded-3xl overflow-hidden flex items-center justify-center shadow-2xl shadow-pink-500/30 animate-float">
+        <img
+          src={logo}
+          alt="BasCavarat Logo"
+          className="w-full h-full object-cover"
+        />
+      </div>
     </div>
     <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-4 animate-pulse">BasCavarat</h1>
     <div className="flex gap-2">
@@ -68,12 +68,12 @@ const AppContent: React.FC = () => {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white dark:bg-slate-950 p-6 text-center transition-colors">
         <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6 animate-pulse">
-            <AlertTriangle className="w-12 h-12 text-red-600 dark:text-red-400" />
+          <AlertTriangle className="w-12 h-12 text-red-600 dark:text-red-400" />
         </div>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Connection Error</h1>
         <p className="text-slate-500 dark:text-slate-400 max-w-md mb-8 leading-relaxed">
           We encountered a problem connecting to the database. The app cannot function without a secure connection.
-          <br/><br/>
+          <br /><br />
           <span className="text-xs font-mono bg-red-50 dark:bg-red-900/10 p-2 rounded block border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-300">
             {supaConnectionError}
           </span>
@@ -87,9 +87,9 @@ const AppContent: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
-    <div className={`min-h-screen flex flex-col font-sans antialiased selection:bg-purple-500 selection:text-white transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-50' : 'bg-[#FFF8F0] text-slate-900'}`}>
+    <div className={`min-h-screen w-full overflow-x-hidden flex flex-col font-sans antialiased selection:bg-purple-500 selection:text-white transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-50' : 'bg-[#FFF8F0] text-slate-900'}`}>
       <Navbar />
       <CartDrawer />
       <main className="flex-grow pb-20"> {/* Added padding-bottom for fixed footer */}

@@ -12,12 +12,15 @@
     "node": "18.x"
   },
   "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/core": "^6.2.1",
+    "@google/generative-ai": "^0.21.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
-    "lucide-react": "^0.344.0",
-    "@google/generative-ai": "^0.21.0",
-    "@supabase/supabase-js": "^2.39.0",
     "recharts": "^2.12.0",
     "xlsx": "^0.18.5"
   },

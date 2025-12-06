@@ -3,17 +3,24 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply font-sans;
+
+  body,
+  html {
+    width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 /* Custom Utilities */
 .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
