@@ -4,7 +4,6 @@ import { Button } from '../Button';
 import { Product, ProductVariant } from '../../types';
 import { generateProductDescription } from '../../services/geminiService';
 import { useShop } from '../../context/ShopContext';
-import { DEVICES } from '../../constants';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -31,7 +30,7 @@ const COLOR_OPTIONS = [
 ];
 
 export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, initialData, onSave }) => {
-  const { brands } = useShop();
+  const { brands, devices } = useShop();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [isSaleEnabled, setIsSaleEnabled] = useState(false);
@@ -287,8 +286,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                 onChange={e => setFormData({ ...formData, device: e.target.value })}
               >
                 <option value="" disabled>Select Device</option>
-                {DEVICES.filter(d => d !== 'All').map(device => (
-                  <option key={device} value={device}>{device}</option>
+                {devices.map(device => (
+                  <option key={device.id} value={device.name}>{device.name}</option>
                 ))}
               </select>
             </div>

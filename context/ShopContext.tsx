@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Product, CartItem, CarouselSlide, Theme, Language, Order, Brand, ProductVariant, DiscountCode } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_BRANDS, INITIAL_SLIDES, TRANSLATIONS, INITIAL_DISCOUNTS } from '../constants';
+import { Product, CartItem, CarouselSlide, Theme, Language, Order, Brand, ProductVariant, DiscountCode, Device } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_BRANDS, INITIAL_SLIDES, TRANSLATIONS, INITIAL_DISCOUNTS, DEVICES } from '../constants';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { useToast } from './ToastContext';
 
@@ -10,6 +10,7 @@ interface ShopContextType {
   cart: CartItem[];
   wishlist: string[];
   brands: Brand[];
+  devices: Device[];
   carouselSlides: CarouselSlide[];
   orders: Order[];
   discounts: DiscountCode[];
@@ -34,11 +35,14 @@ interface ShopContextType {
   // Actions
   refreshBrands: () => Promise<void>;
   refreshProducts: (silent?: boolean) => Promise<void>;
+  refreshDevices: () => Promise<void>;
   addProduct: (product: Omit<Product, 'id' | 'rating'> & { id?: string, rating?: number }) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   addBrand: (name: string, logo?: string) => Promise<void>;
   deleteBrand: (id: string) => Promise<void>;
+  addDevice: (name: string) => Promise<void>;
+  deleteDevice: (id: string) => Promise<void>;
   addSlide: (slide: CarouselSlide) => Promise<void>;
   updateSlide: (slide: CarouselSlide) => Promise<void>;
   deleteSlide: (id: string) => Promise<void>;
@@ -159,6 +163,10 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   // --- STATE ---
   const [products, setProducts] = useState<Product[]>(() => isSupabaseConfigured ? [] : INITIAL_PRODUCTS);
   const [brands, setBrands] = useState<Brand[]>(() => isSupabaseConfigured ? [] : INITIAL_BRANDS);
+  // Initialize devices with the constant values mapped to Device objects
+  const [devices, setDevices] = useState<Device[]>(() =>
+    DEVICES.filter(d => d !== 'All').map((d, i) => ({ id: i.toString(), name: d }))
+  );
   const [carouselSlides, setCarouselSlides] = useState<CarouselSlide[]>(() => isSupabaseConfigured ? [] : INITIAL_SLIDES);
   const [orders, setOrders] = useState<Order[]>([]);
   const [discounts, setDiscounts] = useState<DiscountCode[]>(INITIAL_DISCOUNTS);
@@ -188,6 +196,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     refreshProducts();
     refreshBrands();
     refreshDiscounts();
+    refreshDevices();
   }, []);
 
   useEffect(() => {
@@ -240,6 +249,23 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         if (data) setBrands(data);
       } catch (error) {
         console.error("Error loading brands:", error);
+      }
+    }
+  };
+
+  const refreshDevices = async () => {
+    if (isSupabaseConfigured) {
+      try {
+        // Check if devices table exists by trying to select from it
+        const { data, error } = await supabase.from('devices').select('*');
+        if (error) {
+          // If table doesn't exist or error, fallback to local defaults but don't crash
+          console.warn("Could not load devices from DB (table might be missing)", error);
+          return;
+        }
+        if (data) setDevices(data);
+      } catch (error) {
+        console.error("Error loading devices:", error);
       }
     }
   };
@@ -383,6 +409,44 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     }
   };
 
+  const addDevice = async (name: string) => {
+    if (isSupabaseConfigured) {
+      // Try to insert into devices table. If it fails (table missing), fallback to local state only for this session
+      const { error } = await supabase.from('devices').insert([{ name }]);
+      if (error) {
+        console.error("Failed to add device to DB:", error);
+        // Fallback: Add locally so UI updates, but warn user
+        const newDevice: Device = { id: Date.now().toString(), name };
+        setDevices(prev => [...prev, newDevice]);
+        addToast('Device added locally (DB table missing?)', 'warning');
+      } else {
+        await refreshDevices();
+        addToast('Device added successfully', 'success');
+      }
+    } else {
+      const newDevice: Device = { id: Date.now().toString(), name };
+      setDevices(prev => [...prev, newDevice]);
+      addToast('Device added locally', 'success');
+    }
+  };
+
+  const deleteDevice = async (id: string) => {
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.from('devices').delete().eq('id', id);
+      if (error) {
+        console.error("Failed to delete device from DB:", error);
+        setDevices(prev => prev.filter(d => d.id !== id));
+        addToast('Device deleted locally (DB error)', 'warning');
+      } else {
+        await refreshDevices();
+        addToast('Device deleted', 'success');
+      }
+    } else {
+      setDevices(prev => prev.filter(d => d.id !== id));
+      addToast('Device deleted locally', 'success');
+    }
+  };
+
   const addDiscount = async (discount: Omit<DiscountCode, 'id'>) => {
     if (isSupabaseConfigured) {
       const dbDiscount = {
@@ -501,6 +565,43 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         ...newOrder,
         items: newOrder.items
       };
+      const { customerName, totalAmount, shippingFee, discountAmount, discountCode, orderNumber, ...cleanPayload } = dbPayload as any;
+
+      const { error } = await supabase.from('orders').insert([cleanPayload]);
+      if (error) throw error;
+
+      const updatePromises = orderData.items.map(async (item) => {
+        const product = products.find(p => p.id === item.id);
+        if (product) {
+          let newStock = product.stock;
+          let variantsToUpdate = product.variants;
+
+          if (item.selectedVariant && variantsToUpdate) {
+            variantsToUpdate = variantsToUpdate.map(v => {
+              if (v.id === item.selectedVariant?.id) {
+                return { ...v, stock: Math.max(0, v.stock - item.quantity) };
+              }
+              return v;
+            });
+            newStock = variantsToUpdate.reduce((sum, v) => sum + v.stock, 0);
+
+            return supabase.from('products').update({
+              stock: newStock,
+              variants: variantsToUpdate
+            }).eq('id', item.id);
+
+          } else {
+            newStock = Math.max(0, product.stock - item.quantity);
+            return supabase.from('products').update({ stock: newStock }).eq('id', item.id);
+          }
+        }
+      });
+
+      await Promise.all(updatePromises);
+
+      const { data: ordersData } = await supabase.from('orders').select('*').order('date', { ascending: false });
+      if (ordersData) setOrders(ordersData.map(mapOrderFromDB));
+      await refreshProducts(true);
 
     } else {
       const localOrder: Order = {
@@ -739,12 +840,13 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
 
   return (
     <ShopContext.Provider value={{
-      products, cart, wishlist, brands, carouselSlides, orders, discounts,
+      products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
       shippingFee, updateShippingFee, storeLogo, updateStoreLogo,
       isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading,
-      refreshBrands, refreshProducts,
+      refreshBrands, refreshProducts, refreshDevices,
       addProduct, updateProduct, deleteProduct,
       addBrand, deleteBrand,
+      addDevice, deleteDevice,
       addSlide, updateSlide, deleteSlide,
       placeOrder, updateOrderStatus,
       addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,

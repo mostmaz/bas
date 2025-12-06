@@ -33,16 +33,15 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-full max-w-sm px-4 pointer-events-none">
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-full max-w-sm px-4 pointer-events-none">
         {toasts.map(toast => (
-          <div 
-            key={toast.id} 
-            className={`pointer-events-auto flex items-center gap-3 p-4 rounded-xl shadow-lg border animate-in fade-in slide-in-from-bottom-5 transition-all ${
-              toast.type === 'success' ? 'bg-white dark:bg-slate-900 border-green-500/20 text-green-600 dark:text-green-400' :
-              toast.type === 'error' ? 'bg-white dark:bg-slate-900 border-red-500/20 text-red-600 dark:text-red-400' :
-              toast.type === 'warning' ? 'bg-white dark:bg-slate-900 border-amber-500/20 text-amber-600 dark:text-amber-400' :
-              'bg-white dark:bg-slate-900 border-blue-500/20 text-blue-600 dark:text-blue-400'
-            }`}
+          <div
+            key={toast.id}
+            className={`pointer-events-auto flex items-center gap-3 p-4 rounded-xl shadow-lg border animate-in fade-in slide-in-from-bottom-5 transition-all ${toast.type === 'success' ? 'bg-white dark:bg-slate-900 border-green-500/20 text-green-600 dark:text-green-400' :
+                toast.type === 'error' ? 'bg-white dark:bg-slate-900 border-red-500/20 text-red-600 dark:text-red-400' :
+                  toast.type === 'warning' ? 'bg-white dark:bg-slate-900 border-amber-500/20 text-amber-600 dark:text-amber-400' :
+                    'bg-white dark:bg-slate-900 border-blue-500/20 text-blue-600 dark:text-blue-400'
+              }`}
           >
             {toast.type === 'success' && <CheckCircle className="h-5 w-5 shrink-0" />}
             {toast.type === 'error' && <AlertCircle className="h-5 w-5 shrink-0" />}
