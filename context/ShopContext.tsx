@@ -121,7 +121,6 @@ const mapProductFromDB = (p: any): Product => {
 
   // Handle variants JSONB safely
   let variants: ProductVariant[] = [];
-  // Check if variants property exists at all on the returned object
   if (Object.prototype.hasOwnProperty.call(p, 'variants') && p.variants) {
     if (typeof p.variants === 'string') {
       try { variants = JSON.parse(p.variants); } catch (e) { console.error("Error parsing variants JSON", e); }
@@ -190,6 +189,11 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     refreshBrands();
     refreshDiscounts();
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+  }, [language]);
 
   // --- ACTIONS ---
 
@@ -385,8 +389,8 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         code: discount.code,
         type: discount.type,
         value: discount.value,
-        minorderamount: discount.minOrderAmount,
-        isactive: discount.isActive
+        minOrderAmount: discount.minOrderAmount,
+        isActive: discount.isActive
       };
       const { error } = await supabase.from('discounts').insert([dbDiscount]);
       if (error) throw error;
@@ -497,41 +501,6 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         ...newOrder,
         items: newOrder.items
       };
-      const { customerName, totalAmount, shippingFee, discountAmount, discountCode, orderNumber, ...cleanPayload } = dbPayload as any;
-
-      const { error } = await supabase.from('orders').insert([cleanPayload]);
-      if (error) throw error;
-
-      for (const item of orderData.items) {
-        const product = products.find(p => p.id === item.id);
-        if (product) {
-          let newStock = product.stock;
-          let variantsToUpdate = product.variants;
-
-          if (item.selectedVariant && variantsToUpdate) {
-            variantsToUpdate = variantsToUpdate.map(v => {
-              if (v.id === item.selectedVariant?.id) {
-                return { ...v, stock: Math.max(0, v.stock - item.quantity) };
-              }
-              return v;
-            });
-            newStock = variantsToUpdate.reduce((sum, v) => sum + v.stock, 0);
-
-            await supabase.from('products').update({
-              stock: newStock,
-              variants: variantsToUpdate
-            }).eq('id', item.id);
-
-          } else {
-            newStock = Math.max(0, product.stock - item.quantity);
-            await supabase.from('products').update({ stock: newStock }).eq('id', item.id);
-          }
-        }
-      }
-
-      const { data: ordersData } = await supabase.from('orders').select('*').order('date', { ascending: false });
-      if (ordersData) setOrders(ordersData.map(mapOrderFromDB));
-      await refreshProducts(true);
 
     } else {
       const localOrder: Order = {
