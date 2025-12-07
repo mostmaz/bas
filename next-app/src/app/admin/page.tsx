@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { DashboardOverview } from '@/components/admin/DashboardOverview';
 import { ProductManagement } from '@/components/admin/ProductManagement';
 import { BrandManagement } from '@/components/admin/BrandManagement';
@@ -16,7 +16,7 @@ import { useToast } from '@/context/ToastContext';
 import { supabase } from '@/lib/supabase';
 import { Order } from '@/types';
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
     const { supaConnectionError, isOnline } = useShop();
     const { addToast } = useToast();
     const searchParams = useSearchParams();
@@ -442,4 +442,21 @@ create policy "Anon modification discounts" on discounts for all using (true);
             </div>
         </div>
     );
-};
+}
+
+// Wrap in Suspense to handle useSearchParams
+export default function AdminDashboard() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600 dark:text-slate-400">Loading Admin Dashboard...</p>
+                </div>
+            </div>
+        }>
+            <AdminDashboardContent />
+        </Suspense>
+    );
+}
+
