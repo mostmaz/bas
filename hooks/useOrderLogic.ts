@@ -227,5 +227,122 @@ export const useOrderLogic = (
         }
     };
 
-    return { orders, setOrders, placeOrder, updateOrderStatus };
+    const refreshOrders = async () => {
+        if (!isSupabaseConfigured) return;
+
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .order('date', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching orders:', error);
+            // addToast('Failed to fetch orders', 'error'); // Optional: might be too noisy on init
+            return;
+        }
+
+        if (data) {
+            setOrders(data.map(mapOrderFromDB));
+        }
+    };
+
+    const bulkUpdateOrderStatus = async (ids: string[], status: Order['status']) => {
+        console.log('bulkUpdateOrderStatus (parallel) called', { ids, status });
+        if (ids.length === 0) return;
+
+        if (isSupabaseConfigured) {
+            // Use Promise.all to update each order individually, as single updates are confirmed to work.
+            // This avoids potential issues with .in() queries or RLS policies on batch updates.
+            const updatePromises = ids.map(async (id) => {
+                const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+                if (error) {
+                    console.error(`Failed to update order ${id}`, error);
+                    throw error; // Propagate error to catch block
+                }
+
+                // Handle stock restoration if cancelling
+                if (status === 'Cancelled') {
+                    const order = orders.find(o => o.id === id);
+                    if (order && order.status !== 'Cancelled') {
+                        const itemPromises = order.items.map(async (item) => {
+                            const product = products.find(p => p.id === item.id);
+                            if (product) {
+                                let newStock = product.stock;
+                                let variantsToUpdate = product.variants;
+
+                                if (item.selectedVariant && variantsToUpdate) {
+                                    variantsToUpdate = variantsToUpdate.map(v => {
+                                        if (v.id === item.selectedVariant?.id) {
+                                            return { ...v, stock: v.stock + item.quantity };
+                                        }
+                                        return v;
+                                    });
+                                    newStock = variantsToUpdate.reduce((sum, v) => sum + v.stock, 0);
+
+                                    await supabase.from('products').update({
+                                        stock: newStock,
+                                        variants: variantsToUpdate
+                                    }).eq('id', item.id);
+                                } else {
+                                    newStock = product.stock + item.quantity;
+                                    await supabase.from('products').update({ stock: newStock }).eq('id', item.id);
+                                }
+                            }
+                        });
+                        await Promise.all(itemPromises);
+                    }
+                }
+            });
+
+            try {
+                await Promise.all(updatePromises);
+                console.log('All parallel updates successful');
+
+                if (status === 'Cancelled') await refreshProducts(true);
+
+                setOrders(prev => prev.map(o => ids.includes(o.id) ? { ...o, status } : o));
+                addToast(`${ids.length} orders updated`, 'success');
+                await refreshOrders();
+            } catch (error) {
+                console.error('One or more updates failed', error);
+                addToast('Some updates failed. Check console.', 'error');
+                await refreshOrders(); // Sync to see what actually happened
+            }
+
+        } else {
+            // Local / Demo Mode Logic
+            console.log('Updating Local State...');
+            if (status === 'Cancelled') {
+                const ordersToCancel = orders.filter(o => ids.includes(o.id) && o.status !== 'Cancelled');
+
+                setProducts(prev => {
+                    let newProducts = [...prev];
+                    ordersToCancel.forEach(order => {
+                        order.items.forEach(item => {
+                            const pIndex = newProducts.findIndex(p => p.id === item.id);
+                            if (pIndex !== -1) {
+                                const p = { ...newProducts[pIndex] };
+                                if (item.selectedVariant && p.variants) {
+                                    const updatedVariants = p.variants.map(v => {
+                                        if (v.id === item.selectedVariant?.id) return { ...v, stock: v.stock + item.quantity };
+                                        return v;
+                                    });
+                                    p.variants = updatedVariants;
+                                    p.stock = updatedVariants.reduce((a, b) => a + b.stock, 0);
+                                } else {
+                                    p.stock = p.stock + item.quantity;
+                                }
+                                newProducts[pIndex] = p;
+                            }
+                        });
+                    });
+                    return newProducts;
+                });
+            }
+            setOrders(prev => prev.map(o => ids.includes(o.id) ? { ...o, status } : o));
+            addToast(`${ids.length} orders updated (Local)`, 'success');
+        }
+    };
+
+    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus };
 };

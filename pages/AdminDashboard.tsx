@@ -241,33 +241,49 @@ on conflict (code) do nothing;
 
 -- 6. Enable RLS and Policies (Fix Permission Denied)
 alter table products enable row level security;
+drop policy if exists "Public read products" on products;
 create policy "Public read products" on products for select using (true);
+drop policy if exists "Anon insert products" on products;
 create policy "Anon insert products" on products for insert with check (true);
+drop policy if exists "Anon update products" on products;
 create policy "Anon update products" on products for update using (true);
+drop policy if exists "Anon delete products" on products;
 create policy "Anon delete products" on products for delete using (true);
 
 alter table brands enable row level security;
+drop policy if exists "Public access brands" on brands;
 create policy "Public access brands" on brands for all using (true);
+drop policy if exists "Anon modification brands" on brands;
 create policy "Anon modification brands" on brands for all using (true);
 
 alter table devices enable row level security;
+drop policy if exists "Public access devices" on devices;
 create policy "Public access devices" on devices for all using (true);
+drop policy if exists "Anon modification devices" on devices;
 create policy "Anon modification devices" on devices for all using (true);
 
 alter table slides enable row level security;
+drop policy if exists "Public access slides" on slides;
 create policy "Public access slides" on slides for all using (true);
+drop policy if exists "Anon modification slides" on slides;
 create policy "Anon modification slides" on slides for all using (true);
 
 alter table orders enable row level security;
+drop policy if exists "Public access orders" on orders;
 create policy "Public access orders" on orders for all using (true);
+drop policy if exists "Anon modification orders" on orders;
 create policy "Anon modification orders" on orders for all using (true);
 
 alter table store_settings enable row level security;
+drop policy if exists "Public access settings" on store_settings;
 create policy "Public access settings" on store_settings for all using (true);
+drop policy if exists "Anon modification settings" on store_settings;
 create policy "Anon modification settings" on store_settings for all using (true);
 
 alter table discounts enable row level security;
+drop policy if exists "Public access discounts" on discounts;
 create policy "Public access discounts" on discounts for all using (true);
+drop policy if exists "Anon modification discounts" on discounts;
 create policy "Anon modification discounts" on discounts for all using (true);
 `;
 

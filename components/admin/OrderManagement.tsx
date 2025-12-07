@@ -6,10 +6,14 @@ import { OrderDetailModal } from './OrderDetailModal';
 import { Order } from '../../types';
 
 export const OrderManagement: React.FC = () => {
-  const { orders, updateOrderStatus } = useShop();
+  const { orders, updateOrderStatus, bulkUpdateOrderStatus, refreshOrders } = useShop();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+
+  // Confirmation Modal State
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<Order['status'] | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -54,19 +58,31 @@ export const OrderManagement: React.FC = () => {
     );
   };
 
-  const handleBulkStatusUpdate = async (status: Order['status']) => {
-    if (confirm(`Are you sure you want to mark ${selectedOrderIds.length} orders as ${status}?`)) {
-      for (const id of selectedOrderIds) {
-        await updateOrderStatus(id, status);
-      }
+  const initiateBulkUpdate = (status: Order['status']) => {
+    if (selectedOrderIds.length === 0) {
+      alert("Please select at least one order.");
+      return;
+    }
+    setPendingStatus(status);
+    setIsConfirmOpen(true);
+  };
+
+  const confirmBulkUpdate = async () => {
+    if (pendingStatus && selectedOrderIds.length > 0) {
+      await bulkUpdateOrderStatus(selectedOrderIds, pendingStatus);
       setSelectedOrderIds([]);
+      setIsConfirmOpen(false);
+      setPendingStatus(null);
     }
   };
 
   return (
-    <div className="animate-in fade-in duration-500">
+    <div className="animate-in fade-in duration-500 relative">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white">Orders ({orders.length})</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Orders ({orders.length})</h2>
+          <Button variant="outline" size="sm" onClick={() => refreshOrders()}>Refresh</Button>
+        </div>
         <div className="flex gap-2">
           {selectedOrderIds.length > 0 && (
             <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 p-1 rounded-lg border border-indigo-100 dark:border-indigo-800">
@@ -74,7 +90,7 @@ export const OrderManagement: React.FC = () => {
               <select
                 className="text-sm border-none bg-white dark:bg-slate-800 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 py-1 px-2 dark:text-white"
                 onChange={(e) => {
-                  if (e.target.value) handleBulkStatusUpdate(e.target.value as Order['status']);
+                  if (e.target.value) initiateBulkUpdate(e.target.value as Order['status']);
                   e.target.value = ''; // Reset
                 }}
               >
@@ -189,6 +205,26 @@ export const OrderManagement: React.FC = () => {
         onClose={() => setIsDetailOpen(false)}
         order={selectedOrder}
       />
+
+      {/* Custom Confirmation Modal */}
+      {isConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-slate-700 scale-100 opacity-100">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Confirm Batch Update</h3>
+            <p className="text-gray-600 dark:text-slate-300 mb-6">
+              Are you sure you want to mark <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedOrderIds.length}</span> orders as <span className="font-bold">{pendingStatus}</span>?
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => { setIsConfirmOpen(false); setPendingStatus(null); }}>
+                Cancel
+              </Button>
+              <Button onClick={confirmBulkUpdate}>
+                Confirm Update
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -22,6 +22,7 @@ interface ShopContextType {
   devices: Device[];
   carouselSlides: CarouselSlide[];
   orders: Order[];
+  refreshOrders: () => Promise<void>;
   discounts: DiscountCode[];
 
   // Settings
@@ -57,6 +58,7 @@ interface ShopContextType {
   deleteSlide: (id: string) => Promise<void>;
   placeOrder: (orderData: Omit<Order, 'id' | 'date' | 'status'>) => Promise<void>;
   updateOrderStatus: (id: string, status: Order['status']) => Promise<void>;
+  bulkUpdateOrderStatus: (ids: string[], status: Order['status']) => Promise<void>;
 
   addToCart: (product: Product, variant?: ProductVariant) => void;
   removeFromCart: (id: string) => void;
@@ -132,7 +134,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
   const { products, setProducts, refreshProducts, addProduct, updateProduct, deleteProduct } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
   const { cart, isCartOpen, appliedDiscount, addToCart, removeFromCart, updateCartQuantity, clearCart, toggleCart, applyDiscount, removeDiscount, totalAmount, discountAmount, finalTotal } = useCartLogic(addToast);
-  const { orders, setOrders, placeOrder, updateOrderStatus } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
+  const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -145,6 +147,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     refreshBrands();
     refreshDiscounts();
     refreshDevices();
+    refreshOrders();
   }, []);
 
   useEffect(() => {
@@ -257,7 +260,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       addBrand, deleteBrand,
       addDevice, deleteDevice,
       addSlide, updateSlide, deleteSlide,
-      placeOrder, updateOrderStatus,
+      placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus,
       addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
       appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
       isDemoActive, toggleDemoData,
