@@ -78,7 +78,7 @@ export interface Order {
   shippingFee: number;
   discountAmount?: number; // New
   discountCode?: string; // New
-  status: 'Processing' | 'Shipped' | 'Delivered';
+  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
   date: number;
   orderNumber: string;
 }

@@ -1,9 +1,8 @@
 
-
 import React, { useState, useMemo } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  LineChart, Line, PieChart, Pie, Cell, Legend 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
@@ -23,9 +22,18 @@ const REVENUE_DATA = [
 const COLORS = ['#4f46e5', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
 
 export const DashboardOverview: React.FC = () => {
-  const { products, shippingFee, updateShippingFee, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo } = useShop();
+  const { products, orders, shippingFee, updateShippingFee, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo } = useShop();
   const [tempShippingFee, setTempShippingFee] = useState(shippingFee.toString());
   const lowStockProducts = products.filter(p => p.stock < 10);
+
+  // Dynamic Revenue Calculation (Excluding Cancelled)
+  const totalRevenue = useMemo(() => {
+    return orders
+      .filter(o => o.status !== 'Cancelled')
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+  }, [orders]);
+
+  const pendingOrdersCount = orders.filter(o => o.status === 'Processing').length;
 
   // Calculate Brand Distribution Dynamically
   const brandData = useMemo(() => {
@@ -47,7 +55,7 @@ export const DashboardOverview: React.FC = () => {
       updateShippingFee(fee);
     }
   };
-  
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -64,21 +72,21 @@ export const DashboardOverview: React.FC = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const maxDim = 300; // Resize to max 300px for storage efficiency
-        
+
         let width = img.width;
         let height = img.height;
 
         // Calculate new dimensions
         if (width > height) {
-           if (width > maxDim) {
-             height *= maxDim / width;
-             width = maxDim;
-           }
+          if (width > maxDim) {
+            height *= maxDim / width;
+            width = maxDim;
+          }
         } else {
-           if (height > maxDim) {
-             width *= maxDim / height;
-             height = maxDim;
-           }
+          if (height > maxDim) {
+            width *= maxDim / height;
+            height = maxDim;
+          }
         }
 
         canvas.width = width;
@@ -86,9 +94,9 @@ export const DashboardOverview: React.FC = () => {
 
         // Draw and compress
         if (ctx) {
-           ctx.drawImage(img, 0, 0, width, height);
-           const base64 = canvas.toDataURL('image/webp', 0.8); // Use WebP for better compression
-           updateStoreLogo(base64);
+          ctx.drawImage(img, 0, 0, width, height);
+          const base64 = canvas.toDataURL('image/webp', 0.8); // Use WebP for better compression
+          updateStoreLogo(base64);
         }
       };
 
@@ -105,15 +113,15 @@ export const DashboardOverview: React.FC = () => {
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
             <Settings className="h-5 w-5 mr-2 text-gray-500" /> Store Settings
           </h3>
-          
+
           <div className="space-y-6">
             {/* Shipping Fee */}
             <form onSubmit={handleUpdateShipping} className="flex items-end gap-4">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Shipping Fee (IQD)</label>
                 <div className="relative">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={tempShippingFee}
                     onChange={(e) => setTempShippingFee(e.target.value)}
                     className="w-full border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
@@ -127,21 +135,21 @@ export const DashboardOverview: React.FC = () => {
 
             {/* Logo Upload */}
             <div>
-               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Store Icon / Logo</label>
-               <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-xl overflow-hidden border border-gray-200 dark:border-slate-600 shadow-sm shrink-0 bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
-                     {storeLogo ? (
-                       <img src={storeLogo} alt="Current Logo" className="w-full h-full object-cover" />
-                     ) : (
-                       <ImageIcon className="h-6 w-6 text-gray-400" />
-                     )}
-                  </div>
-                  <label className="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors">
-                     <Upload className="h-4 w-4 mr-2" /> Change Icon
-                     <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-                  </label>
-               </div>
-               <p className="text-xs text-gray-500 mt-2">This image will update the App Logo, Splash Screen, and Website Favicon.</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Store Icon / Logo</label>
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-xl overflow-hidden border border-gray-200 dark:border-slate-600 shadow-sm shrink-0 bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
+                  {storeLogo ? (
+                    <img src={storeLogo} alt="Current Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon className="h-6 w-6 text-gray-400" />
+                  )}
+                </div>
+                <label className="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors">
+                  <Upload className="h-4 w-4 mr-2" /> Change Icon
+                  <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">This image will update the App Logo, Splash Screen, and Website Favicon.</p>
             </div>
           </div>
         </div>
@@ -158,18 +166,17 @@ export const DashboardOverview: React.FC = () => {
             <span className={`text-sm font-medium ${isDemoActive ? 'text-green-600' : 'text-gray-500'}`}>
               Status: {isDemoActive ? 'Active (populated)' : 'Inactive'}
             </span>
-            <button 
+            <button
               onClick={toggleDemoData}
-              className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                isDemoActive 
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300' 
+              className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${isDemoActive
+                  ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300'
                   : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300'
-              }`}
+                }`}
             >
               {isDemoActive ? (
-                 <>Turn Off <ToggleRight className="ml-2 h-5 w-5" /></>
+                <>Turn Off <ToggleRight className="ml-2 h-5 w-5" /></>
               ) : (
-                 <>Turn On <ToggleLeft className="ml-2 h-5 w-5" /></>
+                <>Turn On <ToggleLeft className="ml-2 h-5 w-5" /></>
               )}
             </button>
           </div>
@@ -182,7 +189,7 @@ export const DashboardOverview: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">IQD 12,423,000</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">IQD {totalRevenue.toLocaleString()}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-full text-green-600">
               <DollarSign className="h-6 w-6" />
@@ -194,7 +201,7 @@ export const DashboardOverview: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Active Products</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{products.length}</p>
@@ -208,11 +215,11 @@ export const DashboardOverview: React.FC = () => {
           </p>
         </div>
 
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Pending Orders</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">12</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{pendingOrdersCount}</p>
             </div>
             <div className="p-3 bg-purple-100 rounded-full text-purple-600">
               <ShoppingCart className="h-6 w-6" />
@@ -229,14 +236,14 @@ export const DashboardOverview: React.FC = () => {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={REVENUE_DATA}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} tickFormatter={(value) => `${value/1000}k`} />
-                <Tooltip 
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} tickFormatter={(value) => `${value / 1000}k`} />
+                <Tooltip
                   formatter={(value: number) => [`IQD ${value.toLocaleString()}`, 'Revenue']}
-                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} 
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                 />
-                <Line type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} dot={{fill: '#4f46e5', r: 4}} activeDot={{r: 6}} />
+                <Line type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} dot={{ fill: '#4f46e5', r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
