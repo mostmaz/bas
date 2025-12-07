@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Product, ProductVariant } from '@/types';
-import { INITIAL_PRODUCTS } from '@/lib/constants';
-import { supabase } from '@/lib/supabase';
+import { Product, ProductVariant } from '../types';
+import { INITIAL_PRODUCTS } from '../constants';
+import { supabase } from '../services/supabase';
 
 // Helper to map Product from DB with multiple images support
 const mapProductFromDB = (p: any): Product => {
@@ -36,11 +36,8 @@ const mapProductFromDB = (p: any): Product => {
     };
 };
 
-export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void, setIsAppLoading: (loading: boolean) => void, initialData?: Product[]) => {
-    const [products, setProducts] = useState<Product[]>(() => {
-        if (initialData && initialData.length > 0) return initialData;
-        return isSupabaseConfigured ? [] : INITIAL_PRODUCTS;
-    });
+export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void, setIsAppLoading: (loading: boolean) => void) => {
+    const [products, setProducts] = useState<Product[]>(() => isSupabaseConfigured ? [] : INITIAL_PRODUCTS);
 
     const [isProductsLoading, setIsProductsLoading] = useState(false);
 
@@ -80,11 +77,11 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                     const mappedProducts = data.map(mapProductFromDB);
                     setProducts(mappedProducts);
 
-                    // 3. Update Cache
+                    // 3. Update Cache (silently fail if quota exceeded)
                     try {
                         localStorage.setItem('products_cache', JSON.stringify(mappedProducts));
                     } catch (e) {
-                        console.error("Cache write error", e);
+                        // Silently ignore quota errors - server-side data is already loaded
                     }
                 } else {
                     // Connected but empty - Do NOT show demo data
