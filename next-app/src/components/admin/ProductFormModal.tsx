@@ -1,5 +1,6 @@
 'use client';
 
+// Production-ready Product Form Modal - Fixed TypeScript errors
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Wand2, Loader2, Trash2, Check, Plus, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/Button';
