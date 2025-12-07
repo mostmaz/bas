@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Product, ProductVariant } from '../types';
-import { INITIAL_PRODUCTS } from '../constants';
-import { supabase } from '../services/supabase';
+import { Product, ProductVariant } from '@/types';
+import { INITIAL_PRODUCTS } from '@/lib/constants';
+import { supabase } from '@/lib/supabase';
 
 // Helper to map Product from DB with multiple images support
 const mapProductFromDB = (p: any): Product => {
