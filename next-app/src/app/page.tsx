@@ -1,13 +1,14 @@
+'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useShop } from '../context/ShopContext';
-import { ProductCard } from '../components/ProductCard';
-import { ProductSkeleton } from '../components/ProductSkeleton';
-import { OffersCarousel } from '../components/OffersCarousel';
+import { useShop } from '@/context/ShopContext';
+import { ProductCard } from '@/components/ProductCard';
+import { ProductSkeleton } from '@/components/ProductSkeleton';
+import { OffersCarousel } from '@/components/OffersCarousel';
 import { Filter, ChevronDown, Smartphone, Layers, LayoutGrid, Sparkles, TrendingUp, Loader2 } from 'lucide-react';
-import { Brand } from '../types';
+import { Brand } from '@/types';
 
-export const Home: React.FC = () => {
+export default function Home() {
   const { products, brands, t, searchQuery, orders, isAppLoading, isProductsLoading } = useShop();
   const [selectedDevice, setSelectedDevice] = useState('All');
   const [selectedBrand, setSelectedBrand] = useState('All');
@@ -288,4 +289,4 @@ export const Home: React.FC = () => {
 
     </div>
   );
-};
+}

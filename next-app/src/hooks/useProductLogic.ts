@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Product, ProductVariant } from '../types';
-import { INITIAL_PRODUCTS } from '../constants';
-import { supabase } from '../services/supabase';
+import { Product, ProductVariant } from '@/types';
+import { INITIAL_PRODUCTS } from '@/lib/constants';
+import { supabase } from '@/lib/supabase';
 
 // Helper to map Product from DB with multiple images support
 const mapProductFromDB = (p: any): Product => {
@@ -36,8 +36,11 @@ const mapProductFromDB = (p: any): Product => {
     };
 };
 
-export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void, setIsAppLoading: (loading: boolean) => void) => {
-    const [products, setProducts] = useState<Product[]>(() => isSupabaseConfigured ? [] : INITIAL_PRODUCTS);
+export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void, setIsAppLoading: (loading: boolean) => void, initialData?: Product[]) => {
+    const [products, setProducts] = useState<Product[]>(() => {
+        if (initialData && initialData.length > 0) return initialData;
+        return isSupabaseConfigured ? [] : INITIAL_PRODUCTS;
+    });
 
     const [isProductsLoading, setIsProductsLoading] = useState(false);
 

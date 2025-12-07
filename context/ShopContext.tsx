@@ -41,6 +41,7 @@ interface ShopContextType {
   isOnline: boolean;
   supaConnectionError: string | null;
   isAppLoading: boolean;
+  isProductsLoading: boolean;
 
   // Actions
   refreshBrands: () => Promise<void>;
@@ -131,29 +132,23 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { brands, setBrands, refreshBrands, addBrand, deleteBrand } = useBrandLogic(isSupabaseConfigured, addToast);
   const { devices, setDevices, refreshDevices, addDevice, deleteDevice } = useDeviceLogic(isSupabaseConfigured, addToast);
   const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide } = useSlideLogic(isSupabaseConfigured, addToast);
+
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
-  const { products, setProducts, refreshProducts, addProduct, updateProduct, deleteProduct } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
+  const { products, setProducts, refreshProducts, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
   const { cart, isCartOpen, appliedDiscount, addToCart, removeFromCart, updateCartQuantity, clearCart, toggleCart, applyDiscount, removeDiscount, totalAmount, discountAmount, finalTotal } = useCartLogic(addToast);
   const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
 
   // --- EFFECTS ---
   useEffect(() => {
-    if (isSupabaseConfigured) {
-      addToast("Online Mode: Connecting to Supabase...", "info");
-    } else {
+    if (!isSupabaseConfigured) {
       addToast("Offline Mode: Using Demo Data", "warning");
     }
-    refreshProducts();
+    refreshProducts(true);
     refreshBrands();
     refreshDiscounts();
     refreshDevices();
     refreshOrders();
   }, []);
-
-  useEffect(() => {
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
-  }, [language]);
 
   // --- ACTIONS (Settings & UI) ---
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
@@ -254,7 +249,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     <ShopContext.Provider value={{
       products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
       shippingFee, updateShippingFee, storeLogo, updateStoreLogo,
-      isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading,
+      isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading,
       refreshBrands, refreshProducts, refreshDevices,
       addProduct, updateProduct, deleteProduct,
       addBrand, deleteBrand,
