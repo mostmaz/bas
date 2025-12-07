@@ -33,7 +33,7 @@ export const Checkout: React.FC = () => {
     try {
       await placeOrder(orderData);
       // Wait for 1.5 seconds before showing success page
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 500));
       clearCart();
       navigate('/order-success');
     } catch (error: any) {
