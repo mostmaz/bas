@@ -92,65 +92,49 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         }
     }, [formData.variants]);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
         setIsProcessingImage(true);
-        let processedCount = 0;
         const newImages: string[] = [];
 
-        Array.from(files).forEach((uploadedFile) => {
-            const file = uploadedFile as File;
-            if (file.size > 10 * 1024 * 1024) {
-                alert(`File ${file.name} too large. Skipping.`);
-                processedCount++;
-                if (processedCount === files.length) setIsProcessingImage(false);
-                return;
+        try {
+            // Upload each file to Supabase Storage
+            for (const file of Array.from(files)) {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`File ${file.name} is too large (max 10MB). Skipping.`);
+                    continue;
+                }
+
+                // Create FormData for upload
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Upload to API route
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Upload failed');
+                }
+
+                const { url } = await response.json();
+                newImages.push(url);
             }
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const MAX_WIDTH = 800;
-                    const MAX_HEIGHT = 800;
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    if (ctx) {
-                        ctx.drawImage(img, 0, 0, width, height);
-                        const dataUrl = canvas.toDataURL('image/webp', 0.7);
-                        newImages.push(dataUrl);
-                    }
-                    processedCount++;
-                    if (processedCount === files.length) {
-                        setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
-                        setIsProcessingImage(false);
-                    }
-                };
-                img.onerror = () => {
-                    processedCount++;
-                    if (processedCount === files.length) setIsProcessingImage(false);
-                };
-                img.src = event.target?.result as string;
-            };
-            reader.readAsDataURL(file);
-        });
+            // Add uploaded URLs to form data
+            setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
+            addToast(`${newImages.length} image(s) uploaded successfully`, 'success');
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            addToast(`Upload failed: ${error.message}`, 'error');
+        } finally {
+            setIsProcessingImage(false);
+        }
     };
 
     const removeImage = (index: number) => {
