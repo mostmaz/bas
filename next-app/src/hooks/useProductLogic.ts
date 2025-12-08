@@ -36,8 +36,16 @@ const mapProductFromDB = (p: any): Product => {
     };
 };
 
-export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void, setIsAppLoading: (loading: boolean) => void) => {
-    const [products, setProducts] = useState<Product[]>(() => isSupabaseConfigured ? [] : INITIAL_PRODUCTS);
+export const useProductLogic = (
+    isSupabaseConfigured: boolean,
+    addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void,
+    setIsAppLoading: (loading: boolean) => void,
+    initialProducts?: Product[]
+) => {
+    const [products, setProducts] = useState<Product[]>(() => {
+        if (initialProducts && initialProducts.length > 0) return initialProducts;
+        return isSupabaseConfigured ? [] : INITIAL_PRODUCTS;
+    });
 
     const [isProductsLoading, setIsProductsLoading] = useState(false);
 
