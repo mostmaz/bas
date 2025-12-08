@@ -57,51 +57,33 @@ export const DashboardOverview: React.FC = () => {
         }
     };
 
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            // Create an image element to load the file
-            const img = new Image();
-            const reader = new FileReader();
+        if (!file) return;
 
-            reader.onload = (e) => {
-                img.src = e.target?.result as string;
-            };
+        if (file.size > 5 * 1024 * 1024) {
+            alert("File too large (max 5MB)");
+            return;
+        }
 
-            img.onload = () => {
-                // Create canvas to resize
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const maxDim = 300; // Resize to max 300px for storage efficiency
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
 
-                let width = img.width;
-                let height = img.height;
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
 
-                // Calculate new dimensions
-                if (width > height) {
-                    if (width > maxDim) {
-                        height *= maxDim / width;
-                        width = maxDim;
-                    }
-                } else {
-                    if (height > maxDim) {
-                        width *= maxDim / height;
-                        height = maxDim;
-                    }
-                }
+            if (!response.ok) {
+                throw new Error('Upload failed');
+            }
 
-                canvas.width = width;
-                canvas.height = height;
-
-                // Draw and compress
-                if (ctx) {
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const base64 = canvas.toDataURL('image/webp', 0.8); // Use WebP for better compression
-                    updateStoreLogo(base64);
-                }
-            };
-
-            reader.readAsDataURL(file);
+            const { url } = await response.json();
+            updateStoreLogo(url);
+        } catch (error) {
+            console.error("Logo upload failed:", error);
+            alert("Failed to upload logo");
         }
     };
 

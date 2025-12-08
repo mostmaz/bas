@@ -82,14 +82,33 @@ export const BrandManagement: React.FC = () => {
         setIsRefreshing(false);
     };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setGeneratedLogo(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert("File too large (max 5MB)");
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Upload failed');
+            }
+
+            const { url } = await response.json();
+            setGeneratedLogo(url);
+        } catch (error) {
+            console.error("Logo upload failed:", error);
+            alert("Failed to upload logo");
         }
     };
 
