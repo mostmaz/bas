@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { Product, ProductVariant } from '@/types';
 import { generateProductDescription } from '@/services/geminiService';
 import { useShop } from '@/context/ShopContext';
+import { useToast } from '@/context/ToastContext';
 
 interface ProductFormModalProps {
     isOpen: boolean;
@@ -34,6 +35,7 @@ const COLOR_OPTIONS = [
 
 export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, initialData, onSave }) => {
     const { brands, devices } = useShop();
+    const { addToast } = useToast();
     const [isGenerating, setIsGenerating] = useState(false);
     const [isProcessingImage, setIsProcessingImage] = useState(false);
     const [isSaleEnabled, setIsSaleEnabled] = useState(false);
