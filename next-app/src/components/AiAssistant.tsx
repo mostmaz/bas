@@ -215,9 +215,9 @@ export const AiAssistant: React.FC = () => {
     };
 
     return (
-        <div className="fixed bottom-20 sm:bottom-6 right-6 rtl:right-auto rtl:left-6 z-40 flex flex-col items-end rtl:items-start">
+        <div className="fixed bottom-20 sm:bottom-6 right-6 rtl:right-auto rtl:left-6 z-40 flex flex-col items-end rtl:items-start pointer-events-none">
             {isOpen && (
-                <div className="mb-4 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-black/20 dark:shadow-black/50 border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col h-[500px] animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="mb-4 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-black/20 dark:shadow-black/50 border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col h-[500px] animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-auto">
                     <div className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 p-5 flex justify-between items-center">
                         <div className="flex items-center text-white">
                             <div className="bg-white/20 p-2 rounded-full mr-3 rtl:ml-3 rtl:mr-0 backdrop-blur-sm">
@@ -288,7 +288,7 @@ export const AiAssistant: React.FC = () => {
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="group flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-orange-500 via-pink-500 to-purple-600 rounded-full shadow-lg shadow-pink-600/30 hover:shadow-pink-600/50 hover:scale-110 transition-all duration-300 focus:outline-none ring-4 ring-white/10"
+                    className="group flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-orange-500 via-pink-500 to-purple-600 rounded-full shadow-lg shadow-pink-600/30 hover:shadow-pink-600/50 hover:scale-110 transition-all duration-300 focus:outline-none ring-4 ring-white/10 pointer-events-auto"
                 >
                     <MessageCircle className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                     <span className="absolute top-0 right-0 flex h-4 w-4">
