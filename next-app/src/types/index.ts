@@ -24,6 +24,7 @@ export interface Product {
     isDemo?: boolean;
     colors?: string[]; // Legacy: Array of hex codes
     variants?: ProductVariant[]; // New: Detailed variant system
+    tags?: string[]; // New: Search tags for AI optimization
 }
 
 export interface DiscountCode {

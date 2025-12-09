@@ -170,6 +170,7 @@ alter table products add column if not exists colors text[];
 alter table products add column if not exists variants jsonb;
 alter table products add column if not exists sale_price numeric;
 alter table products add column if not exists sku text;
+alter table products add column if not exists tags text[]; -- New: AI Search Tags
 alter table products add column if not exists created_at timestamptz default now();
 
 -- 2. Ensure Brands table has logo

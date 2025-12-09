@@ -32,7 +32,8 @@ const mapProductFromDB = (p: any): Product => {
         colors: p.colors || [],
         variants: variants,
         salePrice: p.sale_price || p.salePrice || undefined,
-        sku: p.sku || undefined
+        sku: p.sku || undefined,
+        tags: p.tags || []
     };
 };
 
@@ -149,7 +150,8 @@ export const useProductLogic = (
                 colors: product.colors,
                 variants: product.variants,
                 sale_price: product.salePrice,
-                sku: product.sku
+                sku: product.sku,
+                tags: product.tags
             };
 
             const { error } = await supabase.from('products').insert([dbProduct]);
@@ -186,7 +188,8 @@ export const useProductLogic = (
                 colors: product.colors,
                 variants: product.variants,
                 sale_price: product.salePrice,
-                sku: product.sku
+                sku: product.sku,
+                tags: product.tags
             };
 
             const { error } = await supabase.from('products').update(dbProduct).eq('id', product.id);
@@ -197,7 +200,7 @@ export const useProductLogic = (
                     console.warn("Schema mismatch detected: column missing. Retrying update without advanced fields.");
                     addToast("Warning: Database Schema Outdated. Updated without complex data.", 'warning');
 
-                    const { images, colors, variants, sale_price, sku, ...legacyProduct } = dbProduct;
+                    const { images, colors, variants, sale_price, sku, tags, ...legacyProduct } = dbProduct;
                     const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
 
                     const { error: retryError } = await supabase.from('products').update(safeProduct).eq('id', product.id);

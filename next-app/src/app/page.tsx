@@ -93,7 +93,8 @@ export default function Home() {
         p.description.toLowerCase().includes(term) ||
         p.category.toLowerCase().includes(term) ||
         p.brand.toLowerCase().includes(term) ||
-        p.device.toLowerCase().includes(term)
+        p.device.toLowerCase().includes(term) ||
+        p.tags?.some(tag => tag.toLowerCase().includes(term))
       );
 
       return matchDevice && matchBrand && matchSearch;

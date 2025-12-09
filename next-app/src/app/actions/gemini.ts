@@ -125,3 +125,36 @@ export async function generateBrandLogoAction(brandName: string): Promise<string
         return "";
     }
 }
+
+/**
+ * Server Action: Generate Search Tags (SEO & Search Optimization)
+ */
+export async function generateSearchTagsAction(productName: string, category: string, brand: string): Promise<string[]> {
+    if (!apiKey) return [];
+
+    try {
+        const prompt = `Generate a list of 10-15 relevant search keywords (tags) for a product.
+        Product: "${productName}"
+        Category: "${category}"
+        Brand: "${brand}"
+        
+        Rules:
+        1. Include the product name in English and Arabic.
+        2. Include the brand name in English and Arabic (e.g. Samsung, سامسونج).
+        3. Include common misspellings or variations.
+        4. Include related terms (e.g. "case", "cover", "mobile", "phone", "protection").
+        5. Return ONLY a comma-separated list of words. No explanations.`;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+
+        // Split by comma and clean up
+        return text.split(',')
+            .map(tag => tag.trim().toLowerCase())
+            .filter(tag => tag.length > 1);
+    } catch (error) {
+        console.error("Gemini Tag Gen Error:", error);
+        return [];
+    }
+}

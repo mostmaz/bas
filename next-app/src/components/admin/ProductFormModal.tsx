@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Upload, Wand2, Loader2, Trash2, Check, Plus, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Product, ProductVariant } from '@/types';
-import { generateProductDescriptionAction } from '@/app/actions/gemini';
+import { generateProductDescriptionAction, generateSearchTagsAction } from '@/app/actions/gemini';
 import { useShop } from '@/context/ShopContext';
 import { useToast } from '@/context/ToastContext';
 
@@ -58,7 +58,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         images: [] as string[],
         stock: '10',
         colors: [] as string[], // Legacy simple colors
-        variants: [] as ProductVariant[]
+        variants: [] as ProductVariant[],
+        tags: [] as string[]
     };
 
     const [formData, setFormData] = useState(defaultState);
@@ -77,7 +78,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                 images: initialData.images && initialData.images.length > 0 ? initialData.images : [initialData.image],
                 stock: initialData.stock.toString(),
                 colors: initialData.colors || [],
-                variants: initialData.variants || []
+                variants: initialData.variants || [],
+                tags: initialData.tags || []
             });
             setIsSaleEnabled(!!initialData.salePrice);
         } else {
@@ -214,9 +216,22 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isProcessingImage) return;
+
+        // Auto-generate search tags if missing
+        let finalTags = formData.tags;
+        if (!finalTags || finalTags.length === 0) {
+            setIsGenerating(true);
+            try {
+                finalTags = await generateSearchTagsAction(formData.name, formData.category, formData.brand);
+            } catch (e) {
+                console.error("Tag gen failed", e);
+            } finally {
+                setIsGenerating(false);
+            }
+        }
 
         // Fallback if no images
         const finalImages = formData.images.length > 0
@@ -236,7 +251,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
             images: finalImages,
             stock: parseInt(formData.stock),
             colors: formData.colors,
-            variants: formData.variants
+            variants: formData.variants,
+            tags: finalTags
         });
     };
 
