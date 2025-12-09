@@ -19,6 +19,8 @@ import { getCachedProducts, getCachedBrands, getCachedDevices, getCachedSlides }
 
 import { SplashScreen } from "@/components/SplashScreen";
 
+import AppUrlListener from "@/components/AppUrlListener";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -44,6 +46,7 @@ export default async function RootLayout({
       <body className={`${inter.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
         <ToastProvider>
           <ShopProvider initialData={initialData}>
+            <AppUrlListener />
             <SplashScreen />
             <div className="min-h-screen flex flex-col pb-20 md:pb-0">
               <Navbar />
