@@ -175,6 +175,27 @@ export const INITIAL_BRANDS: Brand[] = [
 export const CATEGORIES = ['All', 'Artistic', 'Minimalist', 'Urban', 'Nature'];
 export const DEVICES = ['All', 'iPhone 15', 'iPhone 14', 'Samsung S24', 'Pixel 8'];
 
+export const IRAQ_GOVERNORATES = [
+    "Baghdad",
+    "Basra",
+    "Nineveh",
+    "Erbil",
+    "Sulaymaniyah",
+    "Duhok",
+    "Kirkuk",
+    "Salah Al-Din",
+    "Diyala",
+    "Anbar",
+    "Babylon",
+    "Karbala",
+    "Najaf",
+    "Wasit",
+    "Qadisiyah",
+    "Maysan",
+    "Muthanna",
+    "Halabja"
+];
+
 export const TRANSLATIONS = {
     en: {
         searchPlaceholder: "Search for the perfect case...",

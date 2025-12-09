@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/Button';
 import { Lock, ShoppingBag, MapPin, Phone, User, Truck, Tag } from 'lucide-react';
+import { IRAQ_GOVERNORATES } from '@/lib/constants';
 
 export default function Checkout() {
     const { cart, totalAmount, shippingFee, discountAmount, finalTotal, appliedDiscount, clearCart, placeOrder, t } = useShop();
@@ -127,13 +128,21 @@ export default function Checkout() {
 
                                     <div>
                                         <label htmlFor="city" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('city')}</label>
-                                        <input
-                                            type="text"
-                                            name="city"
-                                            required
-                                            className="block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors"
-                                            placeholder={t('city')}
-                                        />
+                                        <div className="relative">
+                                            <select
+                                                name="city"
+                                                required
+                                                className="block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2.5 border outline-none transition-colors appearance-none"
+                                            >
+                                                <option value="">{t('city')}</option>
+                                                {IRAQ_GOVERNORATES.map((gov) => (
+                                                    <option key={gov} value={gov}>{gov}</option>
+                                                ))}
+                                            </select>
+                                            <div className="pointer-events-none absolute inset-y-0 right-0 rtl:left-0 rtl:right-auto flex items-center px-2 text-slate-700 dark:text-slate-300">
+                                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div>
