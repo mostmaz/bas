@@ -70,9 +70,14 @@ export default function ProductDetails() {
 
     // Merge base images with variant images for the gallery
     // Ensure we filter out empty strings and duplicates
-    const baseImages = product.images && product.images.length > 0 ? product.images : [product.image];
-    const variantImages = product.variants ? product.variants.map(v => v.image).filter(img => img && img.length > 0) : [];
-    const galleryImages = Array.from(new Set([...baseImages, ...variantImages])).filter(Boolean);
+    // Merge base images with variant images for the gallery
+    // Ensure we filter out empty strings and duplicates
+    const rawImages = [
+        product.image,
+        ...(product.images || []),
+        ...(product.variants?.map(v => v.image) || [])
+    ];
+    const galleryImages = Array.from(new Set(rawImages.filter(Boolean).map(url => url.trim()))).filter(Boolean);
 
     // Available Variants (Stock > 0) - Only show if stock is available
     // Only hide variants if they have 0 stock to prevent selection
@@ -126,8 +131,8 @@ export default function ProductDetails() {
                                 <button
                                     onClick={() => toggleWishlist(product.id)}
                                     className={`p-3 backdrop-blur-md rounded-full shadow-lg transition-colors border border-white/20 dark:border-white/10 ${isWishlisted
-                                            ? 'bg-red-500 text-white hover:bg-red-600'
-                                            : 'bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-white hover:text-red-500 dark:hover:text-red-500 hover:bg-white dark:hover:bg-slate-900'
+                                        ? 'bg-red-500 text-white hover:bg-red-600'
+                                        : 'bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-white hover:text-red-500 dark:hover:text-red-500 hover:bg-white dark:hover:bg-slate-900'
                                         }`}
                                 >
                                     <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
@@ -146,8 +151,8 @@ export default function ProductDetails() {
                                         key={idx}
                                         onClick={() => handleImageClick(img)}
                                         className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all snap-start ${activeImage === img
-                                                ? 'border-purple-600 ring-2 ring-purple-600/20'
-                                                : 'border-transparent opacity-70 hover:opacity-100'
+                                            ? 'border-purple-600 ring-2 ring-purple-600/20'
+                                            : 'border-transparent opacity-70 hover:opacity-100'
                                             }`}
                                     >
                                         <img
