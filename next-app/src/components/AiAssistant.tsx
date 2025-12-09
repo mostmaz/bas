@@ -9,7 +9,8 @@ import { useRouter } from 'next/navigation';
 
 export const AiAssistant: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const { products, t, language } = useShop();
+    const { products, t, language, addToCart, placeOrder, clearCart } = useShop();
+    const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
     const [messages, setMessages] = useState<ChatMessage[]>([
         { id: 'init', role: 'model', text: 'Hi! I\'m Casey, your AI style assistant. Looking for a specific vibe?', timestamp: Date.now() }
@@ -50,9 +51,73 @@ export const AiAssistant: React.FC = () => {
         setIsTyping(true);
 
         try {
-            // Append simple language instruction to the context prompt
             const langContext = language === 'ar' ? " Please reply in Arabic." : "";
-            const responseText = await chatWithShopAssistantAction(input + langContext, products);
+
+            const selectedProductDetails = Array.from(selectedProducts).map(id => {
+                const p = products.find(prod => prod.id === id);
+                return p ? `${p.name} (${p.price} IQD)` : '';
+            }).filter(Boolean).join(', ');
+
+            const contextInput = selectedProductDetails
+                ? `[User Selected Products: ${selectedProductDetails}] ${input}`
+                : input;
+
+            const responseText = await chatWithShopAssistantAction(contextInput + langContext, products);
+
+            if (responseText.startsWith('ORDER_CONFIRMED:')) {
+                try {
+                    const jsonStr = responseText.replace('ORDER_CONFIRMED:', '').trim();
+                    const orderDetails = JSON.parse(jsonStr);
+
+                    if (selectedProducts.size > 0) {
+                        const orderItems = Array.from(selectedProducts).map(id => {
+                            const p = products.find(prod => prod.id === id);
+                            return p ? {
+                                id: p.id,
+                                name: p.name,
+                                price: p.price,
+                                quantity: 1,
+                                image: p.image,
+                                selectedColor: p.colors?.[0]
+                            } : null;
+                        }).filter(Boolean);
+
+                        if (orderItems.length > 0) {
+                            await placeOrder({
+                                items: orderItems as any,
+                                customerName: orderDetails.name,
+                                phone: orderDetails.mobile,
+                                city: orderDetails.city,
+                                address: orderDetails.address,
+                                totalAmount: orderDetails.total,
+                                shippingFee: 5000,
+                                orderNumber: `ORD-${Date.now()}`
+                            });
+
+                            setSelectedProducts(new Set());
+                            clearCart();
+
+                            setMessages(prev => [...prev, {
+                                id: (Date.now() + 1).toString(),
+                                role: 'model',
+                                text: `✅ Order placed successfully! Thank you, ${orderDetails.name}. We will contact you at ${orderDetails.mobile}.`,
+                                timestamp: Date.now()
+                            }]);
+                            return;
+                        }
+                    } else {
+                        setMessages(prev => [...prev, {
+                            id: (Date.now() + 1).toString(),
+                            role: 'model',
+                            text: "I tried to place the order, but you haven't selected any products! Please check the boxes on the products you want.",
+                            timestamp: Date.now()
+                        }]);
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Order parsing failed", e);
+                }
+            }
 
             const aiMsg: ChatMessage = {
                 id: (Date.now() + 1).toString(),
@@ -72,9 +137,16 @@ export const AiAssistant: React.FC = () => {
         if (e.key === 'Enter') handleSend();
     };
 
-    // Function to parse text and render links for [Text](/url) pattern as Cards or Links
+    const toggleProductSelection = (productId: string) => {
+        setSelectedProducts(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(productId)) newSet.delete(productId);
+            else newSet.add(productId);
+            return newSet;
+        });
+    };
+
     const renderMessageContent = (text: string, role: 'user' | 'model') => {
-        // Split by the markdown link regex
         const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
 
         return parts.map((part, index) => {
@@ -83,19 +155,28 @@ export const AiAssistant: React.FC = () => {
             if (match) {
                 const [_, label, url] = match;
 
-                // Check if it's a product link
                 if (url.startsWith('/product/')) {
                     const productId = url.split('/').pop();
                     const product = products.find(p => p.id === productId);
 
                     if (product) {
+                        const isSelected = selectedProducts.has(product.id);
                         return (
                             <div
                                 key={index}
-                                onClick={() => router.push(url)}
-                                className="block my-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md hover:border-purple-500 dark:hover:border-purple-500 transition-all group max-w-[240px]"
+                                className={`block my-3 bg-white dark:bg-slate-900 border ${isSelected ? 'border-purple-500 ring-2 ring-purple-500/20' : 'border-slate-200 dark:border-slate-700'} rounded-xl overflow-hidden shadow-sm transition-all group max-w-[240px] relative`}
                             >
-                                <div className="flex p-2 gap-3 items-center text-left">
+                                <div className="absolute top-2 right-2 z-10">
+                                    <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={(e) => {
+                                            toggleProductSelection(product.id);
+                                        }}
+                                        className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                    />
+                                </div>
+                                <div className="flex p-2 gap-3 items-center text-left cursor-pointer" onClick={() => router.push(url)}>
                                     <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                                         <img
                                             src={product.image}
@@ -109,16 +190,12 @@ export const AiAssistant: React.FC = () => {
                                         <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight mb-0.5 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{product.name}</h4>
                                         <p className="text-xs font-bold text-purple-600 dark:text-purple-400">IQD {product.price.toLocaleString()}</p>
                                     </div>
-                                    <div className="text-slate-300 group-hover:text-purple-500 transition-colors">
-                                        <ChevronRight className="h-4 w-4 rtl:rotate-180" />
-                                    </div>
                                 </div>
                             </div>
                         );
                     }
                 }
 
-                // Fallback for non-product links or missing products
                 return (
                     <button
                         key={index}
@@ -139,17 +216,15 @@ export const AiAssistant: React.FC = () => {
 
     return (
         <div className="fixed bottom-20 sm:bottom-6 right-6 rtl:right-auto rtl:left-6 z-40 flex flex-col items-end rtl:items-start">
-            {/* Chat Window */}
             {isOpen && (
                 <div className="mb-4 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-black/20 dark:shadow-black/50 border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col h-[500px] animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    {/* Header */}
                     <div className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 p-5 flex justify-between items-center">
                         <div className="flex items-center text-white">
                             <div className="bg-white/20 p-2 rounded-full mr-3 rtl:ml-3 rtl:mr-0 backdrop-blur-sm">
                                 <Sparkles className="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-lg">{t('caseyAi')}</h3>
+                                <h3 className="font-bold text-lg">Bas Cavarat (بس كفرات)</h3>
                                 <p className="text-xs text-purple-100 opacity-80">{t('alwaysHelp')}</p>
                             </div>
                         </div>
@@ -158,7 +233,6 @@ export const AiAssistant: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Messages */}
                     <div className="flex-1 overflow-y-auto p-5 bg-slate-50 dark:bg-slate-950 space-y-4 custom-scrollbar">
                         {messages.map((msg) => (
                             <div
@@ -189,7 +263,6 @@ export const AiAssistant: React.FC = () => {
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Input */}
                     <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
                         <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-2 border border-transparent focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-500 transition-all">
                             <input
@@ -212,7 +285,6 @@ export const AiAssistant: React.FC = () => {
                 </div>
             )}
 
-            {/* Toggle Button */}
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
