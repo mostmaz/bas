@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles, ChevronRight } from 'lucide-react';
 import { useShop } from '@/context/ShopContext';
-import { chatWithShopAssistant } from '@/services/geminiService';
+import { chatWithShopAssistantAction } from '@/app/actions/gemini';
 import { ChatMessage } from '@/types';
 import { useRouter } from 'next/navigation';
 
@@ -52,7 +52,7 @@ export const AiAssistant: React.FC = () => {
         try {
             // Append simple language instruction to the context prompt
             const langContext = language === 'ar' ? " Please reply in Arabic." : "";
-            const responseText = await chatWithShopAssistant(input + langContext, products);
+            const responseText = await chatWithShopAssistantAction(input + langContext, products);
 
             const aiMsg: ChatMessage = {
                 id: (Date.now() + 1).toString(),
@@ -124,8 +124,8 @@ export const AiAssistant: React.FC = () => {
                         key={index}
                         onClick={() => router.push(url)}
                         className={`inline-flex items-center gap-1 underline font-bold mx-1 hover:opacity-80 transition-opacity ${role === 'user'
-                                ? 'text-white decoration-white'
-                                : 'text-purple-600 dark:text-purple-400 decoration-purple-600 dark:decoration-purple-400'
+                            ? 'text-white decoration-white'
+                            : 'text-purple-600 dark:text-purple-400 decoration-purple-600 dark:decoration-purple-400'
                             }`}
                     >
                         {label}
@@ -167,8 +167,8 @@ export const AiAssistant: React.FC = () => {
                             >
                                 <div
                                     className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
-                                            ? 'bg-purple-600 text-white rounded-br-sm rtl:rounded-bl-sm rtl:rounded-br-2xl'
-                                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-sm rtl:rounded-br-sm rtl:rounded-bl-2xl shadow-sm'
+                                        ? 'bg-purple-600 text-white rounded-br-sm rtl:rounded-bl-sm rtl:rounded-br-2xl'
+                                        : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-sm rtl:rounded-br-sm rtl:rounded-bl-2xl shadow-sm'
                                         }`}
                                 >
                                     {renderMessageContent(msg.text, msg.role)}

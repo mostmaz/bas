@@ -1,0 +1,127 @@
+'use server';
+
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Product } from "@/types";
+
+// Initialize Gemini on the server
+// Use GEMINI_API_KEY (server-side) or fallback to NEXT_PUBLIC_GEMINI_API_KEY
+const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey || '');
+
+/**
+ * Server Action: Chat with the Shop Assistant
+ */
+export async function chatWithShopAssistantAction(
+    userMessage: string,
+    allProducts: Product[]
+): Promise<string> {
+    if (!apiKey) {
+        console.error("Gemini API Key is missing on server.");
+        return "I'm having trouble connecting to my brain (API Key missing).";
+    }
+
+    try {
+        const lowerMsg = userMessage.toLowerCase();
+
+        // Simple keyword search to find relevant products for context
+        let relevantProducts = allProducts.filter(p => {
+            const keywords = [
+                p.name.toLowerCase(),
+                p.category.toLowerCase(),
+                p.brand.toLowerCase(),
+                p.device.toLowerCase(),
+                ...p.name.toLowerCase().split(" ")
+            ];
+            return keywords.some(k => k.length > 2 && lowerMsg.includes(k));
+        });
+
+        // Fallback to top products if no match
+        if (relevantProducts.length === 0) {
+            relevantProducts = allProducts.slice(0, 15);
+        } else {
+            relevantProducts = relevantProducts.slice(0, 20);
+        }
+
+        const productContext = relevantProducts
+            .map(
+                (p) =>
+                    `- ${p.name} (ID: ${p.id}, Price: ${p.price} IQD): ${p.description} (Device: ${p.device}, Brand: ${p.brand})`
+            )
+            .join("\n");
+
+        const systemInstruction = `
+You are "Casey", a helpful and stylish shopping assistant for CaseCraft AI.
+
+Inventory:
+${productContext}
+
+Rules:
+1. Only recommend products from the list.
+2. Short answers (2–3 sentences).
+3. Prices in IQD.
+4. Delivery across Iraq.
+5. If missing product, suggest from list.
+6. ALWAYS include a direct link:
+[Product Name](/product/ID)
+`;
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            systemInstruction,
+        });
+
+        const result = await model.generateContent(userMessage);
+        return result.response.text();
+    } catch (error) {
+        console.error("Gemini Chat Error:", error);
+        return "Oops! My neural link is a bit fuzzy. Please try again.";
+    }
+}
+
+/**
+ * Server Action: Generate Product Description
+ */
+export async function generateProductDescriptionAction(productName: string): Promise<string> {
+    if (!apiKey) return "Error: API Key missing.";
+
+    try {
+        const prompt = `Write a catchy, sales-oriented product description in Arabic (max 35 words) for a premium phone case named "${productName}".`;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent(prompt);
+
+        return result.response.text();
+    } catch (error) {
+        console.error("Gemini Description Gen Error:", error);
+        return "Error generating description.";
+    }
+}
+
+/**
+ * Server Action: Generate Brand Logo
+ */
+export async function generateBrandLogoAction(brandName: string): Promise<string> {
+    if (!apiKey) return "";
+
+    try {
+        const prompt = `Create a simple, modern, minimalist SVG logo for a brand named "${brandName}". 
+    The logo should be square (aspect ratio 1:1).
+    Use a modern color palette.
+    Return ONLY the raw <svg>...</svg> code. Do not include markdown code blocks or any other text.`;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+
+        // Clean up the response to get just the SVG
+        const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/);
+        const svgContent = svgMatch ? svgMatch[0] : text;
+
+        // Convert to base64 data URI
+        const base64Svg = Buffer.from(unescape(encodeURIComponent(svgContent))).toString('base64');
+        return `data:image/svg+xml;base64,${base64Svg}`;
+    } catch (error) {
+        console.error("Gemini Logo Gen Error:", error);
+        return "";
+    }
+}

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Upload, Wand2, Loader2, Trash2, Check, Plus, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Product, ProductVariant } from '@/types';
-import { generateProductDescription } from '@/services/geminiService';
+import { generateProductDescriptionAction } from '@/app/actions/gemini';
 import { useShop } from '@/context/ShopContext';
 import { useToast } from '@/context/ToastContext';
 
@@ -204,7 +204,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
 
         setIsGenerating(true);
         try {
-            const desc = await generateProductDescription(formData.name);
+            const desc = await generateProductDescriptionAction(formData.name);
             setFormData(prev => ({ ...prev, description: desc }));
         } catch (e) {
             console.error(e);

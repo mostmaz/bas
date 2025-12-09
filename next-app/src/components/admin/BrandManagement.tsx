@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Trash2, Wand2, Loader2, Upload, Plus, RefreshCw } from 'lucide-react';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/Button';
-import { generateBrandLogo } from '@/services/geminiService';
+import { generateBrandLogoAction } from '@/app/actions/gemini';
 
 export const BrandManagement: React.FC = () => {
     const { brands, addBrand, deleteBrand, refreshBrands } = useShop();
@@ -22,7 +22,7 @@ export const BrandManagement: React.FC = () => {
         }
         setIsGenerating(true);
         try {
-            const logoUrl = await generateBrandLogo(newBrandName);
+            const logoUrl = await generateBrandLogoAction(newBrandName);
             setGeneratedLogo(logoUrl);
         } catch (error) {
             console.error(error);
