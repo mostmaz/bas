@@ -182,37 +182,76 @@ export const DashboardOverview: React.FC = () => {
                             Found {products.filter(p => p.image?.startsWith('data:image')).length} slow products
                         </h4>
                         <p className="text-xs text-orange-700 dark:text-orange-400 mb-4">
-                            These products are slowing down your site by ~5-10 seconds.
+                            These products are slowing down your site. Click below to automatically upload them to the server.
                         </p>
 
                         <div className="flex gap-3">
                             <Button
                                 onClick={async () => {
-                                    if (!confirm("This will replace ALL slow images (including variants) with a placeholder. You will need to re-upload real images later. Continue?")) return;
+                                    if (!confirm("This will upload all your existing images to the server to make them fast. This process may take a few minutes. Please do not close the tab.\n\nContinue?")) return;
 
                                     const slowProducts = products.filter(p =>
                                         p.image?.startsWith('data:image') ||
                                         p.variants?.some(v => v.image?.startsWith('data:image'))
                                     );
+
                                     let count = 0;
+                                    const total = slowProducts.length;
+
+                                    // Helper to convert base64 to File and upload
+                                    const uploadBase64 = async (base64: string): Promise<string | null> => {
+                                        try {
+                                            const res = await fetch(base64);
+                                            const blob = await res.blob();
+                                            const file = new File([blob], "migrated-image.webp", { type: "image/webp" });
+
+                                            const formData = new FormData();
+                                            formData.append('file', file);
+
+                                            const uploadRes = await fetch('/api/upload', {
+                                                method: 'POST',
+                                                body: formData
+                                            });
+
+                                            if (!uploadRes.ok) return null;
+                                            const { url } = await uploadRes.json();
+                                            return url;
+                                        } catch (e) {
+                                            console.error("Migration upload failed", e);
+                                            return null;
+                                        }
+                                    };
 
                                     for (const p of slowProducts) {
-                                        // Clean variants
-                                        const cleanVariants = p.variants?.map(v => ({
-                                            ...v,
-                                            image: v.image?.startsWith('data:image')
-                                                ? 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80'
-                                                : v.image
-                                        })) || [];
+                                        // Update UI (simple alert for now, ideally a progress bar)
+                                        console.log(`Migrating ${count + 1}/${total}: ${p.name}`);
 
-                                        // Update to a fast placeholder
+                                        let newMainImage = p.image;
+                                        // Migrate Main Image
+                                        if (p.image?.startsWith('data:image')) {
+                                            const url = await uploadBase64(p.image);
+                                            if (url) newMainImage = url;
+                                        }
+
+                                        // Migrate Variants
+                                        const newVariants = [];
+                                        if (p.variants) {
+                                            for (const v of p.variants) {
+                                                let newVarImage = v.image;
+                                                if (v.image?.startsWith('data:image')) {
+                                                    const url = await uploadBase64(v.image);
+                                                    if (url) newVarImage = url;
+                                                }
+                                                newVariants.push({ ...v, image: newVarImage });
+                                            }
+                                        }
+
+                                        // Update Product
                                         await updateProduct({
                                             ...p,
-                                            image: p.image?.startsWith('data:image')
-                                                ? 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80'
-                                                : p.image,
-                                            images: ['https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80'],
-                                            variants: cleanVariants
+                                            image: newMainImage,
+                                            images: [newMainImage, ...(p.images?.slice(1) || [])],
+                                            variants: newVariants
                                         });
                                         count++;
                                     }
@@ -220,12 +259,12 @@ export const DashboardOverview: React.FC = () => {
                                     // Force clear cache
                                     localStorage.removeItem('products_cache');
 
-                                    alert(`Fixed ${count} products! Cache cleared. Page will reload.`);
+                                    alert(`Successfully migrated ${count} products! Your images are now hosted and fast.`);
                                     window.location.reload();
                                 }}
                                 className="bg-orange-600 hover:bg-orange-700 text-white"
                             >
-                                <RefreshCw className="h-4 w-4 mr-2" /> Fix All (Replace with Placeholder)
+                                <RefreshCw className="h-4 w-4 mr-2" /> Fix All (Auto-Upload)
                             </Button>
                         </div>
                     </div>
@@ -347,6 +386,6 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
