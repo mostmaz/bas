@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Cairo } from "next/font/google";
 import "./globals.css";
 import { ShopProvider } from "@/context/ShopContext";
 import { ToastProvider } from "@/context/ToastContext";
@@ -8,7 +8,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { Footer } from "@/components/Footer";
 import { AiAssistant } from "@/components/AiAssistant";
 
-const inter = Inter({ subsets: ["latin"] });
+const cairo = Cairo({ subsets: ["latin", "arabic"] });
 
 export const metadata: Metadata = {
   title: "BasCavarat - Premium Phone Cases",
@@ -42,8 +42,8 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
+    <html lang="ar" dir="rtl">
+      <body className={`${cairo.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
         <ToastProvider>
           <ShopProvider initialData={initialData}>
             <AppUrlListener />

@@ -121,7 +121,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children, initialDat
 
     // --- UI STATE ---
     const [theme, setTheme] = useState<Theme>('light');
-    const [language, setLanguage] = useState<Language>('en');
+    const [language, setLanguage] = useState<Language>('ar');
     const [searchQuery, setSearchQuery] = useState('');
     const [supaConnectionError, setSupaConnectionError] = useState<string | null>(null);
     const [isAppLoading, setIsAppLoading] = useState(false);
@@ -150,6 +150,11 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children, initialDat
     const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
 
     // --- EFFECTS ---
+    useEffect(() => {
+        document.documentElement.lang = language;
+        document.dir = language === 'ar' ? 'rtl' : 'ltr';
+    }, [language]);
+
     useEffect(() => {
         if (!isSupabaseConfigured) {
             addToast("Offline Mode: Using Demo Data", "warning");
