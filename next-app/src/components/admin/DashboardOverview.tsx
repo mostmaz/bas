@@ -5,7 +5,8 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     LineChart, Line, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon, RefreshCw } from 'lucide-react';
+import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon, RefreshCw, Sparkles } from 'lucide-react';
+import { generateSearchTagsAction } from '@/app/actions/gemini';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/Button';
 
@@ -267,6 +268,49 @@ export const DashboardOverview: React.FC = () => {
                                 <RefreshCw className="h-4 w-4 mr-2" /> Fix All (Auto-Upload)
                             </Button>
                         </div>
+                    </div>
+
+                    {/* SEO Tag Generator */}
+                    <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <h4 className="font-medium text-purple-800 dark:text-purple-300 mb-2">
+                            SEO & Search Optimization
+                        </h4>
+                        <p className="text-xs text-purple-700 dark:text-purple-400 mb-4">
+                            Found {products.filter(p => !p.tags || p.tags.length === 0).length} products without search tags.
+                            Generate tags to make them searchable by synonyms (e.g. "Samsung" finds "Galaxy").
+                        </p>
+                        <Button
+                            onClick={async () => {
+                                const productsToFix = products.filter(p => !p.tags || p.tags.length === 0);
+                                if (productsToFix.length === 0) return alert("All products already have tags!");
+
+                                if (!confirm(`Found ${productsToFix.length} products without tags. This will use AI to generate keywords for them.\n\nContinue?`)) return;
+
+                                let count = 0;
+                                const total = productsToFix.length;
+
+                                for (const p of productsToFix) {
+                                    console.log(`Tagging ${count + 1}/${total}: ${p.name}`);
+                                    try {
+                                        const tags = await generateSearchTagsAction(p.name, p.category, p.brand);
+                                        if (tags && tags.length > 0) {
+                                            await updateProduct({ ...p, tags });
+                                            count++;
+                                        } else {
+                                            console.warn("AI returned no tags for", p.name);
+                                        }
+                                    } catch (e) {
+                                        console.error("Tagging failed", e);
+                                    }
+                                }
+
+                                alert(`Successfully generated tags for ${count} products!`);
+                                window.location.reload();
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                        >
+                            <Sparkles className="h-4 w-4 mr-2" /> Generate Missing Tags
+                        </Button>
                     </div>
                 </div>
             </div>
