@@ -8,6 +8,54 @@ import { OffersCarousel } from '@/components/OffersCarousel';
 import { Filter, ChevronDown, Smartphone, Layers, LayoutGrid, Sparkles, TrendingUp, Loader2 } from 'lucide-react';
 import { Brand } from '@/types';
 
+const SEARCH_MAPPINGS: Record<string, string[]> = {
+  'samsung': ['سامسونج', 'جالكسي', 'galaxy'],
+  'سامسونج': ['samsung', 'galaxy', 'جالكسي'],
+  'iphone': ['ايفون', 'آيفون', 'apple', 'ابل'],
+  'ايفون': ['iphone', 'apple', 'ابل'],
+  'آيفون': ['iphone', 'apple', 'ابل'],
+  'realme': ['ريلمي'],
+  'ريلمي': ['realme'],
+  'xiaomi': ['شاومي', 'redmi', 'ريدمي'],
+  'شاومي': ['xiaomi', 'redmi', 'ريدمي'],
+  'huawei': ['هواوي'],
+  'هواوي': ['huawei'],
+  'honor': ['هونر'],
+  'هونر': ['honor'],
+  'infinix': ['انفينكس'],
+  'انفينكس': ['infinix'],
+  'tecno': ['تكنو'],
+  'تكنو': ['tecno'],
+  'oppo': ['اوبو'],
+  'اوبو': ['oppo'],
+  'vivo': ['فيفو'],
+  'فيفو': ['vivo'],
+  'cover': ['كفر', 'حافظة', 'غلاف', 'case'],
+  'كفر': ['cover', 'case'],
+  'case': ['كفر', 'حافظة'],
+  'screen': ['شاشة', 'حماية'],
+  'شاشة': ['screen', 'protector'],
+};
+
+const getSearchTerms = (query: string): string[] => {
+  const lowerQuery = query.toLowerCase().trim();
+  if (!lowerQuery) return [];
+
+  const terms = new Set<string>();
+  terms.add(lowerQuery);
+
+  const words = lowerQuery.split(/\s+/);
+  words.forEach(word => {
+    terms.add(word);
+    // Add synonyms
+    if (SEARCH_MAPPINGS[word]) {
+      SEARCH_MAPPINGS[word].forEach(v => terms.add(v));
+    }
+  });
+
+  return Array.from(terms);
+};
+
 export default function Home() {
   const { products, brands, t, searchQuery, orders, isAppLoading, isProductsLoading } = useShop();
   const [selectedDevice, setSelectedDevice] = useState('All');
@@ -39,11 +87,14 @@ export default function Home() {
       const matchDevice = selectedDevice === 'All' || p.device === selectedDevice;
       const matchBrand = selectedBrand === 'All' || p.brand === selectedBrand;
 
-      const lowerQuery = searchQuery.toLowerCase();
-      const matchSearch = !searchQuery ||
-        p.name.toLowerCase().includes(lowerQuery) ||
-        p.description.toLowerCase().includes(lowerQuery) ||
-        p.category.toLowerCase().includes(lowerQuery);
+      const searchTerms = getSearchTerms(searchQuery);
+      const matchSearch = !searchQuery || searchTerms.some(term =>
+        p.name.toLowerCase().includes(term) ||
+        p.description.toLowerCase().includes(term) ||
+        p.category.toLowerCase().includes(term) ||
+        p.brand.toLowerCase().includes(term) ||
+        p.device.toLowerCase().includes(term)
+      );
 
       return matchDevice && matchBrand && matchSearch;
     });
