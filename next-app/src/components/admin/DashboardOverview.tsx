@@ -5,7 +5,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     LineChart, Line, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon } from 'lucide-react';
+import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/Button';
 
@@ -23,7 +23,7 @@ const REVENUE_DATA = [
 const COLORS = ['#4f46e5', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
 
 export const DashboardOverview: React.FC = () => {
-    const { products, orders, shippingFee, updateShippingFee, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo } = useShop();
+    const { products, orders, shippingFee, updateShippingFee, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo, updateProduct } = useShop();
     const [tempShippingFee, setTempShippingFee] = useState(shippingFee.toString());
     const lowStockProducts = products.filter(p => p.stock < 10);
 
@@ -162,6 +162,54 @@ export const DashboardOverview: React.FC = () => {
                                 <>Turn On <ToggleLeft className="ml-2 h-5 w-5" /></>
                             )}
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Migration Tool - Temporary Fix for Speed */}
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-orange-200 dark:border-orange-900/50 mb-8">
+                <h3 className="text-lg font-semibold mb-2 text-orange-700 dark:text-orange-400 flex items-center">
+                    <AlertTriangle className="h-5 w-5 mr-2" /> Speed Optimizer (Migration Tool)
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">
+                    Your site is slow because some old products use "Base64" images (very large text files) instead of real image URLs.
+                    Use this tool to identify and fix them.
+                </p>
+
+                <div className="flex flex-col gap-4">
+                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                        <h4 className="font-medium text-orange-800 dark:text-orange-300 mb-2">
+                            Found {products.filter(p => p.image?.startsWith('data:image')).length} slow products
+                        </h4>
+                        <p className="text-xs text-orange-700 dark:text-orange-400 mb-4">
+                            These products are slowing down your site by ~5-10 seconds.
+                        </p>
+
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={async () => {
+                                    if (!confirm("This will replace ALL slow images with a placeholder. You will need to re-upload real images later. Continue?")) return;
+
+                                    const slowProducts = products.filter(p => p.image?.startsWith('data:image'));
+                                    let count = 0;
+
+                                    for (const p of slowProducts) {
+                                        // Update to a fast placeholder
+                                        await updateProduct({
+                                            ...p,
+                                            image: 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80',
+                                            images: ['https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80']
+                                        });
+                                        count++;
+                                    }
+                                    alert(`Fixed ${count} products! Your site should be fast now.`);
+                                    window.location.reload();
+                                }}
+                                className="bg-orange-600 hover:bg-orange-700 text-white"
+                            >
+                                <RefreshCw className="h-4 w-4 mr-2" /> Fix All (Replace with Placeholder)
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
