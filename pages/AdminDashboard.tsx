@@ -37,6 +37,14 @@ export const AdminDashboard: React.FC = () => {
         setActiveTab(tab);
       }
     }
+
+    // Magic Link Auto-Login
+    const params = new URLSearchParams(location.search);
+    const key = params.get('key');
+    if (key === '1234') {
+      setIsAuthenticated(true);
+      // Optional: Clear the key from URL so it's not visible in screenshots, but keeping it makes bookmarks work
+    }
   }, [location]);
 
   // Automated Schema Health Check
@@ -285,6 +293,15 @@ drop policy if exists "Public access discounts" on discounts;
 create policy "Public access discounts" on discounts for all using (true);
 drop policy if exists "Anon modification discounts" on discounts;
 create policy "Anon modification discounts" on discounts for all using (true);
+
+-- 7. Storage Bucket Policies (Fix Upload Error)
+insert into storage.buckets (id, name, public) 
+values ('product-images', 'product-images', true)
+on conflict (id) do nothing;
+
+create policy "Public Access" on storage.objects for select using ( bucket_id = 'product-images' );
+create policy "Public Upload" on storage.objects for insert with check ( bucket_id = 'product-images' );
+create policy "Public Delete" on storage.objects for delete using ( bucket_id = 'product-images' );
 `;
 
   const copySQL = () => {

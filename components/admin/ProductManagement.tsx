@@ -1,24 +1,23 @@
 
-
-
 import React, { useState, useMemo, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, Database, AlertTriangle } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 import { Product } from '../../types';
 import { ProductFormModal } from './ProductFormModal';
 import * as XLSX from 'xlsx';
+import { supabase } from '../../services/supabase';
 
 // Helper to convert URL to Base64
 const convertUrlToBase64 = async (url: string): Promise<string> => {
   if (!url) return '';
   if (url.startsWith('data:image')) return url;
-  
+
   try {
     const response = await fetch(url);
     // If CORS fails, fetch throws. If 404, response.ok is false.
     if (!response.ok) throw new Error(`Status: ${response.status}`);
-    
+
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -38,10 +37,11 @@ export const ProductManagement: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+  const [showMigrateConfirm, setShowMigrateConfirm] = useState(false);
+
   // Filter State
   const [selectedDevice, setSelectedDevice] = useState<string>('All');
-  
+
   // File Input Ref for Bulk Upload
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -119,7 +119,7 @@ export const ProductManagement: React.FC = () => {
         variantImage: "https://example.com/blue-image.jpg"
       }
     ];
-    
+
     const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Products");
@@ -132,8 +132,8 @@ export const ProductManagement: React.FC = () => {
 
     // Safety check for library loading
     if (!XLSX || !XLSX.read) {
-        alert("Excel library not loaded properly. Please refresh the page.");
-        return;
+      alert("Excel library not loaded properly. Please refresh the page.");
+      return;
     }
 
     const reader = new FileReader();
@@ -146,138 +146,138 @@ export const ProductManagement: React.FC = () => {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
-        
+
         if (!jsonData || jsonData.length === 0) {
-           alert("No data found in the file.");
-           return;
+          alert("No data found in the file.");
+          return;
         }
 
         // Helper to normalize keys to lowercase (handles "Price" vs "price")
         const normalizeRow = (row: any) => {
-           const normalized: any = {};
-           Object.keys(row).forEach(key => {
-              normalized[key.toLowerCase().trim()] = row[key];
-           });
-           return normalized;
+          const normalized: any = {};
+          Object.keys(row).forEach(key => {
+            normalized[key.toLowerCase().trim()] = row[key];
+          });
+          return normalized;
         };
 
         // Group rows by Product Name to handle variants
         const productsMap = new Map<string, { base: any, variants: any[] }>();
 
         for (const rawRow of jsonData as any[]) {
-           const row = normalizeRow(rawRow);
-           const name = row.name ? String(row.name).trim() : null;
-           
-           if (!name) continue; // Skip rows without name
+          const row = normalizeRow(rawRow);
+          const name = row.name ? String(row.name).trim() : null;
 
-           if (!productsMap.has(name)) {
-              productsMap.set(name, { base: row, variants: [] });
-           }
-           
-           const group = productsMap.get(name)!;
+          if (!name) continue; // Skip rows without name
 
-           // Check if this row defines a variant (normalized keys)
-           if (row.variantcolor) {
-              group.variants.push({
-                 id: `v-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                 color: String(row.variantcolor),
-                 stock: Number(row.variantstock) || 0,
-                 sku: row.variantsku ? String(row.variantsku) : undefined,
-                 image: row.variantimage || '' 
-              });
-           }
+          if (!productsMap.has(name)) {
+            productsMap.set(name, { base: row, variants: [] });
+          }
+
+          const group = productsMap.get(name)!;
+
+          // Check if this row defines a variant (normalized keys)
+          if (row.variantcolor) {
+            group.variants.push({
+              id: `v-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              color: String(row.variantcolor),
+              stock: Number(row.variantstock) || 0,
+              sku: row.variantsku ? String(row.variantsku) : undefined,
+              image: row.variantimage || ''
+            });
+          }
         }
 
         if (productsMap.size === 0) {
-           alert("No valid products identified. Please ensure the Excel file has a 'name' column.");
-           return;
+          alert("No valid products identified. Please ensure the Excel file has a 'name' column.");
+          return;
         }
 
         if (!window.confirm(`Found ${productsMap.size} unique products from ${jsonData.length} rows. Proceed with upload?`)) {
-           return;
+          return;
         }
-        
+
         setIsSaving(true);
         let successCount = 0;
         let failCount = 0;
-        
+
         for (const { base, variants } of productsMap.values()) {
-           try {
-              // Basic Validation
-              if (!base.name || !base.price) {
-                  console.warn("Skipping invalid product (missing name or price):", base);
-                  failCount++;
-                  continue;
-              }
-
-              // Image URL Conversion
-              if (base.image) {
-                  base.image = await convertUrlToBase64(String(base.image));
-              }
-
-              if (variants.length > 0) {
-                 await Promise.all(variants.map(async (v: any) => {
-                     if (v.image) {
-                         v.image = await convertUrlToBase64(String(v.image));
-                     }
-                 }));
-              }
-              
-              // Calculate total stock
-              let finalStock = Number(base.stock) || 0;
-              if (variants.length > 0) {
-                 finalStock = variants.reduce((sum: number, v: any) => sum + v.stock, 0);
-              }
-
-              // Consolidate images
-              const imageList: string[] = base.image ? [base.image] : [];
-              variants.forEach((v: any) => {
-                 if (v.image && !imageList.includes(v.image)) {
-                    imageList.push(v.image);
-                 }
-              });
-              
-              // Map legacy colors
-              const colors = Array.from(new Set(variants.map((v: any) => v.color)));
-
-              await addProduct({
-                name: String(base.name),
-                sku: base.sku ? String(base.sku) : undefined,
-                price: Number(base.price),
-                salePrice: base.saleprice ? Number(base.saleprice) : undefined,
-                category: base.category || 'Mobile Case',
-                device: base.device || 'Generic',
-                brand: base.brand || 'Generic',
-                description: base.description || '',
-                image: base.image || 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4',
-                images: imageList.length > 0 ? imageList : ['https://images.unsplash.com/photo-1603351154351-5cf233d327e4'],
-                stock: finalStock,
-                colors: colors,
-                variants: variants
-              });
-              successCount++;
-           } catch (err) {
-              console.error("Error adding product:", base.name, err);
+          try {
+            // Basic Validation
+            if (!base.name || !base.price) {
+              console.warn("Skipping invalid product (missing name or price):", base);
               failCount++;
-           }
+              continue;
+            }
+
+            // Image URL Conversion
+            if (base.image) {
+              base.image = await convertUrlToBase64(String(base.image));
+            }
+
+            if (variants.length > 0) {
+              await Promise.all(variants.map(async (v: any) => {
+                if (v.image) {
+                  v.image = await convertUrlToBase64(String(v.image));
+                }
+              }));
+            }
+
+            // Calculate total stock
+            let finalStock = Number(base.stock) || 0;
+            if (variants.length > 0) {
+              finalStock = variants.reduce((sum: number, v: any) => sum + v.stock, 0);
+            }
+
+            // Consolidate images
+            const imageList: string[] = base.image ? [base.image] : [];
+            variants.forEach((v: any) => {
+              if (v.image && !imageList.includes(v.image)) {
+                imageList.push(v.image);
+              }
+            });
+
+            // Map legacy colors
+            const colors = Array.from(new Set(variants.map((v: any) => v.color)));
+
+            await addProduct({
+              name: String(base.name),
+              sku: base.sku ? String(base.sku) : undefined,
+              price: Number(base.price),
+              salePrice: base.saleprice ? Number(base.saleprice) : undefined,
+              category: base.category || 'Mobile Case',
+              device: base.device || 'Generic',
+              brand: base.brand || 'Generic',
+              description: base.description || '',
+              image: base.image || 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4',
+              images: imageList.length > 0 ? imageList : ['https://images.unsplash.com/photo-1603351154351-5cf233d327e4'],
+              stock: finalStock,
+              colors: colors,
+              variants: variants
+            });
+            successCount++;
+          } catch (err) {
+            console.error("Error adding product:", base.name, err);
+            failCount++;
+          }
         }
-        
+
         alert(`Bulk upload completed!\nSuccessfully added: ${successCount}\nFailed: ${failCount}`);
         await refreshProducts();
-        
+
       } catch (error: any) {
-         console.error("Error processing file:", error);
-         alert(`Failed to process file: ${error.message || "Unknown error"}`);
+        console.error("Error processing file:", error);
+        alert(`Failed to process file: ${error.message || "Unknown error"}`);
       } finally {
-         setIsSaving(false);
-         // Reset input so same file can be selected again
-         if (fileInputRef.current) fileInputRef.current.value = '';
+        setIsSaving(false);
+        // Reset input so same file can be selected again
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
     };
     reader.onerror = () => {
-        alert("Failed to read file");
-        setIsSaving(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+      alert("Failed to read file");
+      setIsSaving(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsArrayBuffer(file);
   };
@@ -301,7 +301,7 @@ export const ProductManagement: React.FC = () => {
       setIsModalOpen(false);
     } catch (error: any) {
       console.error("Failed to save product:", error);
-      
+
       let msg = "Unknown database error";
       try {
         if (typeof error === 'string') {
@@ -319,22 +319,124 @@ export const ProductManagement: React.FC = () => {
       const lowerMsg = errorString.toLowerCase();
 
       if (lowerMsg.includes("schema cache") || lowerMsg.includes("images") || lowerMsg.includes("column") || lowerMsg.includes("42703")) {
-         alert("Database Schema Sync Issue detected.\n\nThe app tried to save the 'images' gallery, but the database doesn't recognize the column yet.\n\nFIX:\n1. Go to Supabase Dashboard > Settings > API.\n2. Click 'Reload' under Schema Cache.\n\n(We attempted to save the product without the gallery as a fallback - check the list!)");
+        alert("Database Schema Sync Issue detected.\n\nThe app tried to save the 'images' gallery, but the database doesn't recognize the column yet.\n\nFIX:\n1. Go to Supabase Dashboard > Settings > API.\n2. Click 'Reload' under Schema Cache.\n\n(We attempted to save the product without the gallery as a fallback - check the list!)");
       } else if (lowerMsg.includes("payload") || lowerMsg.includes("too large") || lowerMsg.includes("413")) {
-         alert("Error: Image size is too large for the database. Please try fewer or smaller images.");
+        alert("Error: Image size is too large for the database. Please try fewer or smaller images.");
       } else {
-         alert(`Failed to save product:\n${errorString}`);
+        alert(`Failed to save product:\n${errorString}`);
       }
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handleMigrateImages = () => {
+    setShowMigrateConfirm(true);
+  };
+
+  const executeMigration = async () => {
+    setIsSaving(true);
+    let migratedCount = 0;
+    let errorCount = 0;
+
+    try {
+      const productsToUpdate = products.filter(p =>
+        (p.image && p.image.startsWith('data:image')) ||
+        (p.images && p.images.some(img => img.startsWith('data:image'))) ||
+        (p.variants && p.variants.some(v => v.image && v.image.startsWith('data:image')))
+      );
+
+      if (productsToUpdate.length === 0) {
+        alert("No products with Base64 images found.");
+        setIsSaving(false);
+        setShowMigrateConfirm(false);
+        return;
+      }
+
+      for (const product of productsToUpdate) {
+        try {
+          let hasChanges = false;
+          let newImage = product.image;
+          let newImages = [...(product.images || [])];
+          let newVariants = product.variants ? [...product.variants] : [];
+
+          // Helper to upload
+          const uploadBase64 = async (base64Data: string, prefix: string) => {
+            const res = await fetch(base64Data);
+            const blob = await res.blob();
+            const ext = base64Data.substring("data:image/".length, base64Data.indexOf(";base64"));
+            const fileName = `${prefix}-${Date.now()}.${ext}`;
+
+            const { data, error } = await supabase.storage
+              .from('product-images')
+              .upload(fileName, blob, { contentType: blob.type, upsert: true });
+
+            if (error) throw error;
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('product-images')
+              .getPublicUrl(fileName);
+
+            return publicUrl;
+          };
+
+          // 1. Main Image
+          if (newImage && newImage.startsWith('data:image')) {
+            newImage = await uploadBase64(newImage, `main-${product.id}`);
+            hasChanges = true;
+          }
+
+          // 2. Gallery Images
+          for (let i = 0; i < newImages.length; i++) {
+            if (newImages[i].startsWith('data:image')) {
+              newImages[i] = await uploadBase64(newImages[i], `gallery-${product.id}-${i}`);
+              hasChanges = true;
+            }
+          }
+
+          // 3. Variants
+          if (newVariants.length > 0) {
+            for (let i = 0; i < newVariants.length; i++) {
+              if (newVariants[i].image && newVariants[i].image.startsWith('data:image')) {
+                newVariants[i].image = await uploadBase64(newVariants[i].image, `variant-${product.id}-${i}`);
+                hasChanges = true;
+              }
+            }
+          }
+
+          if (hasChanges) {
+            await updateProduct({
+              ...product,
+              image: newImage,
+              images: newImages,
+              variants: newVariants
+            });
+            migratedCount++;
+          }
+
+        } catch (err) {
+          console.error(`Failed to migrate product ${product.name}:`, err);
+          errorCount++;
+        }
+      }
+
+      alert(`Migration Complete!\nMigrated: ${migratedCount}\nErrors: ${errorCount}`);
+      await refreshProducts();
+
+    } catch (e) {
+      console.error("Migration fatal error:", e);
+      alert("An error occurred during migration.");
+    } finally {
+      setIsSaving(false);
+      setShowMigrateConfirm(false);
+    }
+  };
+
   const triggerFileUpload = () => {
-     if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Reset to ensure change event fires even for same file
-        fileInputRef.current.click();
-     }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reset to ensure change event fires even for same file
+      fileInputRef.current.click();
+    }
   };
 
   return (
@@ -346,7 +448,7 @@ export const ProductManagement: React.FC = () => {
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
               <Filter className="h-4 w-4" />
             </div>
-            <select 
+            <select
               value={selectedDevice}
               onChange={(e) => setSelectedDevice(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm text-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
@@ -359,9 +461,9 @@ export const ProductManagement: React.FC = () => {
             </select>
           </div>
 
-          <Button 
-            variant="outline" 
-            onClick={handleDownloadTemplate} 
+          <Button
+            variant="outline"
+            onClick={handleDownloadTemplate}
             className="flex items-center gap-2 bg-white dark:bg-slate-800 border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/20"
             title="Download Excel Template"
           >
@@ -369,35 +471,46 @@ export const ProductManagement: React.FC = () => {
           </Button>
 
           <div className="relative">
-             <input 
-               type="file" 
-               ref={fileInputRef} 
-               onChange={handleBulkUpload} 
-               accept=".xlsx, .xls, .csv" 
-               className="hidden" 
-             />
-             <Button 
-               variant="outline" 
-               onClick={triggerFileUpload} 
-               className="flex items-center gap-2 bg-white dark:bg-slate-800 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
-               title="Upload Excel/CSV"
-               disabled={isSaving}
-             >
-               {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Bulk Add
-             </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleBulkUpload}
+              accept=".xlsx, .xls, .csv"
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              onClick={triggerFileUpload}
+              className="flex items-center gap-2 bg-white dark:bg-slate-800 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
+              title="Upload Excel/CSV"
+              disabled={isSaving}
+            >
+              {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Bulk Add
+            </Button>
           </div>
 
-          <Button 
-            variant="outline" 
-            onClick={handleRefresh} 
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
             disabled={isRefreshing}
             className="flex items-center gap-2 bg-white dark:bg-slate-800"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
+
           <Button onClick={handleAddClick} className="flex items-center gap-2">
             <Plus className="h-4 w-4" /> Add Product
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={handleMigrateImages}
+            disabled={isSaving}
+            className="flex items-center gap-2 bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
+            title="Convert Base64 images to Server URLs"
+          >
+            {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />} Fix Images
           </Button>
         </div>
       </div>
@@ -426,11 +539,11 @@ export const ProductManagement: React.FC = () => {
                 filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                     <td className="px-6 py-4 flex items-center gap-3">
-                      <img 
-                        src={product.image} 
-                        alt="" 
+                      <img
+                        src={product.image}
+                        alt=""
                         loading="lazy"
-                        className="h-10 w-10 rounded-md object-cover border border-gray-200 dark:border-slate-600" 
+                        className="h-10 w-10 rounded-md object-cover border border-gray-200 dark:border-slate-600"
                       />
                       <div>
                         <span className="font-medium text-gray-900 dark:text-white block">{product.name}</span>
@@ -448,22 +561,21 @@ export const ProductManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-gray-900 dark:text-white font-medium">IQD {product.price.toLocaleString()}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        product.stock > 10 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.stock > 10 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
                         {product.stock} in stock
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
-                        <button 
+                        <button
                           onClick={() => handleEditClick(product)}
                           className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 p-2 rounded-full hover:bg-indigo-50 dark:hover:bg-slate-600 transition-colors"
                           title="Edit"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => deleteProduct(product.id)}
                           className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 dark:hover:bg-slate-600 transition-colors"
                           title="Delete"
@@ -480,12 +592,42 @@ export const ProductManagement: React.FC = () => {
         </div>
       </div>
 
-      <ProductFormModal 
+      <ProductFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={editingProduct}
         onSave={handleSaveProduct}
       />
+
+      {/* Confirmation Modal for Image Migration */}
+      {showMigrateConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center gap-4 mb-4 text-amber-600 dark:text-amber-500">
+              <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                <Database className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Fix Product Images?</h3>
+            </div>
+
+            <p className="text-gray-600 dark:text-slate-300 mb-6 leading-relaxed">
+              This will scan all products for "Base64" images (which slow down the app) and upload them to the server.
+              <br /><br />
+              <strong>This process may take a few minutes.</strong> Please do not close the tab.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowMigrateConfirm(false)}>
+                Cancel
+              </Button>
+              <Button onClick={executeMigration} disabled={isSaving}>
+                {isSaving ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
+                {isSaving ? 'Fixing...' : 'Yes, Fix Images'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
