@@ -66,15 +66,14 @@ Rules:
 `;
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
-            systemInstruction,
+            model: "gemini-2.0-flash",
         });
 
-        const result = await model.generateContent(userMessage);
+        const result = await model.generateContent(systemInstruction + "\n\nUser: " + userMessage);
         return result.response.text();
     } catch (error) {
         console.error("Gemini Chat Error:", error);
-        return "Oops! My neural link is a bit fuzzy. Please try again.";
+        return `Oops! My neural link is a bit fuzzy. Debug: ${error instanceof Error ? error.message : String(error)}`;
     }
 }
 
@@ -87,7 +86,7 @@ export async function generateProductDescriptionAction(productName: string): Pro
     try {
         const prompt = `Write a catchy, sales-oriented product description in Arabic (max 35 words) for a premium phone case named "${productName}".`;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent(prompt);
 
         return result.response.text();
@@ -109,7 +108,7 @@ export async function generateBrandLogoAction(brandName: string): Promise<string
     Use a modern color palette.
     Return ONLY the raw <svg>...</svg> code. Do not include markdown code blocks or any other text.`;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
 
@@ -145,7 +144,7 @@ export async function generateSearchTagsAction(productName: string, category: st
         4. Include related terms (e.g. "case", "cover", "mobile", "phone", "protection").
         5. Return ONLY a comma-separated list of words. No explanations.`;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
 
