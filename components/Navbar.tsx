@@ -31,23 +31,11 @@ export const Navbar: React.FC = () => {
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       const term = searchValue.toLowerCase().trim();
-      
-      // Hidden Admin Access Commands
-      if (term === 'admin' || term === 'writ') {
-        navigate('/admin');
-        setSearchValue('');
-        setSearchQuery(''); // Clear actual search so home page doesn't filter
-      } else if (term === 'writbrands') {
-        // Direct access to Brands tab
-        navigate('/admin', { state: { defaultTab: 'brands' } });
-        setSearchValue('');
-        setSearchQuery('');
-      } else {
-        // Normal search behavior is handled by the useEffect debounce, 
-        // but hitting Enter can also optionally navigate to Home if not already there
-        if (location.pathname !== '/') {
-          navigate('/');
-        }
+
+      // Normal search behavior is handled by the useEffect debounce, 
+      // but hitting Enter can also optionally navigate to Home if not already there
+      if (location.pathname !== '/') {
+        navigate('/');
       }
     }
   };
@@ -62,11 +50,11 @@ export const Navbar: React.FC = () => {
           Demo Mode: Configure services/supabase.ts to sync data online.
         </div>
       )}
-      
+
       {/* Database Error Banner - Visible to all during setup */}
       {supaConnectionError && (
-        <div 
-          className="bg-red-600 text-white text-xs py-1 text-center font-medium px-4 cursor-pointer hover:bg-red-700 transition-colors" 
+        <div
+          className="bg-red-600 text-white text-xs py-1 text-center font-medium px-4 cursor-pointer hover:bg-red-700 transition-colors"
           onClick={() => navigate('/admin')}
         >
           Database Error: {supaConnectionError} Click here to setup.
@@ -77,8 +65,8 @@ export const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center cursor-pointer group" onClick={() => navigate('/')}>
-            <img 
-              src={storeLogo} 
+            <img
+              src={storeLogo}
               alt="BasCavarat Logo"
               className="w-10 h-10 rounded-xl mr-3 rtl:ml-3 rtl:mr-0 object-cover shadow-lg shadow-pink-500/20 group-hover:shadow-pink-500/40 transition-all duration-300"
             />
@@ -120,10 +108,10 @@ export const Navbar: React.FC = () => {
 
           {/* Icons */}
           <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            
+
             {/* Theme Toggle */}
-            <button 
-              onClick={toggleTheme} 
+            <button
+              onClick={toggleTheme}
               className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
               aria-label="Toggle Theme"
             >
@@ -140,12 +128,12 @@ export const Navbar: React.FC = () => {
             </button>
 
             {isAdmin ? (
-               <button 
-               onClick={() => navigate('/')}
-               className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-2"
-             >
-               {t('exit')}
-             </button>
+              <button
+                onClick={() => navigate('/')}
+                className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-2"
+              >
+                {t('exit')}
+              </button>
             ) : (
               <>
                 {/* Wishlist Link */}
@@ -171,7 +159,7 @@ export const Navbar: React.FC = () => {
                 </button>
               </>
             )}
-            
+
             {/* Mobile Menu Button */}
             <div className="md:hidden">
               <button
@@ -188,34 +176,34 @@ export const Navbar: React.FC = () => {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 pb-6 pt-2 transition-colors">
-           {!isAdmin && (
-             <div className="space-y-3">
-                <div className="relative mt-3">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-slate-400 dark:text-slate-500" />
-                  </div>
-                  <input
-                    type="text"
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-700 focus:border-purple-500 sm:text-sm"
-                    placeholder={t('searchPlaceholder')}
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    onKeyDown={handleSearch}
-                  />
+          {!isAdmin && (
+            <div className="space-y-3">
+              <div className="relative mt-3">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-slate-400 dark:text-slate-500" />
                 </div>
-                <button 
-                  onClick={() => { navigate('/wishlist'); setIsMobileMenuOpen(false); }}
-                  className="flex items-center w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-white font-medium"
-                >
-                  <Heart className="h-5 w-5 mr-3" /> My Wishlist
-                </button>
-             </div>
-           )}
-           {isAdmin && (
-             <div className="mt-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs text-center text-slate-500">
-               Status: {isOnline && !supaConnectionError ? 'Online (Synced)' : supaConnectionError ? 'Error: Database Setup Required' : 'Offline (Local Demo)'}
-             </div>
-           )}
+                <input
+                  type="text"
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-700 focus:border-purple-500 sm:text-sm"
+                  placeholder={t('searchPlaceholder')}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onKeyDown={handleSearch}
+                />
+              </div>
+              <button
+                onClick={() => { navigate('/wishlist'); setIsMobileMenuOpen(false); }}
+                className="flex items-center w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-white font-medium"
+              >
+                <Heart className="h-5 w-5 mr-3" /> My Wishlist
+              </button>
+            </div>
+          )}
+          {isAdmin && (
+            <div className="mt-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs text-center text-slate-500">
+              Status: {isOnline && !supaConnectionError ? 'Online (Synced)' : supaConnectionError ? 'Error: Database Setup Required' : 'Offline (Local Demo)'}
+            </div>
+          )}
         </div>
       )}
     </nav>
