@@ -23,7 +23,18 @@ function AdminDashboardContent() {
 
     // Auth State
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [pin, setPin] = useState('');
+    const [password, setPassword] = useState('');
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+    // Check for auth cookie on mount
+    useEffect(() => {
+        // Check if admin_ui cookie exists
+        const isAuth = document.cookie.split(';').some((item) => item.trim().startsWith('admin_ui=true'));
+        if (isAuth) {
+            setIsAuthenticated(true);
+        }
+        setIsCheckingAuth(false);
+    }, []);
 
     const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'orders' | 'brands' | 'devices' | 'carousel' | 'discounts'>('overview');
     const [copied, setCopied] = useState(false);
@@ -126,14 +137,27 @@ function AdminDashboardContent() {
         };
     }, [isAuthenticated, isOnline, addToast]);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (pin === '1234') { // Hardcoded for demo purposes
-            setIsAuthenticated(true);
-            addToast('Access Granted', 'success');
-        } else {
-            addToast('Invalid PIN', 'error');
-            setPin('');
+
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setIsAuthenticated(true);
+                addToast('Access Granted', 'success');
+            } else {
+                addToast('Invalid Password', 'error');
+                setPassword('');
+            }
+        } catch (e) {
+            addToast('Login failed', 'error');
         }
     };
 
@@ -302,7 +326,7 @@ create policy "Anon modification discounts" on discounts for all using (true);
                             <Lock className="h-8 w-8" />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Access</h2>
-                        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Enter security PIN to continue</p>
+                        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Enter password to continue</p>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-4">
@@ -312,16 +336,14 @@ create policy "Anon modification discounts" on discounts for all using (true);
                             </div>
                             <input
                                 type="password"
-                                inputMode="numeric"
-                                maxLength={4}
-                                placeholder="Enter 4-digit PIN (1234)"
-                                value={pin}
-                                onChange={(e) => setPin(e.target.value)}
-                                className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center text-lg tracking-widest font-mono"
+                                placeholder="Enter Admin Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
                                 autoFocus
                             />
                         </div>
-                        <Button type="submit" className="w-full py-3 text-base" disabled={pin.length < 4}>
+                        <Button type="submit" className="w-full py-3 text-base" disabled={!password}>
                             <LogIn className="h-5 w-5 mr-2" /> Unlock Dashboard
                         </Button>
                     </form>
@@ -351,7 +373,12 @@ create policy "Anon modification discounts" on discounts for all using (true);
                         </Button>
                         <Button
                             variant="secondary"
-                            onClick={() => setIsAuthenticated(false)}
+                            onClick={async () => {
+                                await fetch('/api/admin/logout', { method: 'POST' });
+                                setIsAuthenticated(false);
+                                // Clear cookie manually from UI just in case
+                                document.cookie = "admin_ui=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                            }}
                             className="bg-white dark:bg-slate-800 border-red-200 text-red-600 hover:bg-red-50"
                         >
                             <Lock className="h-4 w-4 mr-2" /> Lock
