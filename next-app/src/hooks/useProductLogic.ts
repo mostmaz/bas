@@ -57,11 +57,17 @@ export const useProductLogic = (
         try {
             const cached = localStorage.getItem('products_cache');
             if (cached) {
-                const parsed = JSON.parse(cached);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    setProducts(parsed);
-                    // If we have cache, we can stop the global loader immediately to show content
-                    if (!silent) setIsAppLoading(false);
+                // Check if cache contains heavy base64 data
+                if (cached.includes('data:image')) {
+                    console.warn("Clearing cache due to heavy base64 data");
+                    localStorage.removeItem('products_cache');
+                } else {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        setProducts(parsed);
+                        // If we have cache, we can stop the global loader immediately to show content
+                        if (!silent) setIsAppLoading(false);
+                    }
                 }
             }
         } catch (e) {

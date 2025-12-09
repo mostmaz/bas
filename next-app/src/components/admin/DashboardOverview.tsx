@@ -188,21 +188,39 @@ export const DashboardOverview: React.FC = () => {
                         <div className="flex gap-3">
                             <Button
                                 onClick={async () => {
-                                    if (!confirm("This will replace ALL slow images with a placeholder. You will need to re-upload real images later. Continue?")) return;
+                                    if (!confirm("This will replace ALL slow images (including variants) with a placeholder. You will need to re-upload real images later. Continue?")) return;
 
-                                    const slowProducts = products.filter(p => p.image?.startsWith('data:image'));
+                                    const slowProducts = products.filter(p =>
+                                        p.image?.startsWith('data:image') ||
+                                        p.variants?.some(v => v.image?.startsWith('data:image'))
+                                    );
                                     let count = 0;
 
                                     for (const p of slowProducts) {
+                                        // Clean variants
+                                        const cleanVariants = p.variants?.map(v => ({
+                                            ...v,
+                                            image: v.image?.startsWith('data:image')
+                                                ? 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80'
+                                                : v.image
+                                        })) || [];
+
                                         // Update to a fast placeholder
                                         await updateProduct({
                                             ...p,
-                                            image: 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80',
-                                            images: ['https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80']
+                                            image: p.image?.startsWith('data:image')
+                                                ? 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80'
+                                                : p.image,
+                                            images: ['https://images.unsplash.com/photo-1603351154351-5cf233d327e4?w=800&q=80'],
+                                            variants: cleanVariants
                                         });
                                         count++;
                                     }
-                                    alert(`Fixed ${count} products! Your site should be fast now.`);
+
+                                    // Force clear cache
+                                    localStorage.removeItem('products_cache');
+
+                                    alert(`Fixed ${count} products! Cache cleared. Page will reload.`);
                                     window.location.reload();
                                 }}
                                 className="bg-orange-600 hover:bg-orange-700 text-white"
