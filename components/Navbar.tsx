@@ -24,18 +24,17 @@ export const Navbar: React.FC = () => {
 
   // Clear search when navigating to a new page (optional, but good UX)
   useEffect(() => {
-    setSearchValue('');
-    setSearchQuery('');
+    if (location.pathname !== '/search') {
+      setSearchValue('');
+      setSearchQuery('');
+    }
   }, [location.pathname, setSearchQuery]);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       const term = searchValue.toLowerCase().trim();
-
-      // Normal search behavior is handled by the useEffect debounce, 
-      // but hitting Enter can also optionally navigate to Home if not already there
-      if (location.pathname !== '/') {
-        navigate('/');
+      if (term) {
+        navigate('/search');
       }
     }
   };
@@ -97,9 +96,9 @@ export const Navbar: React.FC = () => {
                 </div>
                 <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border ${isOnline && !supaConnectionError ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-slate-500/10 text-slate-500 border-slate-500/20'}`}>
                   {isOnline && !supaConnectionError ? (
-                    <><Wifi className="h-3 w-3" /> Online</>
+                    <><Wifi className="h-3 w-3" /> {t('online')}</>
                   ) : (
-                    <><WifiOff className="h-3 w-3" /> Offline</>
+                    <><WifiOff className="h-3 w-3" /> {t('offline')}</>
                   )}
                 </div>
               </div>
@@ -195,13 +194,13 @@ export const Navbar: React.FC = () => {
                 onClick={() => { navigate('/wishlist'); setIsMobileMenuOpen(false); }}
                 className="flex items-center w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-white font-medium"
               >
-                <Heart className="h-5 w-5 mr-3" /> My Wishlist
+                <Heart className="h-5 w-5 mr-3" /> {t('myWishlist')}
               </button>
             </div>
           )}
           {isAdmin && (
             <div className="mt-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs text-center text-slate-500">
-              Status: {isOnline && !supaConnectionError ? 'Online (Synced)' : supaConnectionError ? 'Error: Database Setup Required' : 'Offline (Local Demo)'}
+              {t('status')}: {isOnline && !supaConnectionError ? t('online') : supaConnectionError ? 'Error: Database Setup Required' : `${t('offline')} (${t('demoMode')})`}
             </div>
           )}
         </div>

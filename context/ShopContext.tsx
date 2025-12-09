@@ -113,7 +113,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
 
   // --- UI STATE ---
   const [theme, setTheme] = useState<Theme>('light');
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>('ar');
   const [searchQuery, setSearchQuery] = useState('');
   const [supaConnectionError, setSupaConnectionError] = useState<string | null>(null);
   const [isAppLoading, setIsAppLoading] = useState(false);

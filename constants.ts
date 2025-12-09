@@ -1,5 +1,4 @@
 
-
 import { Product, CarouselSlide, Brand, DiscountCode } from './types';
 
 export const INITIAL_DISCOUNTS: DiscountCode[] = [
@@ -68,7 +67,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     stock: 8,
     colors: ['#EC4899'],
     variants: [
-       { id: 'v1', color: '#EC4899', stock: 8, image: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?auto=format&fit=crop&w=500&q=70&fm=webp' }
+      { id: 'v1', color: '#EC4899', stock: 8, image: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?auto=format&fit=crop&w=500&q=70&fm=webp' }
     ]
   },
   {
@@ -88,7 +87,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     stock: 100,
     colors: ['#8B4513'],
     variants: [
-       { id: 'v1', color: '#8B4513', stock: 100, image: 'https://images.unsplash.com/photo-1694501015348-6b06504f3252?auto=format&fit=crop&w=500&q=70&fm=webp' }
+      { id: 'v1', color: '#8B4513', stock: 100, image: 'https://images.unsplash.com/photo-1694501015348-6b06504f3252?auto=format&fit=crop&w=500&q=70&fm=webp' }
     ]
   },
   {
@@ -262,6 +261,32 @@ export const TRANSLATIONS = {
     shipped: "Shipped",
     delivered: "Delivered",
     youMightAlsoLike: "You Might Also Like",
+    wishlist: "Wishlist",
+    myWishlist: "My Wishlist",
+    status: "Status",
+    online: "Online",
+    offline: "Offline",
+    demoMode: "Demo Mode",
+    governorate: "Governorate",
+    selectGovernorate: "Select Governorate",
+    baghdad: "Baghdad",
+    basra: "Basra",
+    ninawa: "Ninawa",
+    erbil: "Erbil",
+    sulaymaniyah: "Sulaymaniyah",
+    kirkuk: "Kirkuk",
+    duhok: "Duhok",
+    anbar: "Anbar",
+    babil: "Babil",
+    wasit: "Wasit",
+    karbala: "Karbala",
+    najaf: "Najaf",
+    diyala: "Diyala",
+    qadisiyah: "Al-Qadisiyah",
+    muthanna: "Al-Muthanna",
+    dhiQar: "Dhi Qar",
+    maysan: "Maysan",
+    saladin: "Saladin",
   },
   ar: {
     searchPlaceholder: "ابحث عن الحافظة المثالية...",
@@ -301,8 +326,8 @@ export const TRANSLATIONS = {
     deliveryDetails: "تفاصيل التوصيل",
     fullName: "الاسم الكامل",
     phone: "رقم الهاتف",
-    city: "المدينة",
-    address: "العنوان بالتفصيل",
+    city: "المحافظة",
+    address: "العنوان بالتفصيل (المنطقة، نقطة دالة)",
     completeOrder: "إتمام الطلب",
     secureCheckout: "دفع آمن. الدفع نقداً عند الاستلام.",
     orderSummary: "ملخص الطلب",
@@ -348,5 +373,52 @@ export const TRANSLATIONS = {
     shipped: "تم الشحن",
     delivered: "تم التوصيل",
     youMightAlsoLike: "قد يعجبك أيضاً",
+    wishlist: "المفضلة",
+    myWishlist: "قائمة أمنياتي",
+    status: "الحالة",
+    online: "متصل",
+    offline: "غير متصل",
+    demoMode: "الوضع التجريبي",
+    governorate: "المحافظة",
+    selectGovernorate: "اختر المحافظة",
+    baghdad: "بغداد",
+    basra: "البصرة",
+    ninawa: "نينوى",
+    erbil: "أربيل",
+    sulaymaniyah: "السليمانية",
+    kirkuk: "كركوك",
+    duhok: "دهوك",
+    anbar: "الأنبار",
+    babil: "بابل",
+    wasit: "واسط",
+    karbala: "كربلاء",
+    najaf: "النجف",
+    diyala: "ديالى",
+    qadisiyah: "القادسية",
+    muthanna: "المثنى",
+    dhiQar: "ذي قار",
+    maysan: "ميسان",
+    saladin: "صلاح الدين",
   }
 };
+
+export const IRAQI_GOVERNORATES = [
+  { value: 'Baghdad', labelKey: 'baghdad' },
+  { value: 'Basra', labelKey: 'basra' },
+  { value: 'Ninawa', labelKey: 'ninawa' },
+  { value: 'Erbil', labelKey: 'erbil' },
+  { value: 'Sulaymaniyah', labelKey: 'sulaymaniyah' },
+  { value: 'Kirkuk', labelKey: 'kirkuk' },
+  { value: 'Duhok', labelKey: 'duhok' },
+  { value: 'Anbar', labelKey: 'anbar' },
+  { value: 'Babil', labelKey: 'babil' },
+  { value: 'Wasit', labelKey: 'wasit' },
+  { value: 'Karbala', labelKey: 'karbala' },
+  { value: 'Najaf', labelKey: 'najaf' },
+  { value: 'Diyala', labelKey: 'diyala' },
+  { value: 'Al-Qadisiyah', labelKey: 'qadisiyah' },
+  { value: 'Al-Muthanna', labelKey: 'muthanna' },
+  { value: 'Dhi Qar', labelKey: 'dhiQar' },
+  { value: 'Maysan', labelKey: 'maysan' },
+  { value: 'Saladin', labelKey: 'saladin' },
+];
