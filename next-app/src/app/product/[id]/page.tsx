@@ -77,7 +77,26 @@ export default function ProductDetails() {
         ...(product.images || []),
         ...(product.variants?.map(v => v.image) || [])
     ];
-    const galleryImages = Array.from(new Set(rawImages.filter(Boolean).map(url => url.trim()))).filter(Boolean);
+
+    const uniqueUrls = new Set<string>();
+    const galleryImages: string[] = [];
+
+    rawImages.filter(Boolean).forEach(url => {
+        try {
+            const normalized = decodeURIComponent(url).trim();
+            if (!uniqueUrls.has(normalized)) {
+                uniqueUrls.add(normalized);
+                galleryImages.push(url);
+            }
+        } catch (e) {
+            // Fallback for malformed URLs
+            const normalized = url.trim();
+            if (!uniqueUrls.has(normalized)) {
+                uniqueUrls.add(normalized);
+                galleryImages.push(url);
+            }
+        }
+    });
 
     // Available Variants (Stock > 0) - Only show if stock is available
     // Only hide variants if they have 0 stock to prevent selection
