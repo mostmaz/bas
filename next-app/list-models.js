@@ -1,4 +1,4 @@
-const apiKey = "AIzaSyBEirnly84mY7THxpUfgPpXvU0HIjjZpF4";
+const apiKey = process.env.GEMINI_API_KEY;
 async function listModels() {
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
