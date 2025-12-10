@@ -25,8 +25,8 @@ const nextConfig: NextConfig = {
   // Compression
   compress: true,
 
-  // Output standalone for Docker/Digital Ocean - REMOVED to use standard next start
-  // output: 'standalone',
+  // Output standalone for Docker/Digital Ocean
+  output: 'standalone',
 
   // Performance optimizations
   experimental: {
