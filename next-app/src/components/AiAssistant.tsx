@@ -13,7 +13,7 @@ export const AiAssistant: React.FC = () => {
     const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
     const [messages, setMessages] = useState<ChatMessage[]>([
-        { id: 'init', role: 'model', text: 'Hi! I\'m Casey, your AI style assistant. Looking for a specific vibe?', timestamp: Date.now() }
+        { id: 'init', role: 'model', text: 'Hi! I\'m Layla, your AI style assistant. Looking for a specific vibe?', timestamp: Date.now() }
     ]);
 
     const [input, setInput] = useState('');

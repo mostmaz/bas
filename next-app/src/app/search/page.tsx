@@ -35,22 +35,19 @@ const SEARCH_MAPPINGS: Record<string, string[]> = {
     'شاشة': ['screen', 'protector'],
 };
 
-const getSearchTerms = (query: string): string[] => {
+const getSearchTermsGroups = (query: string): string[][] => {
     const lowerQuery = query.toLowerCase().trim();
     if (!lowerQuery) return [];
 
-    const terms = new Set<string>();
-    terms.add(lowerQuery);
-
     const words = lowerQuery.split(/\s+/);
-    words.forEach(word => {
-        terms.add(word);
+    return words.map(word => {
+        const group = new Set<string>();
+        group.add(word);
         if (SEARCH_MAPPINGS[word]) {
-            SEARCH_MAPPINGS[word].forEach(v => terms.add(v));
+            SEARCH_MAPPINGS[word].forEach(v => group.add(v));
         }
+        return Array.from(group);
     });
-
-    return Array.from(terms);
 };
 
 export default function SearchPage() {
@@ -77,17 +74,22 @@ export default function SearchPage() {
     const filteredProducts = useMemo(() => {
         if (!searchQuery.trim()) return [];
 
-        const searchTerms = getSearchTerms(searchQuery);
-        return products.filter(p =>
-            searchTerms.some(term =>
-                p.name.toLowerCase().includes(term) ||
-                p.description.toLowerCase().includes(term) ||
-                p.category.toLowerCase().includes(term) ||
-                p.brand.toLowerCase().includes(term) ||
-                p.device.toLowerCase().includes(term) ||
-                p.tags?.some(tag => tag.toLowerCase().includes(term))
-            )
-        );
+        const termGroups = getSearchTermsGroups(searchQuery);
+
+        return products.filter(p => {
+            // Product must match ALL term groups (AND logic)
+            return termGroups.every(group => {
+                // For this group, product must match AT LEAST ONE term (OR logic within synonyms)
+                return group.some(term =>
+                    p.name.toLowerCase().includes(term) ||
+                    p.description.toLowerCase().includes(term) ||
+                    p.category.toLowerCase().includes(term) ||
+                    p.brand.toLowerCase().includes(term) ||
+                    p.device.toLowerCase().includes(term) ||
+                    p.tags?.some(tag => tag.toLowerCase().includes(term))
+                );
+            });
+        });
     }, [products, searchQuery]);
 
     return (

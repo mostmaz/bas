@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useShop } from '@/context/ShopContext';
-import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag } from 'lucide-react';
+import { ArrowLeft, Star, Truck, Banknote, Share2, Heart, Check, AlertCircle, Tag } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { ProductCard } from '@/components/ProductCard';
 import { ProductVariant } from '@/types';
@@ -53,7 +53,7 @@ export default function ProductDetails() {
     const relatedProducts = useMemo(() => {
         if (!product) return [];
         return products
-            .filter(p => p.id !== product.id && (p.category === product.category || p.device === product.device))
+            .filter(p => p.id !== product.id && p.device === product.device)
             .slice(0, 6);
     }, [products, product]);
 
@@ -70,41 +70,55 @@ export default function ProductDetails() {
 
     // Merge base images with variant images for the gallery
     // Ensure we filter out empty strings and duplicates
-    // Merge base images with variant images for the gallery
-    // Ensure we filter out empty strings and duplicates
-    const rawImages = [
-        product.image,
-        ...(product.images || []),
-        ...(product.variants?.map(v => v.image) || [])
-    ];
-
     const uniqueUrls = new Set<string>();
     const galleryImages: string[] = [];
 
-    rawImages.filter(Boolean).forEach(url => {
+    // Helper to normalize URL for comparison
+    const normalizeUrl = (url: string) => {
         try {
-            const normalized = decodeURIComponent(url).trim();
-            if (!uniqueUrls.has(normalized)) {
-                uniqueUrls.add(normalized);
-                galleryImages.push(url);
-            }
-        } catch (e) {
-            // Fallback for malformed URLs
-            const normalized = url.trim();
-            if (!uniqueUrls.has(normalized)) {
-                uniqueUrls.add(normalized);
-                galleryImages.push(url);
-            }
+            // Remove query parameters for deduplication check to handle SAS tokens/versions
+            const cleanUrl = url.split('?')[0];
+            return decodeURIComponent(cleanUrl).trim();
+        } catch {
+            return url.trim();
         }
-    });
+    };
+
+    // 1. Add main product image
+    if (product.image) {
+        const norm = normalizeUrl(product.image);
+        uniqueUrls.add(norm);
+        galleryImages.push(product.image);
+    }
+
+    // 2. Add additional images (excluding main image if duplicated)
+    if (product.images) {
+        product.images.forEach(url => {
+            if (!url) return;
+            const norm = normalizeUrl(url);
+            if (!uniqueUrls.has(norm)) {
+                uniqueUrls.add(norm);
+                galleryImages.push(url);
+            }
+        });
+    }
+
+    // 3. Add variant images (excluding existing images)
+    if (product.variants) {
+        product.variants.forEach(v => {
+            if (!v.image) return;
+            const norm = normalizeUrl(v.image);
+            if (!uniqueUrls.has(norm)) {
+                uniqueUrls.add(norm);
+                galleryImages.push(v.image);
+            }
+        });
+    }
 
     // Available Variants (Stock > 0) - Only show if stock is available
-    // Only hide variants if they have 0 stock to prevent selection
-    // Safeguard against undefined variants with optional chaining
     const availableVariants = product.variants ? product.variants.filter(v => v.stock > 0) : [];
 
     // Determine current stock display
-    // If a variant is selected, show its stock. Otherwise show total product stock.
     const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
 
     // Discount Calculation
@@ -116,24 +130,18 @@ export default function ProductDetails() {
         <div className="pt-8 pb-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                {/* Breadcrumb & Back */}
-                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-8 flex-wrap">
-                    <button onClick={() => router.back()} className="hover:text-purple-600 dark:hover:text-white flex items-center transition-colors font-medium">
+                {/* Back Button Only (Breadcrumbs Removed) */}
+                <div className="mb-8">
+                    <button onClick={() => router.back()} className="hover:text-purple-600 dark:hover:text-white flex items-center transition-colors font-medium text-slate-500 dark:text-slate-400">
                         <ArrowLeft className="h-4 w-4 mr-1 rtl:ml-1 rtl:mr-0" /> {t('back')}
                     </button>
-                    <span className="text-slate-400 dark:text-slate-600">/</span>
-                    <span className="cursor-pointer hover:text-purple-600 dark:hover:text-white" onClick={() => router.push('/')}>{t('shop')}</span>
-                    <span className="text-slate-400 dark:text-slate-600">/</span>
-                    <span className="cursor-pointer hover:text-purple-600 dark:hover:text-white" onClick={() => router.push('/')}>{product.brand}</span>
-                    <span className="text-slate-400 dark:text-slate-600">/</span>
-                    <span className="text-slate-900 dark:text-white font-semibold truncate max-w-[150px] sm:max-w-none">{product.name}</span>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
                     {/* Image Section */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 flex flex-col items-center">
                         {/* Main Image */}
-                        <div className="aspect-[3/4] w-full rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/5 relative group shadow-2xl shadow-slate-200/50 dark:shadow-none transition-all">
+                        <div className="aspect-[3/4] w-1/2 rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/5 relative group shadow-2xl shadow-slate-200/50 dark:shadow-none transition-all">
                             <img
                                 src={activeImage || product.image}
                                 alt={product.name}
@@ -295,7 +303,7 @@ export default function ProductDetails() {
                             </div>
                             <div className="flex items-start">
                                 <div className="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                    <ShieldCheck className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                                    <Banknote className="h-6 w-6 text-green-600 dark:text-green-400" />
                                 </div>
                                 <div className="ml-4 rtl:mr-4 rtl:ml-0">
                                     <h4 className="text-base font-semibold text-slate-900 dark:text-white">{t('qualityGuarantee')}</h4>
