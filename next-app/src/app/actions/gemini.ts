@@ -89,19 +89,36 @@ ALWAYS include a direct link for products: [Product Name](/product/ID)
 /**
  * Server Action: Generate Product Description
  */
-export async function generateProductDescriptionAction(productName: string): Promise<string> {
+export async function generateProductDescriptionAction(productName: string, imageBase64?: string): Promise<string> {
     if (!apiKey) return "Error: API Key missing.";
 
     try {
-        const prompt = `Write a catchy, sales-oriented product description in Arabic (max 35 words) for a premium phone case named "${productName}".`;
-
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const result = await model.generateContent(prompt);
 
+        let prompt = `Write a creative, premium, and sales-oriented product description in Arabic (max 50 words) for a phone case named "${productName}". Focus on protection, style, and quality.`;
+
+        if (imageBase64) {
+            prompt = `Analyze this image of a phone case named "${productName}". Write a creative, premium, and sales-oriented product description in Arabic (max 50 words) describing its design, color, and features shown in the image. Focus on protection, style, and quality.`;
+
+            // Remove data:image/...;base64, prefix if present
+            const base64Data = imageBase64.split(',')[1] || imageBase64;
+
+            const imagePart = {
+                inlineData: {
+                    data: base64Data,
+                    mimeType: "image/jpeg",
+                },
+            };
+
+            const result = await model.generateContent([prompt, imagePart]);
+            return result.response.text();
+        }
+
+        const result = await model.generateContent(prompt);
         return result.response.text();
     } catch (error) {
         console.error("Gemini Description Gen Error:", error);
-        return "Error generating description.";
+        return "عذراً، حدث خطأ أثناء إنشاء الوصف.";
     }
 }
 
