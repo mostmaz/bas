@@ -50,7 +50,7 @@ export const ProductDetails: React.FC = () => {
   const relatedProducts = useMemo(() => {
     if (!product) return [];
     return products
-      .filter(p => p.id !== product.id && (p.category === product.category || p.device === product.device))
+      .filter(p => p.id !== product.id && p.device === product.device)
       .slice(0, 6);
   }, [products, product]);
 
@@ -226,9 +226,9 @@ export const ProductDetails: React.FC = () => {
             {availableVariants.length > 0 && (
               <div className="mb-8 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Select Color</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('selectColor')}</h3>
                   <span className={`text-xs font-bold px-2 py-1 rounded ${currentStock < 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                    {currentStock} in stock
+                    {currentStock} {t('inStock')}
                   </span>
                 </div>
 
@@ -251,9 +251,35 @@ export const ProductDetails: React.FC = () => {
                 {selectedVariant && selectedVariant.stock < 5 && (
                   <div className="mt-3 flex items-center text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 py-1.5 px-3 rounded-lg w-fit">
                     <AlertCircle className="h-3 w-3 mr-1.5" />
-                    Hurry! Only {selectedVariant.stock} left in stock.
+                    {t('hurryOnly')} {selectedVariant.stock} {t('leftInStock')}
                   </div>
                 )}
+
+                {/* Add to Cart Button (Inside Variant Box) */}
+                <div className="mt-6">
+                  <Button
+                    size="lg"
+                    onClick={() => addToCart(product, selectedVariant || undefined)}
+                    disabled={currentStock < 1}
+                    className="w-full py-4 text-lg shadow-xl shadow-purple-600/20"
+                  >
+                    {currentStock < 1 ? 'Out of Stock' : t('addToCart')}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Add to Cart Button (Outside Variant Box - if no variants) */}
+            {availableVariants.length === 0 && (
+              <div className="mb-8">
+                <Button
+                  size="lg"
+                  onClick={() => addToCart(product, selectedVariant || undefined)}
+                  disabled={currentStock < 1}
+                  className="w-full py-4 text-lg shadow-xl shadow-purple-600/20"
+                >
+                  {currentStock < 1 ? 'Out of Stock' : t('addToCart')}
+                </Button>
               </div>
             )}
 
@@ -263,22 +289,16 @@ export const ProductDetails: React.FC = () => {
               {t('genericProductDesc')}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Button
-                size="lg"
-                onClick={() => addToCart(product, selectedVariant || undefined)}
-                disabled={currentStock < 1}
-                className="flex-1 py-4 text-lg shadow-xl shadow-purple-600/20"
-              >
-                {currentStock < 1 ? 'Out of Stock' : t('addToCart')}
-              </Button>
+            {/* Wishlist Button (Standalone now) */}
+            <div className="flex gap-4 mb-12">
               <Button
                 variant="outline"
                 size="lg"
                 onClick={() => toggleWishlist(product.id)}
-                className={`px-6 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 ${isWishlisted ? 'text-red-500 border-red-200 bg-red-50 dark:bg-red-900/10' : 'text-slate-600 dark:text-slate-300'}`}
+                className={`flex-1 px-6 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 ${isWishlisted ? 'text-red-500 border-red-200 bg-red-50 dark:bg-red-900/10' : 'text-slate-600 dark:text-slate-300'}`}
               >
-                <Heart className={`h-6 w-6 ${isWishlisted ? 'fill-current' : ''}`} />
+                <Heart className={`h-6 w-6 mr-2 ${isWishlisted ? 'fill-current' : ''}`} />
+                {isWishlisted ? t('wishlist') : t('wishlist')}
               </Button>
             </div>
 

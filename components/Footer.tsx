@@ -13,7 +13,7 @@ export const Footer: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe z-40 transition-colors">
+    <div className="fixed bottom-4 left-4 right-4 bg-white dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl z-40 transition-all">
       <div className="flex justify-around items-center h-16 px-2 w-full">
 
         <button

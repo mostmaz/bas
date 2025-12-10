@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, Database, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, Database, AlertTriangle, CheckSquare, Square, Eye, EyeOff, Smartphone } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 import { Product } from '../../types';
@@ -42,6 +42,9 @@ export const ProductManagement: React.FC = () => {
   // Filter State
   const [selectedDevice, setSelectedDevice] = useState<string>('All');
 
+  // Selection State
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+
   // File Input Ref for Bulk Upload
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,6 +73,79 @@ export const ProductManagement: React.FC = () => {
     setIsRefreshing(true);
     await refreshProducts();
     setIsRefreshing(false);
+  };
+
+  // Batch Operations
+  const handleSelectAll = () => {
+    if (selectedProducts.size === filteredProducts.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
+    }
+  };
+
+  const handleSelectProduct = (id: string) => {
+    const newSelected = new Set(selectedProducts);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedProducts(newSelected);
+  };
+
+  const handleBatchDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedProducts.size} products?`)) return;
+    setIsSaving(true);
+    try {
+      await Promise.all(Array.from(selectedProducts).map(id => deleteProduct(id)));
+      setSelectedProducts(new Set());
+      await refreshProducts();
+    } catch (e) {
+      alert('Error deleting products');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleBatchHide = async (hide: boolean) => {
+    setIsSaving(true);
+    try {
+      await Promise.all(Array.from(selectedProducts).map(id => {
+        const product = products.find(p => p.id === id);
+        if (product) {
+          return updateProduct({ ...product, isHidden: hide });
+        }
+        return Promise.resolve();
+      }));
+      setSelectedProducts(new Set());
+      await refreshProducts();
+    } catch (e) {
+      alert('Error updating visibility');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleBatchEditDevice = async () => {
+    const newDevice = window.prompt("Enter new device name for selected products:");
+    if (!newDevice) return;
+    setIsSaving(true);
+    try {
+      await Promise.all(Array.from(selectedProducts).map(id => {
+        const product = products.find(p => p.id === id);
+        if (product) {
+          return updateProduct({ ...product, device: newDevice });
+        }
+        return Promise.resolve();
+      }));
+      setSelectedProducts(new Set());
+      await refreshProducts();
+    } catch (e) {
+      alert('Error updating devices');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDownloadTemplate = () => {
@@ -515,11 +591,63 @@ export const ProductManagement: React.FC = () => {
         </div>
       </div>
 
+      {/* Batch Actions Toolbar */}
+      {selectedProducts.size > 0 && (
+        <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg flex items-center justify-between animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-2 text-sm text-indigo-900 dark:text-indigo-200 font-medium">
+            <CheckSquare className="h-4 w-4" />
+            {selectedProducts.size} Selected
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleBatchEditDevice}
+              className="bg-white dark:bg-slate-800"
+            >
+              <Smartphone className="h-4 w-4 mr-2" /> Edit Device
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleBatchHide(true)}
+              className="bg-white dark:bg-slate-800"
+            >
+              <EyeOff className="h-4 w-4 mr-2" /> Hide
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleBatchHide(false)}
+              className="bg-white dark:bg-slate-800"
+            >
+              <Eye className="h-4 w-4 mr-2" /> Show
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={handleBatchDelete}
+            >
+              <Trash2 className="h-4 w-4 mr-2" /> Delete
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-slate-400 font-medium border-b border-gray-200 dark:border-slate-700">
               <tr>
+                <th className="px-6 py-3 w-10">
+                  <button onClick={handleSelectAll} className="text-gray-400 hover:text-indigo-600">
+                    {selectedProducts.size > 0 && selectedProducts.size === filteredProducts.length ? (
+                      <CheckSquare className="h-5 w-5 text-indigo-600" />
+                    ) : (
+                      <Square className="h-5 w-5" />
+                    )}
+                  </button>
+                </th>
                 <th className="px-6 py-3">Product</th>
                 <th className="px-6 py-3">SKU</th>
                 <th className="px-6 py-3">Specs</th>
@@ -531,13 +659,22 @@ export const ProductManagement: React.FC = () => {
             <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400 italic">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400 italic">
                     No products found for the selected device.
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                  <tr key={product.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${selectedProducts.has(product.id) ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''} ${product.isHidden ? 'opacity-60 grayscale' : ''}`}>
+                    <td className="px-6 py-4">
+                      <button onClick={() => handleSelectProduct(product.id)} className="text-gray-400 hover:text-indigo-600">
+                        {selectedProducts.has(product.id) ? (
+                          <CheckSquare className="h-5 w-5 text-indigo-600" />
+                        ) : (
+                          <Square className="h-5 w-5" />
+                        )}
+                      </button>
+                    </td>
                     <td className="px-6 py-4 flex items-center gap-3">
                       <img
                         src={product.image}
@@ -546,7 +683,10 @@ export const ProductManagement: React.FC = () => {
                         className="h-10 w-10 rounded-md object-cover border border-gray-200 dark:border-slate-600"
                       />
                       <div>
-                        <span className="font-medium text-gray-900 dark:text-white block">{product.name}</span>
+                        <span className="font-medium text-gray-900 dark:text-white block">
+                          {product.name}
+                          {product.isHidden && <span className="ml-2 text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">Hidden</span>}
+                        </span>
                         <span className="text-gray-500 dark:text-slate-400 text-xs">{product.category}</span>
                       </div>
                     </td>

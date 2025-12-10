@@ -117,7 +117,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const ENCODED_PIN = 'MTUwODkzNDEyQ0Bj';
+    const ENCODED_PIN = 'MTUwODkzNDEyQ0Bj'; // Encoded PIN
     if (btoa(pin) === ENCODED_PIN) {
       setIsAuthenticated(true);
       addToast('Access Granted', 'success');
@@ -136,6 +136,7 @@ alter table products add column if not exists colors text[];
 alter table products add column if not exists variants jsonb;
 alter table products add column if not exists sale_price numeric;
 alter table products add column if not exists sku text;
+alter table products add column if not exists isHidden boolean default false;
 alter table products add column if not exists created_at timestamptz default now();
 
 -- 2. Ensure Brands table has logo
@@ -166,7 +167,8 @@ create table if not exists products (
   rating numeric,
   stock numeric,
   colors text[],
-  variants jsonb
+  variants jsonb,
+  isHidden boolean default false
 );
 
 create table if not exists brands (
@@ -311,9 +313,7 @@ create policy "Public Delete" on storage.objects for delete using ( bucket_id = 
               </div>
               <input
                 type="password"
-                inputMode="numeric"
-                maxLength={4}
-                placeholder="Enter 4-digit PIN (1234)"
+                placeholder="Enter Admin Password"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center text-lg tracking-widest font-mono"
