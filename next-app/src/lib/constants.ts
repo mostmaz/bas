@@ -282,6 +282,8 @@ export const TRANSLATIONS = {
         shipped: "Shipped",
         delivered: "Delivered",
         youMightAlsoLike: "You Might Also Like",
+        popular: "Popular",
+        noDeviceMatch: "Sorry, no products available for this device right now.",
     },
     ar: {
         searchPlaceholder: "ابحث عن الحافظة المثالية...",
@@ -291,6 +293,7 @@ export const TRANSLATIONS = {
         selectDevice: "اختر جهازك",
         deviceSubtitle: "تصفية الحافظات الخاصة بموديل هاتفك",
         noProducts: "لم يتم العثور على منتجات",
+        noDeviceMatch: "عذراً، لا توجد منتجات متوفرة لهذا الجهاز حالياً.",
         cart: "عربة التسوق",
         emptyCart: "عربة التسوق فارغة",
         checkout: "الدفع",
@@ -368,5 +371,6 @@ export const TRANSLATIONS = {
         shipped: "تم الشحن",
         delivered: "تم التوصيل",
         youMightAlsoLike: "قد يعجبك أيضاً",
+        popular: "الأكثر شيوعاً",
     }
 };

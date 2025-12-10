@@ -192,7 +192,8 @@ export default function Home() {
               onChange={(e) => setSelectedDevice(e.target.value)}
               className="w-full appearance-none bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white py-2 pl-4 pr-10 rtl:pl-10 rtl:pr-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-xs sm:text-sm font-medium cursor-pointer hover:bg-white dark:hover:bg-slate-900 transition-colors shadow-inner"
             >
-              {uniqueDevices.map((device) => (
+              <option value="All">{t('selectDevice')}</option>
+              {uniqueDevices.filter(d => d !== 'All').map((device) => (
                 <option key={device} value={device}>{device}</option>
               ))}
             </select>
@@ -278,8 +279,12 @@ export default function Home() {
                 <div className="bg-slate-100 dark:bg-slate-800 p-6 rounded-full mb-4">
                   <Filter className="h-10 w-10 text-slate-400" />
                 </div>
-                <h3 className="text-lg font-medium text-slate-900 dark:text-white">{t('noProducts')}</h3>
-                <p className="text-slate-500 dark:text-slate-400 mt-2">{t('noProducts')}</p>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+                  {selectedDevice !== 'All' ? t('noDeviceMatch') : t('noProducts')}
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 mt-2">
+                  {selectedDevice !== 'All' ? t('noDeviceMatch') : t('noProducts')}
+                </p>
                 <button
                   onClick={() => { setSelectedDevice('All'); setSelectedBrand('All'); }}
                   className="mt-6 text-purple-600 dark:text-purple-400 font-medium hover:underline"
@@ -322,7 +327,7 @@ export default function Home() {
               <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <TrendingUp className="h-6 w-6 text-amber-500" />
-                  {t('bestSellers')}
+                  {t('popular')}
                   <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                     {t('trending')}
                   </span>
