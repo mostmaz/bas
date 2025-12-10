@@ -155,10 +155,26 @@ export const useProductLogic = (
             };
 
             const { error } = await supabase.from('products').insert([dbProduct]);
+
             if (error) {
-                console.error(error);
-                addToast('Failed to add product', 'error');
-                return;
+                const lowerMsg = (error.message || '').toLowerCase();
+                // Check for schema mismatch errors
+                if (error.code === '42703' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku') || lowerMsg.includes('tags')) {
+                    console.warn("Schema mismatch detected during add: column missing. Retrying insert without advanced fields.");
+                    addToast("Warning: Database Schema Outdated. Added without complex data.", 'warning');
+
+                    const { images, colors, variants, sale_price, sku, tags, ...legacyProduct } = dbProduct;
+                    const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
+
+                    const { error: retryError } = await supabase.from('products').insert([safeProduct]);
+                    if (retryError) {
+                        console.error("Retry Add Error:", retryError);
+                        throw retryError;
+                    }
+                } else {
+                    console.error("Add Error:", error);
+                    throw error;
+                }
             }
             await refreshProducts();
             addToast('Product added successfully', 'success');
@@ -196,7 +212,7 @@ export const useProductLogic = (
 
             if (error) {
                 const lowerMsg = (error.message || '').toLowerCase();
-                if (error.code === '42703' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku')) {
+                if (error.code === '42703' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku') || lowerMsg.includes('tags')) {
                     console.warn("Schema mismatch detected: column missing. Retrying update without advanced fields.");
                     addToast("Warning: Database Schema Outdated. Updated without complex data.", 'warning');
 
@@ -205,14 +221,12 @@ export const useProductLogic = (
 
                     const { error: retryError } = await supabase.from('products').update(safeProduct).eq('id', product.id);
                     if (retryError) {
-                        console.error(retryError);
-                        addToast('Failed to update product', 'error');
-                        return;
+                        console.error("Retry Update Error:", retryError);
+                        throw retryError;
                     }
                 } else {
-                    console.error(error);
-                    addToast('Failed to update product', 'error');
-                    return;
+                    console.error("Update Error:", error);
+                    throw error;
                 }
             }
             await refreshProducts();

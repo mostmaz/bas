@@ -260,7 +260,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200 border border-gray-200 dark:border-slate-700 flex flex-col max-h-[95vh]">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200 border border-gray-200 dark:border-slate-700 flex flex-col max-h-[90vh]">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center shrink-0">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">{initialData ? 'Edit Product' : 'Add New Product'}</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200">
