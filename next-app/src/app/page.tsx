@@ -332,6 +332,7 @@ export default function Home() {
                     {t('trending')}
                   </span>
                 </h2>
+                <button className="text-sm text-purple-600 dark:text-purple-400 font-medium">{t('viewAll')}</button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-8">
                 {bestSellers.map((product) => (
