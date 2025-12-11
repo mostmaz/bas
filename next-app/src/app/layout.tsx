@@ -5,14 +5,30 @@ import { ShopProvider } from "@/context/ShopContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { Navbar } from "@/components/Navbar";
 import { CartDrawer } from "@/components/CartDrawer";
-import { Footer } from "@/components/Footer";
+
 import { AiAssistant } from "@/components/AiAssistant";
+import { FloatingNav } from "@/components/FloatingNav";
 
 const cairo = Cairo({ subsets: ["latin", "arabic"] });
 
 export const metadata: Metadata = {
-  title: "BasCavarat - Premium Phone Cases",
-  description: "Shop the best phone cases in Iraq. Premium quality, fast delivery.",
+  title: "BasCavarat | Premium Mobile Accessories",
+  description: "Discover premium mobile accessories, cases, and gadgets at BasCavarat. Shop the latest trends with fast shipping and quality guarantee.",
+  manifest: "/manifest.json",
+  themeColor: "#9333EA",
+  openGraph: {
+    type: "website",
+    url: "https://bascavarat.com/",
+    title: "BasCavarat | Premium Mobile Accessories",
+    description: "Discover premium mobile accessories, cases, and gadgets at BasCavarat.",
+    images: ["/logo.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BasCavarat | Premium Mobile Accessories",
+    description: "Discover premium mobile accessories, cases, and gadgets at BasCavarat.",
+    images: ["/logo.png"],
+  },
 };
 
 import { getCachedProducts, getCachedBrands, getCachedDevices, getCachedSlides } from "@/lib/server-data";
@@ -48,19 +64,36 @@ export default async function RootLayout({
           <ShopProvider initialData={initialData}>
             <AppUrlListener />
             <SplashScreen />
-            <div className="min-h-screen flex flex-col pb-20 md:pb-0">
+            <div className="min-h-screen flex flex-col">
               <Navbar />
               <CartDrawer />
               <main className="flex-grow">
                 {children}
               </main>
               <AiAssistant />
-              <div className="md:hidden">
-                <Footer />
-              </div>
+              <FloatingNav />
+
             </div>
           </ShopProvider>
         </ToastProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('Service Worker registration successful with scope: ', registration.scope);
+                    },
+                    function(err) {
+                      console.log('Service Worker registration failed: ', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

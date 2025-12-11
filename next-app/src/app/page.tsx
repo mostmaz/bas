@@ -1,132 +1,62 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useShop } from '@/context/ShopContext';
 import { ProductCard } from '@/components/ProductCard';
 import { ProductSkeleton } from '@/components/ProductSkeleton';
 import { OffersCarousel } from '@/components/OffersCarousel';
-import { Filter, ChevronDown, Smartphone, Layers, LayoutGrid, Sparkles, TrendingUp, Loader2 } from 'lucide-react';
+import { Filter, ChevronDown, Smartphone, Layers, LayoutGrid, Sparkles, TrendingUp, ChevronRight } from 'lucide-react';
 import { Brand } from '@/types';
-
-const SEARCH_MAPPINGS: Record<string, string[]> = {
-  'samsung': ['سامسونج', 'جالكسي', 'galaxy'],
-  'سامسونج': ['samsung', 'galaxy', 'جالكسي'],
-  'iphone': ['ايفون', 'آيفون', 'apple', 'ابل'],
-  'ايفون': ['iphone', 'apple', 'ابل'],
-  'آيفون': ['iphone', 'apple', 'ابل'],
-  'realme': ['ريلمي'],
-  'ريلمي': ['realme'],
-  'xiaomi': ['شاومي', 'redmi', 'ريدمي'],
-  'شاومي': ['xiaomi', 'redmi', 'ريدمي'],
-  'huawei': ['هواوي'],
-  'هواوي': ['huawei'],
-  'honor': ['هونر'],
-  'هونر': ['honor'],
-  'infinix': ['انفينكس'],
-  'انفينكس': ['infinix'],
-  'tecno': ['تكنو'],
-  'تكنو': ['tecno'],
-  'oppo': ['اوبو'],
-  'اوبو': ['oppo'],
-  'vivo': ['فيفو'],
-  'فيفو': ['vivo'],
-  'cover': ['كفر', 'حافظة', 'غلاف', 'case'],
-  'كفر': ['cover', 'case'],
-  'case': ['كفر', 'حافظة'],
-  'screen': ['شاشة', 'حماية'],
-  'شاشة': ['screen', 'protector'],
-};
-
-const getSearchTerms = (query: string): string[] => {
-  const lowerQuery = query.toLowerCase().trim();
-  if (!lowerQuery) return [];
-
-  const terms = new Set<string>();
-  terms.add(lowerQuery);
-
-  const words = lowerQuery.split(/\s+/);
-  words.forEach(word => {
-    terms.add(word);
-    // Add synonyms
-    if (SEARCH_MAPPINGS[word]) {
-      SEARCH_MAPPINGS[word].forEach(v => terms.add(v));
-    }
-  });
-
-  return Array.from(terms);
-};
+import { useRouter } from 'next/navigation';
+import { FilterModal, FilterState } from '@/components/FilterModal';
 
 export default function Home() {
-  const { products, brands, t, searchQuery, orders, isAppLoading, isProductsLoading } = useShop();
-  const [selectedDevice, setSelectedDevice] = useState('All');
-  const [selectedBrand, setSelectedBrand] = useState('All');
+  const { products, brands, t, devices, isAppLoading, isProductsLoading, orders } = useShop();
+  const router = useRouter();
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Lazy Loading State
-  const [visibleCount, setVisibleCount] = useState(12);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  // We keep local state for the filter modal, but applying it navigates away
+  const [filters, setFilters] = useState<FilterState>({
+    priceRange: [0, 1000000],
+    selectedColors: [],
+    selectedBrands: []
+  });
 
-  // Dynamically extract unique devices from products
-  const uniqueDevices = useMemo(() => {
-    const devices = new Set(products.map(p => p.device).filter(Boolean));
-    const sortedDevices = Array.from(devices).sort();
-    return ['All', ...sortedDevices];
-  }, [products]);
-
-  // Helper to check if any filter is active
-  const isFiltered = useMemo(() => {
-    return searchQuery !== '' || selectedDevice !== 'All' || selectedBrand !== 'All';
-  }, [searchQuery, selectedDevice, selectedBrand]);
-
-  // Reset visible count when filters change
-  useEffect(() => {
-    setVisibleCount(12);
-  }, [selectedDevice, selectedBrand, searchQuery]);
-
-  const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchDevice = selectedDevice === 'All' || p.device === selectedDevice;
-      const matchBrand = selectedBrand === 'All' || p.brand === selectedBrand;
-
-      const searchTerms = getSearchTerms(searchQuery);
-      const matchSearch = !searchQuery || searchTerms.some(term =>
-        p.name.toLowerCase().includes(term) ||
-        p.description.toLowerCase().includes(term) ||
-        p.category.toLowerCase().includes(term) ||
-        p.brand.toLowerCase().includes(term) ||
-        p.device.toLowerCase().includes(term) ||
-        p.tags?.some(tag => tag.toLowerCase().includes(term))
-      );
-
-      return matchDevice && matchBrand && matchSearch;
-    });
-  }, [products, selectedDevice, selectedBrand, searchQuery]);
-
-  const visibleProducts = useMemo(() => {
-    return filteredProducts.slice(0, visibleCount);
-  }, [filteredProducts, visibleCount]);
-
-  // Infinite Scroll Observer
-  useEffect(() => {
-    if (!isFiltered) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => prev + 12);
-        }
-      },
-      { threshold: 0.1, rootMargin: '200px' }
-    );
-
-    const currentRef = loadMoreRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
+  const handleDeviceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const device = e.target.value;
+    if (device && device !== 'All') {
+      router.push(`/filtered-products?device=${encodeURIComponent(device)}`);
     }
+  };
 
-    return () => {
-      if (currentRef) observer.unobserve(currentRef);
-    };
-  }, [filteredProducts, isFiltered, visibleCount]);
+  const handleBrandSelect = (brandName: string) => {
+    if (brandName !== 'All') {
+      router.push(`/filtered-products?brand=${encodeURIComponent(brandName)}`);
+    }
+  };
+
+  const handleFilterApply = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    setIsFilterOpen(false);
+
+    // Construct query params for filters
+    const params = new URLSearchParams();
+    if (newFilters.selectedBrands.length > 0) params.set('brand', newFilters.selectedBrands[0]); // Simple mapping for now
+    // For complex filters (price, colors), we might need to pass them via state or encode them in URL
+    // For now, let's just navigate to the filtered page which handles its own state or params
+    // If we want to pass state, we can't easily do it with router.push in Next.js 13+ without using query params
+    // So let's just navigate to the page and let the user refine there, or pass what we can.
+
+    // Actually, the Vite app passes state. In Next.js we should probably use URL params for everything if possible.
+    // But FilteredProductsPage in Next.js (which I just wrote) reads from URL.
+    // So let's just navigate to /filtered-products and let the user filter there?
+    // Or better, if we want to support price/color filters from Home, we should encode them in URL.
+    // But the current FilteredProductsPage implementation primarily looks at 'brand' and 'device' from URL.
+    // It initializes other filters to default.
+    // To fully support "Apply" from Home, we'd need to update FilteredProductsPage to read all filters from URL.
+    // For now, let's just navigate to /filtered-products.
+    router.push('/filtered-products');
+  };
 
   // Latest Products (Last 8 items)
   const latestProducts = useMemo(() => {
@@ -165,71 +95,74 @@ export default function Home() {
     return ['All', ...brands];
   }, [brands]);
 
+  // Unique devices for dropdown
+  const uniqueDevices = useMemo(() => {
+    const devSet = new Set(products.map(p => p.device).filter(Boolean));
+    return Array.from(devSet).sort();
+  }, [products]);
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-24">
+      <FilterModal
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleFilterApply}
+        initialFilters={filters}
+      />
 
-      {/* Offers Carousel */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-        <OffersCarousel />
-      </div>
-
-      {/* Device Selection Bar */}
+      {/* Device Selection Bar & Filter Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 md:mt-8">
-        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 shadow-lg border border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 transition-colors">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 via-pink-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-pink-500/20 shrink-0">
-              <Smartphone className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">{t('selectDevice')}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t('deviceSubtitle')}</p>
-            </div>
-          </div>
-
-          <div className="relative w-full sm:w-64">
+        <div className="flex gap-3">
+          {/* Device Selector */}
+          <div className="flex-1 relative">
             <select
-              value={selectedDevice}
-              onChange={(e) => setSelectedDevice(e.target.value)}
-              className="w-full appearance-none bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white py-2 pl-4 pr-10 rtl:pl-10 rtl:pr-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-xs sm:text-sm font-medium cursor-pointer hover:bg-white dark:hover:bg-slate-900 transition-colors shadow-inner"
+              onChange={handleDeviceSelect}
+              className="w-full appearance-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white py-4 px-6 rounded-2xl shadow-sm border-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 text-base font-medium cursor-pointer transition-all pr-10 rtl:pl-10 rtl:pr-6"
+              defaultValue=""
             >
-              <option value="All">{t('selectDevice')}</option>
-              {uniqueDevices.filter(d => d !== 'All').map((device) => (
+              <option value="">{t('selectDevice')}</option>
+              {uniqueDevices.map((device) => (
                 <option key={device} value={device}>{device}</option>
               ))}
             </select>
-            <div className="absolute inset-y-0 right-0 rtl:left-0 rtl:right-auto flex items-center px-3 pointer-events-none text-slate-500">
-              <ChevronDown className="h-4 w-4" />
+            <div className="absolute inset-y-0 right-4 rtl:left-4 rtl:right-auto flex items-center pointer-events-none text-slate-400">
+              <ChevronDown className="h-5 w-5" />
             </div>
           </div>
+
+          {/* Filter Button */}
+          <button
+            onClick={() => setIsFilterOpen(true)}
+            className="bg-purple-600 text-white rounded-2xl w-14 h-14 flex items-center justify-center shadow-lg shadow-purple-500/30 hover:bg-purple-700 active:scale-95 transition-all relative shrink-0"
+          >
+            <Filter className="h-6 w-6" />
+            {(filters.selectedBrands.length > 0 || filters.selectedColors.length > 0 || filters.priceRange[0] > 0 || filters.priceRange[1] < 1000000) && (
+              <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 border-2 border-purple-600 rounded-full"></span>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Brand Filter */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Layers className="h-5 w-5 text-purple-600" />
-            {t('shopByBrand')}
-          </h2>
-        </div>
+      {/* Offers Carousel */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <OffersCarousel />
+      </div>
 
+      {/* Brand Filter */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
           {displayBrands.map((brand, index) => {
             const isAll = typeof brand === 'string';
-            const isSelected = selectedBrand === (isAll ? 'All' : brand.name);
             const brandName = isAll ? t('viewAll') : brand.name;
             const key = isAll ? 'all' : brand.id;
 
             return (
               <button
                 key={key}
-                onClick={() => setSelectedBrand(isAll ? 'All' : (brand as Brand).name)}
-                className={`flex items-center gap-3 pl-2 pr-4 py-2 rounded-full border transition-all whitespace-nowrap ${isSelected
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-lg shadow-slate-200/50 dark:shadow-none scale-105'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500'
-                  }`}
+                onClick={() => handleBrandSelect(isAll ? 'All' : (brand as Brand).name)}
+                className={`flex items-center gap-3 pl-2 pr-4 py-2 rounded-full border transition-all whitespace-nowrap bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500`}
               >
-                <div className={`h-8 w-8 rounded-full overflow-hidden flex items-center justify-center ${isSelected ? 'bg-white/20 ring-1 ring-white/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                <div className={`h-8 w-8 rounded-full overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800`}>
                   {isAll ? (
                     <LayoutGrid className="h-4 w-4" />
                   ) : (
@@ -248,103 +181,82 @@ export default function Home() {
       </div>
 
       {/* Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 mb-20">
-        {isFiltered ? (
-          // --- FILTERED RESULTS VIEW ---
-          <div className="animate-in fade-in duration-500">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                {searchQuery ? `${t('search')}: "${searchQuery}"` : t('filteredResults')}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 mb-20 space-y-16">
+
+        {/* Best Sellers Section */}
+        {bestSellers.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <TrendingUp className="h-6 w-6 text-amber-500" />
+                {t('popular')}
+                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                  {t('trending')}
+                </span>
               </h2>
-              <span className="text-sm text-slate-500 dark:text-slate-400">{filteredProducts.length} {t('items')}</span>
             </div>
-
-            {filteredProducts.length > 0 ? (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-8">
-                  {visibleProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              {bestSellers.map((product) => (
+                <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
+                  <ProductCard product={product} />
                 </div>
-
-                {/* Sentinel for Lazy Loading */}
-                {visibleCount < filteredProducts.length && (
-                  <div ref={loadMoreRef} className="flex justify-center py-8 w-full">
-                    <Loader2 className="h-8 w-8 text-purple-600 animate-spin" />
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="bg-slate-100 dark:bg-slate-800 p-6 rounded-full mb-4">
-                  <Filter className="h-10 w-10 text-slate-400" />
-                </div>
-                <h3 className="text-lg font-medium text-slate-900 dark:text-white">
-                  {selectedDevice !== 'All' ? t('noDeviceMatch') : t('noProducts')}
-                </h3>
-                <p className="text-slate-500 dark:text-slate-400 mt-2">
-                  {selectedDevice !== 'All' ? t('noDeviceMatch') : t('noProducts')}
-                </p>
-                <button
-                  onClick={() => { setSelectedDevice('All'); setSelectedBrand('All'); }}
-                  className="mt-6 text-purple-600 dark:text-purple-400 font-medium hover:underline"
-                >
-                  {t('clearFilters')}
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          // --- DEFAULT VIEW (Latest & Best Sellers) ---
-          <div className="space-y-16 animate-in fade-in duration-500">
-
-            {/* Latest Products Section */}
-            <section>
-              <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Sparkles className="h-6 w-6 text-purple-600" />
-                  {t('latestDrops')}
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                    {t('new')}
-                  </span>
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-8">
-                {isAppLoading || isProductsLoading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <ProductSkeleton key={i} />
-                  ))
-                ) : (
-                  latestProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))
-                )}
-              </div>
-            </section>
-
-            {/* Best Sellers Section */}
-            <section>
-              <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <TrendingUp className="h-6 w-6 text-amber-500" />
-                  {t('popular')}
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                    {t('trending')}
-                  </span>
-                </h2>
-                <button className="text-sm text-purple-600 dark:text-purple-400 font-medium">{t('viewAll')}</button>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-8">
-                {bestSellers.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </section>
-
-          </div>
+              ))}
+            </div>
+          </section>
         )}
-      </div>
 
+        {/* Latest Products Section */}
+        {latestProducts.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-purple-600" />
+                {t('latestDrops')}
+                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                  {t('new')}
+                </span>
+              </h2>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              {isAppLoading || isProductsLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="min-w-[180px] w-[180px] sm:w-[220px]">
+                    <ProductSkeleton />
+                  </div>
+                ))
+              ) : (
+                latestProducts.map((product) => (
+                  <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
+                    <ProductCard product={product} />
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* All Products (Popular) */}
+        <section>
+          <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <LayoutGrid className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+              {t('viewAll')}
+            </h2>
+            <button className="text-sm text-purple-600 dark:text-purple-400 font-medium flex items-center gap-1">
+              {t('viewAll')} <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+            {products.slice(0, 10).map((product) => (
+              <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+      </div>
     </div>
   );
 }

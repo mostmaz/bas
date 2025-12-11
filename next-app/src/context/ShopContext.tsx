@@ -56,6 +56,7 @@ interface ShopContextType {
     deleteBrand: (id: string) => Promise<void>;
     addDevice: (name: string) => Promise<void>;
     deleteDevice: (id: string) => Promise<void>;
+    refreshSlides: () => Promise<void>;
     addSlide: (slide: CarouselSlide) => Promise<void>;
     updateSlide: (slide: CarouselSlide) => Promise<void>;
     deleteSlide: (id: string) => Promise<void>;
@@ -142,7 +143,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children, initialDat
     // --- HOOKS ---
     const { brands, setBrands, refreshBrands, addBrand, deleteBrand } = useBrandLogic(isSupabaseConfigured, addToast, initialData?.brands);
     const { devices, setDevices, refreshDevices, addDevice, deleteDevice } = useDeviceLogic(isSupabaseConfigured, addToast, initialData?.devices);
-    const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide } = useSlideLogic(isSupabaseConfigured, addToast, initialData?.slides);
+    const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides } = useSlideLogic(isSupabaseConfigured, addToast, initialData?.slides);
 
     const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
     const { products, setProducts, refreshProducts, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading, initialData?.products);
@@ -164,6 +165,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children, initialDat
         refreshDiscounts();
         refreshDevices();
         refreshOrders();
+        refreshSlides();
     }, []);
 
     // --- ACTIONS (Settings & UI) ---
@@ -261,16 +263,18 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children, initialDat
         addToast('Demo data generated', 'success');
     };
 
+    const effectiveShippingFee = totalAmount >= 25000 ? 0 : shippingFee;
+
     return (
         <ShopContext.Provider value={{
             products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
-            shippingFee, updateShippingFee, storeLogo, updateStoreLogo,
+            shippingFee: effectiveShippingFee, updateShippingFee, storeLogo, updateStoreLogo,
             isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading,
             refreshBrands, refreshProducts, refreshDevices,
             addProduct, updateProduct, deleteProduct,
             addBrand, deleteBrand,
             addDevice, deleteDevice,
-            addSlide, updateSlide, deleteSlide,
+            addSlide, updateSlide, deleteSlide, refreshSlides,
             placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus,
             addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
             appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,

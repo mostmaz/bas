@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Product, Brand, CarouselSlide, Device } from '@/types';
+import { unstable_cache } from 'next/cache';
 
 // Helper to map Product from DB (reused logic from useProductLogic to ensure consistency)
 const mapProductFromDB = (p: any): Product => {
@@ -29,55 +30,71 @@ const mapProductFromDB = (p: any): Product => {
     };
 };
 
-// Fetch products without caching (data is too large for Next.js cache limit)
-export async function getCachedProducts() {
-    const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
+// Fetch products with caching
+export const getCachedProducts = unstable_cache(
+    async () => {
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error("Server Fetch Error (Products):", error);
-        return [];
-    }
+        if (error) {
+            console.error("Server Fetch Error (Products):", error);
+            return [];
+        }
 
-    return data ? data.map(mapProductFromDB) : [];
-}
+        return data ? data.map(mapProductFromDB) : [];
+    },
+    ['products-cache'],
+    { revalidate: 3600, tags: ['products'] }
+);
 
-export async function getCachedBrands() {
-    const { data, error } = await supabase
-        .from('brands')
-        .select('*')
-        .order('name', { ascending: true });
+export const getCachedBrands = unstable_cache(
+    async () => {
+        const { data, error } = await supabase
+            .from('brands')
+            .select('*')
+            .order('name', { ascending: true });
 
-    if (error) {
-        console.error("Server Fetch Error (Brands):", error);
-        return [];
-    }
-    return data as Brand[];
-}
+        if (error) {
+            console.error("Server Fetch Error (Brands):", error);
+            return [];
+        }
+        return data as Brand[];
+    },
+    ['brands-cache'],
+    { revalidate: 3600, tags: ['brands'] }
+);
 
-export async function getCachedSlides() {
-    const { data, error } = await supabase
-        .from('slides')
-        .select('*');
+export const getCachedSlides = unstable_cache(
+    async () => {
+        const { data, error } = await supabase
+            .from('slides')
+            .select('*');
 
-    if (error) {
-        console.error("Server Fetch Error (Slides):", error);
-        return [];
-    }
-    return data as CarouselSlide[];
-}
+        if (error) {
+            console.error("Server Fetch Error (Slides):", error);
+            return [];
+        }
+        return data as CarouselSlide[];
+    },
+    ['slides-cache'],
+    { revalidate: 3600, tags: ['slides'] }
+);
 
-export async function getCachedDevices() {
-    const { data, error } = await supabase
-        .from('devices')
-        .select('*')
-        .order('name', { ascending: true });
+export const getCachedDevices = unstable_cache(
+    async () => {
+        const { data, error } = await supabase
+            .from('devices')
+            .select('*')
+            .order('name', { ascending: true });
 
-    if (error) {
-        console.error("Server Fetch Error (Devices):", error);
-        return [];
-    }
-    return data as Device[];
-}
+        if (error) {
+            console.error("Server Fetch Error (Devices):", error);
+            return [];
+        }
+        return data as Device[];
+    },
+    ['devices-cache'],
+    { revalidate: 3600, tags: ['devices'] }
+);

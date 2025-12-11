@@ -218,7 +218,13 @@ export default function Checkout() {
                                         <p className="text-slate-600 dark:text-slate-400 flex items-center">
                                             <Truck className="h-4 w-4 mr-1 rtl:ml-1 rtl:mr-0 text-slate-400" /> {t('shipping')}
                                         </p>
-                                        <p className="font-medium text-slate-900 dark:text-white">IQD {shippingFee.toLocaleString()}</p>
+                                        <p className="font-medium text-slate-900 dark:text-white">
+                                            {shippingFee === 0 ? (
+                                                <span className="text-green-600 dark:text-green-400 font-bold">{t('free')}</span>
+                                            ) : (
+                                                `IQD ${shippingFee.toLocaleString()}`
+                                            )}
+                                        </p>
                                     </div>
                                     <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
                                         <p className="text-base font-bold text-slate-900 dark:text-white">{t('total')}</p>

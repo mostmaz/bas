@@ -6,6 +6,8 @@ import { Button } from '../components/Button';
 import { ProductCard } from '../components/ProductCard';
 import { ProductVariant } from '../types';
 
+import { optimizeImage } from '../utils/imageUtils';
+
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { products, addToCart, t, wishlist, toggleWishlist } = useShop();
@@ -29,6 +31,7 @@ export const ProductDetails: React.FC = () => {
     }
   }, [product]);
 
+  // ... (keep handleVariantSelect and handleImageClick as is)
   const handleVariantSelect = (variant: ProductVariant) => {
     setSelectedVariant(variant);
     if (variant.image) {
@@ -135,7 +138,7 @@ export const ProductDetails: React.FC = () => {
             {/* Main Image */}
             <div className="aspect-[3/4] w-full rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/5 relative group shadow-2xl shadow-slate-200/50 dark:shadow-none transition-all">
               <img
-                src={activeImage || product.image}
+                src={optimizeImage(activeImage || product.image, 800)}
                 alt={product.name}
                 className="w-full h-full object-cover object-center transition-opacity duration-300"
               />
@@ -175,7 +178,7 @@ export const ProductDetails: React.FC = () => {
                       }`}
                   >
                     <img
-                      src={img}
+                      src={optimizeImage(img, 200)}
                       alt={`View ${idx + 1}`}
                       loading="lazy"
                       className="w-full h-full object-cover"

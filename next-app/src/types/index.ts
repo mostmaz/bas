@@ -55,6 +55,7 @@ export interface CarouselSlide {
     description: string;
     color: string;
     image: string;
+    imagePosition?: string;
 }
 
 export interface Brand {

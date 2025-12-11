@@ -6,6 +6,8 @@ import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
 import { ProductQuickViewModal } from './ProductQuickViewModal';
 
+import { optimizeImage } from '../utils/imageUtils';
+
 interface ProductCardProps {
   product: Product;
 }
@@ -41,10 +43,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div onClick={handleNavigate} className="block relative cursor-pointer">
           <div className="aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
             <img
-              src={product.image}
+              src={optimizeImage(product.image, 400)}
               alt={product.name}
-              loading="eager"
-              decoding="sync"
+              loading="lazy"
+              decoding="async"
               onLoad={() => setIsImageLoaded(true)}
               className={`h-full w-full object-cover object-center transition-all duration-700 ${isImageLoaded ? 'opacity-95 dark:opacity-90 group-hover:scale-110 group-hover:opacity-100' : 'opacity-0 scale-100'}`}
             />

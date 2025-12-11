@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useShop } from '@/context/ShopContext';
 import { ArrowLeft, Star, Truck, Banknote, Share2, Heart, Check, AlertCircle, Tag } from 'lucide-react';
@@ -142,10 +143,13 @@ export default function ProductDetails() {
                     <div className="space-y-4 flex flex-col items-center">
                         {/* Main Image */}
                         <div className="aspect-[3/4] w-1/2 rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/5 relative group shadow-2xl shadow-slate-200/50 dark:shadow-none transition-all">
-                            <img
+                            <Image
                                 src={activeImage || product.image}
                                 alt={product.name}
-                                className="w-full h-full object-cover object-center transition-opacity duration-300"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                priority
+                                className="object-cover object-center transition-opacity duration-300"
                             />
                             {/* Sale Tag */}
                             {product.salePrice && (
@@ -182,11 +186,12 @@ export default function ProductDetails() {
                                             : 'border-transparent opacity-70 hover:opacity-100'
                                             }`}
                                     >
-                                        <img
+                                        <Image
                                             src={img}
                                             alt={`View ${idx + 1}`}
-                                            loading="lazy"
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            sizes="100px"
+                                            className="object-cover"
                                         />
                                     </button>
                                 ))}

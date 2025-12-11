@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
+import { optimizeImage } from '../utils/imageUtils';
+
 export const OffersCarousel: React.FC = () => {
   const { carouselSlides, language } = useShop();
   const [current, setCurrent] = useState(0);
@@ -30,7 +32,7 @@ export const OffersCarousel: React.FC = () => {
         >
           <div className="w-full h-full relative overflow-hidden">
             <img
-              src={offer.image}
+              src={optimizeImage(offer.image, 800)}
               alt={offer.title || "Slide"}
               loading={idx === 0 ? "eager" : "lazy"}
               className="w-full h-full object-cover"

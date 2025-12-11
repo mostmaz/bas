@@ -1,0 +1,102 @@
+[
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\drawable_bg_filter_button.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\drawable\\bg_filter_button.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-mdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-hdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-hdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-xxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-mdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-mdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-xhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\layout_activity_product_details.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\layout\\activity_product_details.xml"
+    },
+    {
+        "merged": "com.bascavarat.store.app-merged_res-31:/layout_activity_main.xml.flat",
+        "source": "com.bascavarat.store.app-main-33:/layout/activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-xxxhdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-xxxhdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\layout_item_product.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\layout\\item_product.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-xxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-hdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-hdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-xhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-xxxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-xxxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\drawable_bg_search_bar.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\drawable\\bg_search_bar.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\drawable_gradient_overlay.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\drawable\\gradient_overlay.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-xxhdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-xxhdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-hdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-xhdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-xhdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-mdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-mdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\drawable_bg_bottom_sheet.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\drawable\\bg_bottom_sheet.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-merged_res-31:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\8.2\\com.bascavarat.store.app-main-33:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+    }
+]

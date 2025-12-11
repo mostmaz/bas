@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Plus, Eye, Heart } from 'lucide-react';
 import { Product } from '@/types';
 import { useShop } from '@/context/ShopContext';
@@ -40,13 +41,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="group relative flex flex-col overflow-hidden rounded-xl sm:rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-lg transition-all duration-300 hover:shadow-2xl hover:shadow-pink-500/10 hover:border-pink-500/30 hover:-translate-y-1">
         <div onClick={handleNavigate} className="block relative cursor-pointer">
           <div className="aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
-            <img
+            <Image
               src={product.image}
               alt={product.name}
-              loading="eager"
-              decoding="sync"
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              className={`object-cover object-center transition-all duration-700 ${isImageLoaded ? 'opacity-95 dark:opacity-90 group-hover:scale-110 group-hover:opacity-100' : 'opacity-0 scale-100'}`}
               onLoad={() => setIsImageLoaded(true)}
-              className={`h-full w-full object-cover object-center transition-all duration-700 ${isImageLoaded ? 'opacity-95 dark:opacity-90 group-hover:scale-110 group-hover:opacity-100' : 'opacity-0 scale-100'}`}
+              priority={false}
             />
             {!isImageLoaded && (
               <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800 animate-pulse">

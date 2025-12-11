@@ -171,7 +171,13 @@ export const CartDrawer: React.FC = () => {
                                 )}
                                 <div className="flex justify-between text-sm font-medium text-slate-900 dark:text-white">
                                     <p className="text-slate-500 dark:text-slate-300">{t('shipping')}</p>
-                                    <p>IQD {shippingFee.toLocaleString()}</p>
+                                    <p>
+                                        {shippingFee === 0 ? (
+                                            <span className="text-green-600 dark:text-green-400 font-bold">{t('free')}</span>
+                                        ) : (
+                                            `IQD ${shippingFee.toLocaleString()}`
+                                        )}
+                                    </p>
                                 </div>
                                 <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-800 pt-3 mt-1">
                                     <p>{t('total')}</p>
