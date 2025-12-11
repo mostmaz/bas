@@ -22,9 +22,16 @@ const REVENUE_DATA = [
 const COLORS = ['#4f46e5', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
 
 export const DashboardOverview: React.FC = () => {
-  const { products, orders, shippingFee, updateShippingFee, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo } = useShop();
-  const [tempShippingFee, setTempShippingFee] = useState(shippingFee.toString());
+  const { products, orders, baseShippingFee, updateShippingFee, freeShippingThreshold, updateFreeShippingThreshold, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo } = useShop();
+  const [tempShippingFee, setTempShippingFee] = useState(baseShippingFee.toString());
+  const [tempThreshold, setTempThreshold] = useState(freeShippingThreshold.toString());
   const lowStockProducts = products.filter(p => p.stock < 10);
+
+  // Sync local state with context values when they change (e.g. after fetch)
+  React.useEffect(() => {
+    setTempShippingFee(baseShippingFee.toString());
+    setTempThreshold(freeShippingThreshold.toString());
+  }, [baseShippingFee, freeShippingThreshold]);
 
   // Dynamic Revenue Calculation (Excluding Cancelled)
   const totalRevenue = useMemo(() => {
@@ -51,8 +58,13 @@ export const DashboardOverview: React.FC = () => {
   const handleUpdateShipping = (e: React.FormEvent) => {
     e.preventDefault();
     const fee = parseInt(tempShippingFee);
+    const threshold = parseInt(tempThreshold);
+
     if (!isNaN(fee) && fee >= 0) {
       updateShippingFee(fee);
+    }
+    if (!isNaN(threshold) && threshold >= 0) {
+      updateFreeShippingThreshold(threshold);
     }
   };
 
@@ -115,11 +127,11 @@ export const DashboardOverview: React.FC = () => {
           </h3>
 
           <div className="space-y-6">
-            {/* Shipping Fee */}
-            <form onSubmit={handleUpdateShipping} className="flex items-end gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Shipping Fee (IQD)</label>
-                <div className="relative">
+            {/* Shipping Settings */}
+            <form onSubmit={handleUpdateShipping} className="space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Shipping Fee (IQD)</label>
                   <input
                     type="number"
                     value={tempShippingFee}
@@ -127,9 +139,18 @@ export const DashboardOverview: React.FC = () => {
                     className="w-full border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Free Shipping Over (IQD)</label>
+                  <input
+                    type="number"
+                    value={tempThreshold}
+                    onChange={(e) => setTempThreshold(e.target.value)}
+                    className="w-full border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
               </div>
-              <Button type="submit" variant="secondary" className="mb-[1px]">
-                <Save className="h-4 w-4 mr-2" /> Save
+              <Button type="submit" variant="secondary" className="w-full">
+                <Save className="h-4 w-4 mr-2" /> Save Settings
               </Button>
             </form>
 
@@ -169,8 +190,8 @@ export const DashboardOverview: React.FC = () => {
             <button
               onClick={toggleDemoData}
               className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${isDemoActive
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300'
-                  : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300'
+                ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300'
+                : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300'
                 }`}
             >
               {isDemoActive ? (

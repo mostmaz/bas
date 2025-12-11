@@ -19,6 +19,7 @@ const OrderSuccess = React.lazy(() => import('./pages/OrderSuccess').then(module
 const MyOrders = React.lazy(() => import('./pages/MyOrders').then(module => ({ default: module.MyOrders })));
 const SearchPage = React.lazy(() => import('./pages/SearchPage').then(module => ({ default: module.SearchPage })));
 const Wishlist = React.lazy(() => import('./pages/Wishlist').then(module => ({ default: module.Wishlist })));
+const FilteredProductsPage = React.lazy(() => import('./pages/FilteredProductsPage').then(module => ({ default: module.FilteredProductsPage })));
 
 // Loading Fallback for Route Transitions
 const PageLoader = () => (
@@ -102,6 +103,7 @@ const AppContent: React.FC = () => {
             <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/filtered-products" element={<FilteredProductsPage />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

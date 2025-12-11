@@ -2,9 +2,22 @@ import { useState, useEffect } from 'react';
 import { CartItem, Product, ProductVariant, DiscountCode } from '../types';
 
 export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void) => {
-    const [cart, setCart] = useState<CartItem[]>([]);
+    const [cart, setCart] = useState<CartItem[]>(() => {
+        try {
+            const saved = localStorage.getItem('cart');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error("Failed to load cart", e);
+            return [];
+        }
+    });
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null);
+
+    // Persist cart
+    useEffect(() => {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }, [cart]);
 
     const addToCart = (product: Product, variant?: ProductVariant) => {
         setCart(prev => {

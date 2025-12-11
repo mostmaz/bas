@@ -26,8 +26,11 @@ interface ShopContextType {
   discounts: DiscountCode[];
 
   // Settings
-  shippingFee: number;
+  shippingFee: number; // Effective shipping fee
+  baseShippingFee: number; // Configured base fee
+  freeShippingThreshold: number; // Threshold for free shipping
   updateShippingFee: (fee: number) => Promise<void>;
+  updateFreeShippingThreshold: (threshold: number) => Promise<void>;
   storeLogo: string;
   updateStoreLogo: (logo: string) => Promise<void>;
 
@@ -120,7 +123,11 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const [isAppLoading, setIsAppLoading] = useState(false);
   const [isDemoActive, setIsDemoActive] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
-  const [shippingFee, setShippingFee] = useState<number>(5000);
+
+  // Settings State
+  const [baseShippingFee, setBaseShippingFee] = useState<number>(5000);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState<number>(25000);
+
   const [storeLogo, setStoreLogo] = useState<string>(() => {
     try {
       return localStorage.getItem('storeLogo') || DEFAULT_LOGO;
@@ -139,6 +146,9 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { cart, isCartOpen, appliedDiscount, addToCart, removeFromCart, updateCartQuantity, clearCart, toggleCart, applyDiscount, removeDiscount, totalAmount, discountAmount, finalTotal } = useCartLogic(addToast);
   const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
 
+  // Calculate Effective Shipping Fee
+  const shippingFee = totalAmount >= freeShippingThreshold ? 0 : baseShippingFee;
+
   // --- EFFECTS ---
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -150,6 +160,19 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     refreshDevices();
     refreshOrders();
     refreshSlides();
+
+    // Fetch Settings
+    const fetchSettings = async () => {
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase.from('store_settings').select('shipping_fee, free_shipping_threshold, logo').limit(1);
+        if (data && data.length > 0) {
+          if (data[0].shipping_fee !== undefined) setBaseShippingFee(data[0].shipping_fee);
+          if (data[0].free_shipping_threshold !== undefined) setFreeShippingThreshold(data[0].free_shipping_threshold);
+          if (data[0].logo) setStoreLogo(data[0].logo);
+        }
+      }
+    };
+    fetchSettings();
   }, []);
 
   // --- ACTIONS (Settings & UI) ---
@@ -173,7 +196,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   };
 
   const updateShippingFee = async (fee: number) => {
-    setShippingFee(fee);
+    setBaseShippingFee(fee);
     if (isSupabaseConfigured) {
       const { data } = await supabase.from('store_settings').select('id').limit(1);
       if (data && data.length > 0) {
@@ -182,6 +205,19 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         await supabase.from('store_settings').insert([{ shipping_fee: fee }]);
       }
       addToast('Shipping fee updated', 'success');
+    }
+  };
+
+  const updateFreeShippingThreshold = async (threshold: number) => {
+    setFreeShippingThreshold(threshold);
+    if (isSupabaseConfigured) {
+      const { data } = await supabase.from('store_settings').select('id').limit(1);
+      if (data && data.length > 0) {
+        await supabase.from('store_settings').update({ free_shipping_threshold: threshold }).eq('id', data[0].id);
+      } else {
+        await supabase.from('store_settings').insert([{ free_shipping_threshold: threshold }]);
+      }
+      addToast('Free shipping threshold updated', 'success');
     }
   };
 
@@ -250,7 +286,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   return (
     <ShopContext.Provider value={{
       products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
-      shippingFee, updateShippingFee, storeLogo, updateStoreLogo,
+      shippingFee, baseShippingFee, freeShippingThreshold, updateShippingFee, updateFreeShippingThreshold, storeLogo, updateStoreLogo,
       isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading,
       refreshBrands, refreshProducts, refreshDevices,
       addProduct, updateProduct, deleteProduct,

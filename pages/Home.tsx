@@ -20,13 +20,22 @@ export const Home: React.FC = () => {
   });
 
   const handleBrandSelect = (brandName: string) => {
-    setSelectedBrandFilter(brandName);
-    // Reset advanced filters when selecting a top-bar brand
-    setFilters({
-      priceRange: [0, 1000000],
-      selectedColors: [],
-      selectedBrands: []
-    });
+    if (brandName === 'All') {
+      setSelectedBrandFilter('All');
+    } else {
+      navigate(`/filtered-products?brand=${encodeURIComponent(brandName)}`);
+    }
+  };
+
+  const handleDeviceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const device = e.target.value;
+    if (device) {
+      navigate(`/filtered-products?device=${encodeURIComponent(device)}`);
+      // Reset selection after navigation so when they come back it's clean, or keep it?
+      // Keeping it might be confusing if they come back and it's still selected but showing Home content.
+      // But `value={selectedDevice}` is controlled.
+      setSelectedDevice('');
+    }
   };
 
   const handleFilterApply = (newFilters: FilterState) => {
@@ -130,7 +139,7 @@ export const Home: React.FC = () => {
           <div className="relative">
             <select
               value={selectedDevice}
-              onChange={(e) => setSelectedDevice(e.target.value)}
+              onChange={handleDeviceSelect}
               className="block w-full pl-11 pr-10 py-3.5 bg-white dark:bg-slate-800 border-none rounded-2xl text-slate-900 dark:text-white appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 shadow-sm shadow-slate-200/50 dark:shadow-none transition-all cursor-pointer"
             >
               <option value="">{t('selectDevice')}</option>
@@ -229,12 +238,18 @@ export const Home: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:gap-6">
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
             {isProductsLoading ? (
-              Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="min-w-[160px] w-[160px] sm:w-[200px]">
+                  <ProductSkeleton />
+                </div>
+              ))
             ) : (
               filteredProducts.slice(0, 6).map(product => (
-                <ProductCard key={product.id} product={product} />
+                <div key={product.id} className="min-w-[160px] w-[160px] sm:w-[200px]">
+                  <ProductCard product={product} />
+                </div>
               ))
             )}
           </div>

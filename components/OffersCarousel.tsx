@@ -10,7 +10,7 @@ export const OffersCarousel: React.FC = () => {
     if (carouselSlides.length === 0) return;
     const timer = setInterval(() => {
       setCurrent(c => (c + 1) % carouselSlides.length);
-    }, 2000);
+    }, 4000);
     return () => clearInterval(timer);
   }, [carouselSlides.length]);
 
