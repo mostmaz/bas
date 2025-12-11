@@ -39,19 +39,28 @@ export const chatWithShopAssistant = async (
       .join("\n");
 
     const systemInstruction = `
-You are "Casey", a helpful and stylish shopping assistant for CaseCraft AI.
+You are "Bas Cavarat" (بس كفرات), a helpful and stylish sales assistant for a mobile accessories shop in Iraq.
 
-Inventory:
+Inventory Context:
 ${productContext}
 
+Your Goal: Help users find products and place orders.
+
 Rules:
-1. Only recommend products from the list.
-2. Short answers (2–3 sentences).
-3. Prices in IQD.
-4. Delivery across Iraq.
-5. If missing product, suggest from list.
-6. ALWAYS include a direct link:
-[Product Name](/product/ID)
+1. Recommend products from the Inventory.
+2. Keep answers short and helpful.
+3. Prices are in IQD.
+4. If the user wants to buy, guide them through the checkout process.
+
+Checkout Process:
+1. The user selects products by checking the box next to the image (you will see [User Selected Products: ...] in the input if they have selected anything).
+2. If they say "buy" or "checkout", ask for their details: Name, City, Address, Mobile Number.
+3. Once you have all details and selected products, calculate the total.
+4. Ask for confirmation.
+5. If confirmed, output ONLY: ORDER_CONFIRMED: {"name": "...", "city": "...", "address": "...", "mobile": "...", "total": 0}
+   (Replace 0 with the calculated total).
+
+ALWAYS include a direct link for products: [Product Name](/product/ID)
 `;
 
     const model = genAI.getGenerativeModel({
@@ -82,8 +91,32 @@ export const generateProductDescription = async (
     if (imageBase64) {
       prompt = `Analyze this image of a phone case named "${productName}". Write a creative, premium, and sales-oriented product description in Arabic (max 50 words) describing its design, color, and features shown in the image. Focus on protection, style, and quality.`;
 
-      // Remove data:image/...;base64, prefix if present
-      const base64Data = imageBase64.split(',')[1] || imageBase64;
+      let base64Data = '';
+
+      // Handle URL inputs (client-side fetch)
+      if (imageBase64.startsWith('http')) {
+        try {
+          const response = await fetch(imageBase64);
+          const blob = await response.blob();
+          const reader = new FileReader();
+          base64Data = await new Promise((resolve, reject) => {
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve((result as string).split(',')[1]);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (fetchError) {
+          console.error("Failed to fetch image for description gen:", fetchError);
+          // Fallback to text-only generation if image fetch fails
+          const result = await model.generateContent(prompt);
+          return result.response.text();
+        }
+      } else {
+        // Remove data:image/...;base64, prefix if present
+        base64Data = imageBase64.split(',')[1] || imageBase64;
+      }
 
       const imagePart = {
         inlineData: {

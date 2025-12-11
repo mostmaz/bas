@@ -206,7 +206,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
 
         setIsGenerating(true);
         try {
-            const desc = await generateProductDescriptionAction(formData.name);
+            const desc = await generateProductDescriptionAction(formData.name, formData.images[0]);
             setFormData(prev => ({ ...prev, description: desc }));
         } catch (e) {
             console.error(e);

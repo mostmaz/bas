@@ -100,8 +100,24 @@ export async function generateProductDescriptionAction(productName: string, imag
         if (imageBase64) {
             prompt = `Analyze this image of a phone case named "${productName}". Write a creative, premium, and sales-oriented product description in Arabic (max 50 words) describing its design, color, and features shown in the image. Focus on protection, style, and quality.`;
 
-            // Remove data:image/...;base64, prefix if present
-            const base64Data = imageBase64.split(',')[1] || imageBase64;
+            let base64Data = '';
+
+            // Handle URL inputs (Next.js app uses Supabase URLs)
+            if (imageBase64.startsWith('http')) {
+                try {
+                    const imageResponse = await fetch(imageBase64);
+                    const arrayBuffer = await imageResponse.arrayBuffer();
+                    base64Data = Buffer.from(arrayBuffer).toString('base64');
+                } catch (fetchError) {
+                    console.error("Failed to fetch image for description gen:", fetchError);
+                    // Fallback to text-only generation if image fetch fails
+                    const result = await model.generateContent(prompt);
+                    return result.response.text();
+                }
+            } else {
+                // Handle Base64 inputs (legacy/local app)
+                base64Data = imageBase64.split(',')[1] || imageBase64;
+            }
 
             const imagePart = {
                 inlineData: {

@@ -9,12 +9,13 @@ import { useNavigate } from 'react-router-dom';
 
 export const AiAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { products, t, language } = useShop();
-  
+  const { products, t, language, placeOrder, clearCart } = useShop();
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 'init', role: 'model', text: 'Hi! I\'m Casey, your AI style assistant. Looking for a specific vibe?', timestamp: Date.now() }
+    { id: 'init', role: 'model', text: 'Hi! I\'m Bas Cavarat, your AI style assistant. Looking for a specific vibe?', timestamp: Date.now() }
   ]);
-  
+
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -22,7 +23,7 @@ export const AiAssistant: React.FC = () => {
 
   // Update initial greeting when language changes
   useEffect(() => {
-    setMessages(prev => prev.map(msg => 
+    setMessages(prev => prev.map(msg =>
       msg.id === 'init' ? { ...msg, text: t('aiIntro') } : msg
     ));
   }, [language, t]);
@@ -50,10 +51,76 @@ export const AiAssistant: React.FC = () => {
     setIsTyping(true);
 
     try {
-      // Append simple language instruction to the context prompt
       const langContext = language === 'ar' ? " Please reply in Arabic." : "";
-      const responseText = await chatWithShopAssistant(input + langContext, products);
-      
+
+      const selectedProductDetails = Array.from(selectedProducts).map(id => {
+        const p = products.find(prod => prod.id === id);
+        return p ? `${p.name} (${p.price} IQD)` : '';
+      }).filter(Boolean).join(', ');
+
+      const contextInput = selectedProductDetails
+        ? `[User Selected Products: ${selectedProductDetails}] ${input}`
+        : input;
+
+      const responseText = await chatWithShopAssistant(contextInput + langContext, products);
+
+      if (responseText.startsWith('ORDER_CONFIRMED:')) {
+        try {
+          const jsonStr = responseText.replace('ORDER_CONFIRMED:', '').trim();
+          const orderDetails = JSON.parse(jsonStr);
+
+          if (selectedProducts.size > 0) {
+            const orderItems = Array.from(selectedProducts).map(id => {
+              const p = products.find(prod => prod.id === id);
+              return p ? {
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                quantity: 1,
+                image: p.image,
+                selectedColor: p.colors?.[0]
+              } : null;
+            }).filter(Boolean);
+
+            if (orderItems.length > 0) {
+              await placeOrder({
+                items: orderItems as any,
+                customerName: orderDetails.name,
+                phone: orderDetails.mobile,
+                city: orderDetails.city,
+                address: orderDetails.address,
+                totalAmount: orderDetails.total,
+                shippingFee: 5000,
+                orderNumber: `ORD-${Date.now()}`
+              });
+
+              setSelectedProducts(new Set());
+              clearCart();
+
+              setMessages(prev => [...prev, {
+                id: (Date.now() + 1).toString(),
+                role: 'model',
+                text: `✅ Order placed successfully! Thank you, ${orderDetails.name}. We will contact you at ${orderDetails.mobile}.`,
+                timestamp: Date.now()
+              }]);
+              setIsTyping(false);
+              return;
+            }
+          } else {
+            setMessages(prev => [...prev, {
+              id: (Date.now() + 1).toString(),
+              role: 'model',
+              text: "I tried to place the order, but you haven't selected any products! Please check the boxes on the products you want.",
+              timestamp: Date.now()
+            }]);
+            setIsTyping(false);
+            return;
+          }
+        } catch (e) {
+          console.error("Order parsing failed", e);
+        }
+      }
+
       const aiMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'model',
@@ -72,14 +139,23 @@ export const AiAssistant: React.FC = () => {
     if (e.key === 'Enter') handleSend();
   };
 
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) newSet.delete(productId);
+      else newSet.add(productId);
+      return newSet;
+    });
+  };
+
   // Function to parse text and render links for [Text](/url) pattern as Cards or Links
   const renderMessageContent = (text: string, role: 'user' | 'model') => {
     // Split by the markdown link regex
     const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
-    
+
     return parts.map((part, index) => {
       const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-      
+
       if (match) {
         const [_, label, url] = match;
 
@@ -89,29 +165,36 @@ export const AiAssistant: React.FC = () => {
           const product = products.find(p => p.id === productId);
 
           if (product) {
+            const isSelected = selectedProducts.has(product.id);
             return (
-              <div 
-                key={index} 
-                onClick={() => navigate(url)}
-                className="block my-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md hover:border-purple-500 dark:hover:border-purple-500 transition-all group max-w-[240px]"
+              <div
+                key={index}
+                className={`block my-3 bg-white dark:bg-slate-900 border ${isSelected ? 'border-purple-500 ring-2 ring-purple-500/20' : 'border-slate-200 dark:border-slate-700'} rounded-xl overflow-hidden shadow-sm transition-all group max-w-[240px] relative`}
               >
-                <div className="flex p-2 gap-3 items-center text-left">
-                   <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                      <img 
-                        src={product.image} 
-                        alt={product.name} 
-                        loading="lazy"
-                        className="h-full w-full object-cover" 
-                      />
-                   </div>
-                   <div className="flex-1 min-w-0">
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{product.brand}</p>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight mb-0.5 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{product.name}</h4>
-                      <p className="text-xs font-bold text-purple-600 dark:text-purple-400">IQD {product.price.toLocaleString()}</p>
-                   </div>
-                   <div className="text-slate-300 group-hover:text-purple-500 transition-colors">
-                     <ChevronRight className="h-4 w-4 rtl:rotate-180" />
-                   </div>
+                <div className="absolute top-2 right-2 z-10">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      toggleProductSelection(product.id);
+                    }}
+                    className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                  />
+                </div>
+                <div className="flex p-2 gap-3 items-center text-left cursor-pointer" onClick={() => navigate(url)}>
+                  <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{product.brand}</p>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight mb-0.5 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{product.name}</h4>
+                    <p className="text-xs font-bold text-purple-600 dark:text-purple-400">IQD {product.price.toLocaleString()}</p>
+                  </div>
                 </div>
               </div>
             );
@@ -123,17 +206,16 @@ export const AiAssistant: React.FC = () => {
           <button
             key={index}
             onClick={() => navigate(url)}
-            className={`inline-flex items-center gap-1 underline font-bold mx-1 hover:opacity-80 transition-opacity ${
-              role === 'user' 
-                ? 'text-white decoration-white' 
+            className={`inline-flex items-center gap-1 underline font-bold mx-1 hover:opacity-80 transition-opacity ${role === 'user'
+                ? 'text-white decoration-white'
                 : 'text-purple-600 dark:text-purple-400 decoration-purple-600 dark:decoration-purple-400'
-            }`}
+              }`}
           >
             {label}
           </button>
         );
       }
-      
+
       return <span key={index}>{part}</span>;
     });
   };
@@ -150,7 +232,7 @@ export const AiAssistant: React.FC = () => {
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-lg">{t('caseyAi')}</h3>
+                <h3 className="font-bold text-lg">Bas Cavarat (بس كفرات)</h3>
                 <p className="text-xs text-purple-100 opacity-80">{t('alwaysHelp')}</p>
               </div>
             </div>
@@ -167,11 +249,10 @@ export const AiAssistant: React.FC = () => {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                    msg.role === 'user'
+                  className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
                       ? 'bg-purple-600 text-white rounded-br-sm rtl:rounded-bl-sm rtl:rounded-br-2xl'
                       : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-sm rtl:rounded-br-sm rtl:rounded-bl-2xl shadow-sm'
-                  }`}
+                    }`}
                 >
                   {renderMessageContent(msg.text, msg.role)}
                 </div>
