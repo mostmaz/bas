@@ -50,7 +50,7 @@ export const AdminDashboard: React.FC = () => {
             const lowerMsg = String(msg).toLowerCase();
             const code = (error as any)?.code;
 
-            if (code === '42703' || lowerMsg.includes('column') || lowerMsg.includes('does not exist')) {
+            if (code === '42703' || code === 'PGRST204' || lowerMsg.includes('column') || lowerMsg.includes('does not exist') || lowerMsg.includes('schema cache')) {
               let missingItem = "Advanced Columns";
               if (lowerMsg.includes('colors')) missingItem = "'colors'";
               else if (lowerMsg.includes('images')) missingItem = "'images'";
@@ -58,10 +58,12 @@ export const AdminDashboard: React.FC = () => {
               else if (lowerMsg.includes('sale_price')) missingItem = "'sale_price'";
               else if (lowerMsg.includes('sku')) missingItem = "'sku'";
 
-              const alertMsg = `CRITICAL: Database missing ${missingItem}. Please run the DB Setup script.`;
+              else if (lowerMsg.includes('ishidden')) missingItem = "'isHidden'";
+
+              const alertMsg = `CRITICAL: Database Schema Cache Stale. Please run the DB Setup script.`;
               setSchemaError(alertMsg);
               setShowSql(true);
-              addToast(`Schema Error: ${missingItem} missing`, 'error');
+              addToast(`Schema Error: ${missingItem} missing or cache stale`, 'error');
             } else {
               console.warn("Non-critical schema warning:", msg);
             }
@@ -285,6 +287,9 @@ on conflict (id) do nothing;
 create policy "Public Access" on storage.objects for select using ( bucket_id = 'product-images' );
 create policy "Public Upload" on storage.objects for insert with check ( bucket_id = 'product-images' );
 create policy "Public Delete" on storage.objects for delete using ( bucket_id = 'product-images' );
+
+-- 8. Reload Schema Cache (Fix PGRST204)
+NOTIFY pgrst, 'reload config';
 `;
 
   const copySQL = () => {

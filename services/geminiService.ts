@@ -55,7 +55,7 @@ Rules:
 `;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       systemInstruction,
     });
 
@@ -75,7 +75,7 @@ export const generateProductDescription = async (
   imageBase64?: string
 ): Promise<string> => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     let prompt = `Write a creative, premium, and sales-oriented product description in Arabic (max 50 words) for a phone case named "${productName}". Focus on protection, style, and quality.`;
 
@@ -114,7 +114,7 @@ export const generateBrandLogo = async (brandName: string): Promise<string> => {
     Use a modern color palette.
     Return ONLY the raw <svg>...</svg> code. Do not include markdown code blocks or any other text.`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 

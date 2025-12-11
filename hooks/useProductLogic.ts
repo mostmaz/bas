@@ -145,7 +145,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
             if (error) {
                 const lowerMsg = (error.message || '').toLowerCase();
                 // Check for schema mismatch errors
-                if (error.code === '42703' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku') || lowerMsg.includes('ishidden')) {
+                if (error.code === '42703' || error.code === 'PGRST204' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku') || lowerMsg.includes('ishidden')) {
                     console.warn("Schema mismatch detected during add: column missing. Retrying insert without advanced fields.");
                     addToast("Warning: Database Schema Outdated. Added without complex data.", 'warning');
 
@@ -198,7 +198,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
 
             if (error) {
                 const lowerMsg = (error.message || '').toLowerCase();
-                if (error.code === '42703' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku') || lowerMsg.includes('ishidden')) {
+                if (error.code === '42703' || error.code === 'PGRST204' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku') || lowerMsg.includes('ishidden')) {
                     console.warn("Schema mismatch detected: column missing. Retrying update without advanced fields.");
                     addToast("Warning: Database Schema Outdated. Updated without complex data.", 'warning');
 
