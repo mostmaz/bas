@@ -27,6 +27,7 @@ const COLORS = ['#4f46e5', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'
 export const DashboardOverview: React.FC = () => {
     const { products, orders, shippingFee, updateShippingFee, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo, updateProduct } = useShop();
     const [tempShippingFee, setTempShippingFee] = useState(shippingFee.toString());
+    const [optimizationProgress, setOptimizationProgress] = useState<number | null>(null);
     const lowStockProducts = products.filter(p => p.stock < 10);
 
     // Dynamic Revenue Calculation (Excluding Cancelled)
@@ -333,93 +334,113 @@ export const DashboardOverview: React.FC = () => {
                             </p>
 
                             <div className="flex gap-3">
-                                <Button
-                                    onClick={async () => {
-                                        if (!confirm("This will process ALL product images. It may take a while. Continue?")) return;
+                                <div className="flex flex-col gap-3 w-full">
+                                    {optimizationProgress !== null ? (
+                                        <div className="w-full space-y-2">
+                                            <div className="flex justify-between text-xs text-blue-700 dark:text-blue-300">
+                                                <span>Processing...</span>
+                                                <span>{Math.round(optimizationProgress)}%</span>
+                                            </div>
+                                            <div className="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-2.5 overflow-hidden">
+                                                <div
+                                                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                                    style={{ width: `${optimizationProgress}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <Button
+                                            onClick={async () => {
+                                                if (!confirm("This will process ALL product images. It may take a while. Continue?")) return;
 
-                                        const allProducts = products;
-                                        let count = 0;
-                                        const total = allProducts.length;
+                                                const allProducts = products;
+                                                let count = 0;
+                                                const total = allProducts.length;
+                                                setOptimizationProgress(0);
 
-                                        // Helper to process image URL
-                                        const processImageUrl = async (url: string): Promise<string | null> => {
-                                            try {
-                                                // Skip if not a supabase URL or already processed (optimization check could be added here)
-                                                if (!url || !url.includes('supabase.co')) return url;
+                                                // Helper to process image URL
+                                                const processImageUrl = async (url: string): Promise<string | null> => {
+                                                    try {
+                                                        // Skip if not a supabase URL or already processed (optimization check could be added here)
+                                                        if (!url || !url.includes('supabase.co')) return url;
 
-                                                const res = await fetch(url);
-                                                const blob = await res.blob();
-                                                const file = new File([blob], "optimized-image.jpg", { type: "image/jpeg" });
+                                                        const res = await fetch(url);
+                                                        const blob = await res.blob();
+                                                        const file = new File([blob], "optimized-image.jpg", { type: "image/jpeg" });
 
-                                                // Compress
-                                                const compressedFile = await compressImage(file);
+                                                        // Compress
+                                                        const compressedFile = await compressImage(file);
 
-                                                const formData = new FormData();
-                                                formData.append('file', compressedFile);
+                                                        const formData = new FormData();
+                                                        formData.append('file', compressedFile);
 
-                                                const uploadRes = await fetch('/api/upload', {
-                                                    method: 'POST',
-                                                    body: formData
-                                                });
+                                                        const uploadRes = await fetch('/api/upload', {
+                                                            method: 'POST',
+                                                            body: formData
+                                                        });
 
-                                                if (!uploadRes.ok) return null;
-                                                const { url: newUrl } = await uploadRes.json();
-                                                return newUrl;
-                                            } catch (e) {
-                                                console.error("Optimization failed for url", url, e);
-                                                return null;
-                                            }
-                                        };
+                                                        if (!uploadRes.ok) return null;
+                                                        const { url: newUrl } = await uploadRes.json();
+                                                        return newUrl;
+                                                    } catch (e) {
+                                                        console.error("Optimization failed for url", url, e);
+                                                        return null;
+                                                    }
+                                                };
 
-                                        for (const p of allProducts) {
-                                            console.log(`Optimizing ${count + 1}/${total}: ${p.name}`);
+                                                for (const p of allProducts) {
+                                                    console.log(`Optimizing ${count + 1}/${total}: ${p.name}`);
 
-                                            let hasChanges = false;
-                                            let newMainImage = p.image;
+                                                    let hasChanges = false;
+                                                    let newMainImage = p.image;
 
-                                            // Optimize Main Image
-                                            if (p.image) {
-                                                const optimizedUrl = await processImageUrl(p.image);
-                                                if (optimizedUrl && optimizedUrl !== p.image) {
-                                                    newMainImage = optimizedUrl;
-                                                    hasChanges = true;
-                                                }
-                                            }
-
-                                            // Optimize Variants
-                                            const newVariants = [];
-                                            if (p.variants) {
-                                                for (const v of p.variants) {
-                                                    let newVarImage = v.image;
-                                                    if (v.image) {
-                                                        const optimizedUrl = await processImageUrl(v.image);
-                                                        if (optimizedUrl && optimizedUrl !== v.image) {
-                                                            newVarImage = optimizedUrl;
+                                                    // Optimize Main Image
+                                                    if (p.image) {
+                                                        const optimizedUrl = await processImageUrl(p.image);
+                                                        if (optimizedUrl && optimizedUrl !== p.image) {
+                                                            newMainImage = optimizedUrl;
                                                             hasChanges = true;
                                                         }
                                                     }
-                                                    newVariants.push({ ...v, image: newVarImage });
+
+                                                    // Optimize Variants
+                                                    const newVariants = [];
+                                                    if (p.variants) {
+                                                        for (const v of p.variants) {
+                                                            let newVarImage = v.image;
+                                                            if (v.image) {
+                                                                const optimizedUrl = await processImageUrl(v.image);
+                                                                if (optimizedUrl && optimizedUrl !== v.image) {
+                                                                    newVarImage = optimizedUrl;
+                                                                    hasChanges = true;
+                                                                }
+                                                            }
+                                                            newVariants.push({ ...v, image: newVarImage });
+                                                        }
+                                                    }
+
+                                                    if (hasChanges) {
+                                                        await updateProduct({
+                                                            ...p,
+                                                            image: newMainImage,
+                                                            images: [newMainImage, ...(p.images?.slice(1) || [])], // Simplified for now
+                                                            variants: newVariants
+                                                        });
+                                                    }
+                                                    count++;
+                                                    setOptimizationProgress((count / total) * 100);
                                                 }
-                                            }
 
-                                            if (hasChanges) {
-                                                await updateProduct({
-                                                    ...p,
-                                                    image: newMainImage,
-                                                    images: [newMainImage, ...(p.images?.slice(1) || [])], // Simplified for now
-                                                    variants: newVariants
-                                                });
-                                            }
-                                            count++;
-                                        }
-
-                                        alert(`Optimization complete! Processed ${count} products.`);
-                                        window.location.reload();
-                                    }}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                    <RefreshCw className="h-4 w-4 mr-2" /> Optimize All Images
-                                </Button>
+                                                setOptimizationProgress(null);
+                                                alert(`Optimization complete! Processed ${count} products.`);
+                                                window.location.reload();
+                                            }}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                                        >
+                                            <RefreshCw className="h-4 w-4 mr-2" /> Optimize All Images
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
