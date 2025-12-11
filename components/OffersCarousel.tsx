@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 export const OffersCarousel: React.FC = () => {
@@ -18,7 +17,6 @@ export const OffersCarousel: React.FC = () => {
   const next = () => setCurrent(c => (c + 1) % carouselSlides.length);
   const prev = () => setCurrent(c => (c === 0 ? carouselSlides.length - 1 : c - 1));
 
-  // Handle RTL Icon flipping logic if needed, though icons are usually universally directional for next/prev
   const isRTL = language === 'ar';
 
   if (carouselSlides.length === 0) return null;
@@ -30,30 +28,14 @@ export const OffersCarousel: React.FC = () => {
           key={offer.id}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
         >
-          <div className={`w-full h-full bg-gradient-to-r ${offer.color} flex items-center relative overflow-hidden`}>
-
-            {/* Image Overlay */}
-            <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} top-0 bottom-0 w-2/3 md:w-1/2 h-full`}>
-              <img
-                src={offer.image}
-                alt=""
-                loading={idx === 0 ? "eager" : "lazy"}
-                className="w-full h-full object-cover mix-blend-overlay opacity-50 md:opacity-100"
-              />
-              <div className={`absolute inset-0 bg-gradient-to-r ${offer.color} mix-blend-multiply md:hidden`}></div>
-              {/* Fade Gradient */}
-              <div className={`absolute inset-y-0 ${isRTL ? 'right-0' : 'left-0'} w-32 bg-gradient-to-${isRTL ? 'l' : 'r'} ${offer.color} to-transparent hidden md:block`}></div>
-            </div>
-
-            {/* Content */}
-            <div className="relative z-10 p-5 md:p-10 max-w-2xl text-white">
-              <span className="inline-block py-1 px-2 rounded-full bg-white/20 backdrop-blur-sm text-[10px] md:text-xs font-bold tracking-wider mb-2 border border-white/30 shadow-sm">
-                {offer.subtitle}
-              </span>
-              <h2 className="text-xl md:text-3xl font-bold mb-2 leading-tight shadow-sm">{offer.title}</h2>
-              <p className="text-xs md:text-base text-white/90 mb-0 max-w-md drop-shadow-sm line-clamp-2 md:line-clamp-2 hidden sm:block">{offer.description}</p>
-            </div>
-
+          <div className="w-full h-full relative overflow-hidden">
+            <img
+              src={offer.image}
+              alt={offer.title || "Slide"}
+              loading={idx === 0 ? "eager" : "lazy"}
+              className="w-full h-full object-cover"
+              style={{ objectPosition: offer.imagePosition || 'center' }}
+            />
           </div>
         </div>
       ))}

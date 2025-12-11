@@ -190,8 +190,12 @@ create table if not exists slides (
   subtitle text,
   description text,
   color text,
-  image text
+  image text,
+  imagePosition text
 );
+
+-- 9. Add imagePosition to slides if missing
+alter table slides add column if not exists imagePosition text;
 
 create table if not exists orders (
   id text primary key default gen_random_uuid()::text,

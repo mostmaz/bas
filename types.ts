@@ -50,11 +50,12 @@ export interface ChatMessage {
 
 export interface CarouselSlide {
   id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  color: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  color?: string;
   image: string;
+  imagePosition?: string;
 }
 
 export interface Brand {

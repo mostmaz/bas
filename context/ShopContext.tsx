@@ -57,6 +57,7 @@ interface ShopContextType {
   addSlide: (slide: CarouselSlide) => Promise<void>;
   updateSlide: (slide: CarouselSlide) => Promise<void>;
   deleteSlide: (id: string) => Promise<void>;
+  refreshSlides: () => Promise<void>;
   placeOrder: (orderData: Omit<Order, 'id' | 'date' | 'status'>) => Promise<void>;
   updateOrderStatus: (id: string, status: Order['status']) => Promise<void>;
   bulkUpdateOrderStatus: (ids: string[], status: Order['status']) => Promise<void>;
@@ -131,7 +132,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   // --- HOOKS ---
   const { brands, setBrands, refreshBrands, addBrand, deleteBrand } = useBrandLogic(isSupabaseConfigured, addToast);
   const { devices, setDevices, refreshDevices, addDevice, deleteDevice } = useDeviceLogic(isSupabaseConfigured, addToast);
-  const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide } = useSlideLogic(isSupabaseConfigured, addToast);
+  const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides } = useSlideLogic(isSupabaseConfigured, addToast);
 
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
   const { products, setProducts, refreshProducts, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
@@ -148,6 +149,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     refreshDiscounts();
     refreshDevices();
     refreshOrders();
+    refreshSlides();
   }, []);
 
   // --- ACTIONS (Settings & UI) ---
@@ -254,7 +256,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       addProduct, updateProduct, deleteProduct,
       addBrand, deleteBrand,
       addDevice, deleteDevice,
-      addSlide, updateSlide, deleteSlide,
+      addSlide, updateSlide, deleteSlide, refreshSlides,
       placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus,
       addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
       appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
