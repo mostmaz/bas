@@ -103,6 +103,14 @@ export const Home: React.FC = () => {
     });
   }, [products, selectedBrandFilter, selectedDevice, filters]);
 
+  const bestSellers = useMemo(() => {
+    return [...filteredProducts].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 6);
+  }, [filteredProducts]);
+
+  const latestProducts = useMemo(() => {
+    return filteredProducts.slice(0, 6);
+  }, [filteredProducts]);
+
   return (
     <div className="pb-24">
       <FilterModal
@@ -174,8 +182,40 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
+      {/* Best Sellers Section */}
+      {bestSellers.length > 0 && (
+        <div className="mt-8 px-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('bestSellers')}</h3>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
+            {bestSellers.map(product => (
+              <div key={product.id} className="min-w-[160px] w-[160px] sm:w-[200px]">
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Latest Added Section */}
+      {latestProducts.length > 0 && (
+        <div className="mt-6 px-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('latestDrops')}</h3>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
+            {latestProducts.map(product => (
+              <div key={product.id} className="min-w-[160px] w-[160px] sm:w-[200px]">
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Products Grid */}
-      <div className="mt-4 px-6">
+      <div className="mt-8 px-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('popular')}</h3>
           <button className="text-sm text-purple-600 dark:text-purple-400 font-medium">{t('viewAll')}</button>
