@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useShop } from '@/context/ShopContext';
+import Image from 'next/image';
 
 export const SplashScreen = () => {
     const [isVisible, setIsVisible] = useState(true);
@@ -21,11 +22,14 @@ export const SplashScreen = () => {
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 transition-opacity duration-500">
             <div className="relative animate-in fade-in zoom-in duration-700">
                 <div className="h-32 w-32 rounded-3xl bg-gradient-to-br from-purple-600 to-pink-500 p-1 shadow-2xl shadow-purple-500/30">
-                    <div className="h-full w-full rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
-                        <img
+                    <div className="h-full w-full rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden relative">
+                        <Image
                             src={storeLogo || "/logo.png"}
                             alt="BasCavarat"
-                            className="h-24 w-24 object-cover"
+                            fill
+                            sizes="96px"
+                            className="object-cover"
+                            priority
                         />
                     </div>
                 </div>

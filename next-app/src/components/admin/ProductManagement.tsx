@@ -9,25 +9,34 @@ import { Product } from '@/types';
 import { ProductFormModal } from './ProductFormModal';
 import * as XLSX from 'xlsx';
 
-// Helper to convert URL to Base64
-const convertUrlToBase64 = async (url: string): Promise<string> => {
+// Helper to upload image from URL directly to server
+const uploadImageFromUrl = async (url: string): Promise<string> => {
     if (!url) return '';
-    if (url.startsWith('data:image')) return url;
+    // If it's already a Supabase URL, return it (optional optimization)
+    if (url.includes('supabase.co')) return url;
 
     try {
         const response = await fetch(url);
-        // If CORS fails, fetch throws. If 404, response.ok is false.
         if (!response.ok) throw new Error(`Status: ${response.status}`);
 
         const blob = await response.blob();
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
+        const filename = url.split('/').pop()?.split('?')[0] || `bulk_upload_${Date.now()}.jpg`;
+        const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
         });
+
+        if (!uploadRes.ok) throw new Error('Upload failed');
+
+        const { url: newUrl } = await uploadRes.json();
+        return newUrl;
     } catch (error) {
-        console.warn(`[Bulk Upload] Failed to convert image to base64 (CORS/Network). Using original URL.`, error);
+        console.warn(`[Bulk Upload] Failed to upload image from URL: ${url}. Keeping original URL.`, error);
         return url;
     }
 };
@@ -210,15 +219,15 @@ export const ProductManagement: React.FC = () => {
                             continue;
                         }
 
-                        // Image URL Conversion
+                        // Image URL Conversion (Upload to Server)
                         if (base.image) {
-                            base.image = await convertUrlToBase64(String(base.image));
+                            base.image = await uploadImageFromUrl(String(base.image));
                         }
 
                         if (variants.length > 0) {
                             await Promise.all(variants.map(async (v: any) => {
                                 if (v.image) {
-                                    v.image = await convertUrlToBase64(String(v.image));
+                                    v.image = await uploadImageFromUrl(String(v.image));
                                 }
                             }));
                         }

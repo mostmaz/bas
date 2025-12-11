@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Search, Menu, X, Moon, Sun, Globe, WifiOff, Wifi, Heart } from 'lucide-react';
 import { useShop } from '@/context/ShopContext';
 import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 export const Navbar: React.FC = () => {
     const { cart, toggleCart, theme, toggleTheme, language, toggleLanguage, t, isOnline, supaConnectionError, setSearchQuery, storeLogo } = useShop();
@@ -79,11 +80,16 @@ export const Navbar: React.FC = () => {
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center cursor-pointer group" onClick={() => router.push('/')}>
-                        <img
-                            src={storeLogo}
-                            alt="BasCavarat Logo"
-                            className="w-10 h-10 rounded-xl mr-3 rtl:ml-3 rtl:mr-0 object-cover shadow-lg shadow-pink-500/20 group-hover:shadow-pink-500/40 transition-all duration-300"
-                        />
+                        <div className="relative w-10 h-10 rounded-xl mr-3 rtl:ml-3 rtl:mr-0 shadow-lg shadow-pink-500/20 group-hover:shadow-pink-500/40 transition-all duration-300 overflow-hidden">
+                            <Image
+                                src={storeLogo}
+                                alt="BasCavarat Logo"
+                                fill
+                                sizes="40px"
+                                className="object-cover"
+                                priority
+                            />
+                        </div>
                         <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white transition-colors">BasCavarat</span>
                     </div>
 
