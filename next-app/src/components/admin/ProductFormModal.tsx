@@ -8,6 +8,7 @@ import { Product, ProductVariant } from '@/types';
 import { generateProductDescriptionAction, generateSearchTagsAction } from '@/app/actions/gemini';
 import { useShop } from '@/context/ShopContext';
 import { useToast } from '@/context/ToastContext';
+import { compressImage } from '@/utils/imageCompression';
 
 interface ProductFormModalProps {
     isOpen: boolean;
@@ -111,9 +112,20 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                     continue;
                 }
 
+                // Compress image before upload
+                let fileToUpload = file;
+                try {
+                    // Only compress images
+                    if (file.type.startsWith('image/')) {
+                        fileToUpload = await compressImage(file);
+                    }
+                } catch (compError) {
+                    console.warn("Compression failed, using original file", compError);
+                }
+
                 // Create FormData for upload
                 const formData = new FormData();
-                formData.append('file', file);
+                formData.append('file', fileToUpload);
 
                 // Upload to API route
                 const response = await fetch('/api/upload', {

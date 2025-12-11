@@ -9,6 +9,7 @@ import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings,
 import { generateSearchTagsAction } from '@/app/actions/gemini';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/Button';
+import { compressImage } from '@/utils/imageCompression';
 
 // Mock Data for Revenue (keep static for demo)
 const REVENUE_DATA = [
@@ -313,123 +314,233 @@ export const DashboardOverview: React.FC = () => {
                         </Button>
                     </div>
                 </div>
-            </div>
-
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Total Revenue</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">IQD {totalRevenue.toLocaleString()}</p>
-                        </div>
-                        <div className="p-3 bg-green-100 rounded-full text-green-600">
-                            <DollarSign className="h-6 w-6" />
-                        </div>
-                    </div>
-                    <p className="text-sm text-green-600 mt-2 flex items-center">
-                        <TrendingUp className="h-3 w-3 mr-1" /> +12.5% vs last week
+                {/* Image Optimizer Tool */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-blue-200 dark:border-blue-900/50 mb-8">
+                    <h3 className="text-lg font-semibold mb-2 text-blue-700 dark:text-blue-400 flex items-center">
+                        <ImageIcon className="h-5 w-5 mr-2" /> Image Optimizer
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">
+                        Scan your products for images that can be compressed to save bandwidth and improve load times.
                     </p>
-                </div>
 
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Active Products</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{products.length}</p>
-                        </div>
-                        <div className="p-3 bg-blue-100 rounded-full text-blue-600">
-                            <Package className="h-6 w-6" />
+                    <div className="flex flex-col gap-4">
+                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">
+                                Optimize Existing Images
+                            </h4>
+                            <p className="text-xs text-blue-700 dark:text-blue-400 mb-4">
+                                This will download, compress, and re-upload images for all products.
+                            </p>
+
+                            <div className="flex gap-3">
+                                <Button
+                                    onClick={async () => {
+                                        if (!confirm("This will process ALL product images. It may take a while. Continue?")) return;
+
+                                        const allProducts = products;
+                                        let count = 0;
+                                        const total = allProducts.length;
+
+                                        // Helper to process image URL
+                                        const processImageUrl = async (url: string): Promise<string | null> => {
+                                            try {
+                                                // Skip if not a supabase URL or already processed (optimization check could be added here)
+                                                if (!url || !url.includes('supabase.co')) return url;
+
+                                                const res = await fetch(url);
+                                                const blob = await res.blob();
+                                                const file = new File([blob], "optimized-image.jpg", { type: "image/jpeg" });
+
+                                                // Compress
+                                                const compressedFile = await compressImage(file);
+
+                                                const formData = new FormData();
+                                                formData.append('file', compressedFile);
+
+                                                const uploadRes = await fetch('/api/upload', {
+                                                    method: 'POST',
+                                                    body: formData
+                                                });
+
+                                                if (!uploadRes.ok) return null;
+                                                const { url: newUrl } = await uploadRes.json();
+                                                return newUrl;
+                                            } catch (e) {
+                                                console.error("Optimization failed for url", url, e);
+                                                return null;
+                                            }
+                                        };
+
+                                        for (const p of allProducts) {
+                                            console.log(`Optimizing ${count + 1}/${total}: ${p.name}`);
+
+                                            let hasChanges = false;
+                                            let newMainImage = p.image;
+
+                                            // Optimize Main Image
+                                            if (p.image) {
+                                                const optimizedUrl = await processImageUrl(p.image);
+                                                if (optimizedUrl && optimizedUrl !== p.image) {
+                                                    newMainImage = optimizedUrl;
+                                                    hasChanges = true;
+                                                }
+                                            }
+
+                                            // Optimize Variants
+                                            const newVariants = [];
+                                            if (p.variants) {
+                                                for (const v of p.variants) {
+                                                    let newVarImage = v.image;
+                                                    if (v.image) {
+                                                        const optimizedUrl = await processImageUrl(v.image);
+                                                        if (optimizedUrl && optimizedUrl !== v.image) {
+                                                            newVarImage = optimizedUrl;
+                                                            hasChanges = true;
+                                                        }
+                                                    }
+                                                    newVariants.push({ ...v, image: newVarImage });
+                                                }
+                                            }
+
+                                            if (hasChanges) {
+                                                await updateProduct({
+                                                    ...p,
+                                                    image: newMainImage,
+                                                    images: [newMainImage, ...(p.images?.slice(1) || [])], // Simplified for now
+                                                    variants: newVariants
+                                                });
+                                            }
+                                            count++;
+                                        }
+
+                                        alert(`Optimization complete! Processed ${count} products.`);
+                                        window.location.reload();
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                    <RefreshCw className="h-4 w-4 mr-2" /> Optimize All Images
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
-                        {lowStockProducts.length} items low on stock
-                    </p>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Pending Orders</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{pendingOrdersCount}</p>
-                        </div>
-                        <div className="p-3 bg-purple-100 rounded-full text-purple-600">
-                            <ShoppingCart className="h-6 w-6" />
-                        </div>
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">Needs attention</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Chart */}
-                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Revenue Trend (IQD)</h3>
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={REVENUE_DATA}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} tickFormatter={(value) => `${value / 1000}k`} />
-                                <Tooltip
-                                    formatter={(value: number) => [`IQD ${value.toLocaleString()}`, 'Revenue']}
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                                />
-                                <Line type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} dot={{ fill: '#4f46e5', r: 4 }} activeDot={{ r: 6 }} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* Pie Chart & Low Stock */}
-                <div className="space-y-6">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-                        <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Products by Brand</h3>
-                        <div className="h-48">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Total Revenue</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white">IQD {totalRevenue.toLocaleString()}</p>
+                            </div>
+                            <div className="p-3 bg-green-100 rounded-full text-green-600">
+                                <DollarSign className="h-6 w-6" />
+                            </div>
+                        </div>
+                        <p className="text-sm text-green-600 mt-2 flex items-center">
+                            <TrendingUp className="h-3 w-3 mr-1" /> +12.5% vs last week
+                        </p>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Active Products</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{products.length}</p>
+                            </div>
+                            <div className="p-3 bg-blue-100 rounded-full text-blue-600">
+                                <Package className="h-6 w-6" />
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
+                            {lowStockProducts.length} items low on stock
+                        </p>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Pending Orders</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{pendingOrdersCount}</p>
+                            </div>
+                            <div className="p-3 bg-purple-100 rounded-full text-purple-600">
+                                <ShoppingCart className="h-6 w-6" />
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">Needs attention</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Main Chart */}
+                    <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Revenue Trend (IQD)</h3>
+                        <div className="h-72">
                             <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={brandData}
-                                        innerRadius={40}
-                                        outerRadius={70}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {brandData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                    <Legend />
-                                </PieChart>
+                                <LineChart data={REVENUE_DATA}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} tickFormatter={(value) => `${value / 1000}k`} />
+                                    <Tooltip
+                                        formatter={(value: number) => [`IQD ${value.toLocaleString()}`, 'Revenue']}
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                    />
+                                    <Line type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} dot={{ fill: '#4f46e5', r: 4 }} activeDot={{ r: 6 }} />
+                                </LineChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center text-amber-600">
-                            <AlertTriangle className="h-5 w-5 mr-2" /> Low Stock Alert
-                        </h3>
-                        {lowStockProducts.length > 0 ? (
-                            <div className="space-y-3">
-                                {lowStockProducts.slice(0, 3).map(p => (
-                                    <div key={p.id} className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-700 dark:text-slate-300 truncate max-w-[150px]">{p.name}</span>
-                                        <span className="text-red-600 font-medium">{p.stock} left</span>
-                                    </div>
-                                ))}
-                                {lowStockProducts.length > 3 && (
-                                    <p className="text-xs text-center text-gray-500 dark:text-slate-500 mt-2">
-                                        + {lowStockProducts.length - 3} more items
-                                    </p>
-                                )}
+                    {/* Pie Chart & Low Stock */}
+                    <div className="space-y-6">
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+                            <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Products by Brand</h3>
+                            <div className="h-48">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={brandData}
+                                            innerRadius={40}
+                                            outerRadius={70}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {brandData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
                             </div>
-                        ) : (
-                            <p className="text-sm text-gray-500 dark:text-slate-400">All inventory levels are healthy.</p>
-                        )}
+                        </div>
+
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+                            <h3 className="text-lg font-semibold mb-4 flex items-center text-amber-600">
+                                <AlertTriangle className="h-5 w-5 mr-2" /> Low Stock Alert
+                            </h3>
+                            {lowStockProducts.length > 0 ? (
+                                <div className="space-y-3">
+                                    {lowStockProducts.slice(0, 3).map(p => (
+                                        <div key={p.id} className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-700 dark:text-slate-300 truncate max-w-[150px]">{p.name}</span>
+                                            <span className="text-red-600 font-medium">{p.stock} left</span>
+                                        </div>
+                                    ))}
+                                    {lowStockProducts.length > 3 && (
+                                        <p className="text-xs text-center text-gray-500 dark:text-slate-500 mt-2">
+                                            + {lowStockProducts.length - 3} more items
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-slate-400">All inventory levels are healthy.</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };

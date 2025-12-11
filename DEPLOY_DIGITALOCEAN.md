@@ -19,8 +19,22 @@ The App Platform is the easiest way to deploy Next.js applications. It handles S
    - Select `/next-app` as the source directory (since the Next.js app is in a subdirectory).
    - Click **Save**.
 5. **Resources**:
-   - Digital Ocean should auto-detect the component as a **Web Service**.
-   - Choose a plan (Basic is fine for starting).
+   - Digital Ocean might detect **two components**:
+     1. **Node.js** (detected from the root folder).
+     2. **Docker** (detected from the `/next-app` folder).
+   - **Action**: 
+     - Find the **Node.js** component in the list and click the **Trash/Delete icon** next to it.
+     - Keep **ONLY** the **Docker** component.
+   - **Configuration for Docker Component**:
+     - Ensure "Source Directory" is `/next-app`.
+     - Choose a plan (Basic is fine).
+
+### Performance Tips for Digital Ocean
+1. **Enable CDN**: In the App Platform settings, go to the **Settings** tab and enable **Content Delivery Network (CDN)**. This will cache your static assets (images, CSS, JS) globally, making the site much faster for users in different regions.
+2. **Scale Up (If needed)**: If the site feels slow, you can upgrade the container size in the **Resources** tab. The "Basic" plan with 1GB RAM is a good starting point, but 2GB is better for production traffic.
+3. **Database Region**: Ensure your Supabase database region is close to your Digital Ocean region (e.g., both in Frankfurt or London) to minimize latency.
+4. **Image Compression**: I have implemented **automatic client-side image compression** in the Admin Dashboard. When you upload product images, they are now automatically compressed before being sent to Supabase. This saves bandwidth and makes images load faster for your customers.
+
 6. **Environment Variables**:
    - Click **Edit** next to Environment Variables.
    - Add the following variables (copy them from your `.env.local` or Supabase dashboard):
