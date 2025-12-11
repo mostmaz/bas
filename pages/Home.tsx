@@ -41,7 +41,11 @@ export const Home: React.FC = () => {
   const handleFilterApply = (newFilters: FilterState) => {
     setFilters(newFilters);
     setIsFilterOpen(false);
-    // Reset top-bar brand filter when applying advanced filters
+
+    // Navigate to filtered products page with the selected filters
+    navigate('/filtered-products', { state: { initialFilters: newFilters } });
+
+    // Reset top-bar brand filter when applying advanced filters (though we are navigating away)
     setSelectedBrandFilter('All');
   };
 

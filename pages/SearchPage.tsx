@@ -3,6 +3,7 @@ import { Search, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { ProductCard } from '../components/ProductCard';
 import { useNavigate } from 'react-router-dom';
+import { expandSearchQuery } from '../utils/searchUtils';
 
 export const SearchPage: React.FC = () => {
   const { products, t, language } = useShop();
@@ -28,13 +29,18 @@ export const SearchPage: React.FC = () => {
 
   const filteredProducts = products.filter(p => {
     if (!query) return false;
-    const lowerQuery = query.toLowerCase();
-    return (
-      p.name.toLowerCase().includes(lowerQuery) || 
-      p.description.toLowerCase().includes(lowerQuery) || 
-      p.category.toLowerCase().includes(lowerQuery) ||
-      p.brand.toLowerCase().includes(lowerQuery)
-    );
+
+    const searchTerms = expandSearchQuery(query);
+
+    return searchTerms.some(term => {
+      const lowerTerm = term.toLowerCase();
+      return (
+        p.name.toLowerCase().includes(lowerTerm) ||
+        p.description.toLowerCase().includes(lowerTerm) ||
+        p.category.toLowerCase().includes(lowerTerm) ||
+        p.brand.toLowerCase().includes(lowerTerm)
+      );
+    });
   });
 
   const isRTL = language === 'ar';
@@ -44,8 +50,8 @@ export const SearchPage: React.FC = () => {
       {/* Sticky Search Header */}
       <div className="sticky top-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md z-30 pb-4 pt-2 -mx-4 px-4 border-b border-slate-100 dark:border-slate-800 mb-4">
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate(-1)} 
+          <button
+            onClick={() => navigate(-1)}
             className="p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
           >
             {isRTL ? <ArrowRight className="h-6 w-6" /> : <ArrowLeft className="h-6 w-6" />}
@@ -64,7 +70,7 @@ export const SearchPage: React.FC = () => {
               className="block w-full pl-10 rtl:pr-10 rtl:pl-3 pr-10 rtl:pl-10 py-3 border border-slate-200 dark:border-slate-800 rounded-2xl leading-5 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
             />
             {query && (
-              <button 
+              <button
                 onClick={() => setQuery('')}
                 className="absolute inset-y-0 right-0 rtl:left-0 rtl:right-auto pr-3 rtl:pl-3 flex items-center text-slate-400 hover:text-slate-600"
               >
@@ -81,7 +87,7 @@ export const SearchPage: React.FC = () => {
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('results')} ({filteredProducts.length})</h2>
           </div>
-          
+
           {filteredProducts.length > 0 ? (
             <div className="grid grid-cols-2 gap-4">
               {filteredProducts.map(product => (
@@ -101,7 +107,7 @@ export const SearchPage: React.FC = () => {
             <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-4 px-1">{t('popularSearches')}</h2>
             <div className="flex flex-wrap gap-2">
               {['iPhone 15', 'Samsung', 'Marble', 'Minimalist', 'Eco', 'Urban'].map(term => (
-                <button 
+                <button
                   key={term}
                   onClick={() => setQuery(term)}
                   className="px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full text-sm text-slate-700 dark:text-slate-300 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"

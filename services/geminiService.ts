@@ -9,7 +9,8 @@ const genAI = new GoogleGenerativeAI(process.env.API_KEY as string);
  */
 export const chatWithShopAssistant = async (
   userMessage: string,
-  allProducts: Product[]
+  allProducts: Product[],
+  assistantName: string = "Sarah"
 ): Promise<string> => {
   try {
     const lowerMsg = userMessage.toLowerCase();
@@ -39,7 +40,7 @@ export const chatWithShopAssistant = async (
       .join("\n");
 
     const systemInstruction = `
-You are "Bas Cavarat" (بس كفرات), a helpful and stylish sales assistant for a mobile accessories shop in Iraq.
+You are "${assistantName}", a helpful and stylish sales assistant for a mobile accessories shop in Iraq.
 
 Inventory Context:
 ${productContext}

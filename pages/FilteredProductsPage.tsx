@@ -17,10 +17,17 @@ export const FilteredProductsPage: React.FC = () => {
 
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [selectedDevice, setSelectedDevice] = useState(deviceFilter || '');
-    const [filters, setFilters] = useState<FilterState>({
-        priceRange: [0, 1000000],
-        selectedColors: [],
-        selectedBrands: []
+
+    // Initialize filters from location state if available, otherwise default
+    const [filters, setFilters] = useState<FilterState>(() => {
+        if (location.state && location.state.initialFilters) {
+            return location.state.initialFilters;
+        }
+        return {
+            priceRange: [0, 1000000],
+            selectedColors: [],
+            selectedBrands: []
+        };
     });
 
     useEffect(() => {

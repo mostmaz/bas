@@ -12,8 +12,11 @@ export const AiAssistant: React.FC = () => {
   const { products, t, language, placeOrder, clearCart } = useShop();
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
+  const aiNames = ["Layla", "Noor", "Sara", "Maya", "Amira"];
+  const [aiName] = useState(() => aiNames[Math.floor(Math.random() * aiNames.length)]);
+
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 'init', role: 'model', text: 'Hi! I\'m Bas Cavarat, your AI style assistant. Looking for a specific vibe?', timestamp: Date.now() }
+    { id: 'init', role: 'model', text: `Hi! I'm ${aiName}, your AI style assistant. Looking for a specific vibe?`, timestamp: Date.now() }
   ]);
 
   const [input, setInput] = useState('');
@@ -24,9 +27,9 @@ export const AiAssistant: React.FC = () => {
   // Update initial greeting when language changes
   useEffect(() => {
     setMessages(prev => prev.map(msg =>
-      msg.id === 'init' ? { ...msg, text: t('aiIntro') } : msg
+      msg.id === 'init' ? { ...msg, text: t('aiIntro').replace('{name}', aiName) } : msg
     ));
-  }, [language, t]);
+  }, [language, t, aiName]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,7 +65,7 @@ export const AiAssistant: React.FC = () => {
         ? `[User Selected Products: ${selectedProductDetails}] ${input}`
         : input;
 
-      const responseText = await chatWithShopAssistant(contextInput + langContext, products);
+      const responseText = await chatWithShopAssistant(contextInput + langContext, products, aiName);
 
       if (responseText.startsWith('ORDER_CONFIRMED:')) {
         try {
@@ -207,8 +210,8 @@ export const AiAssistant: React.FC = () => {
             key={index}
             onClick={() => navigate(url)}
             className={`inline-flex items-center gap-1 underline font-bold mx-1 hover:opacity-80 transition-opacity ${role === 'user'
-                ? 'text-white decoration-white'
-                : 'text-purple-600 dark:text-purple-400 decoration-purple-600 dark:decoration-purple-400'
+              ? 'text-white decoration-white'
+              : 'text-purple-600 dark:text-purple-400 decoration-purple-600 dark:decoration-purple-400'
               }`}
           >
             {label}
@@ -232,7 +235,7 @@ export const AiAssistant: React.FC = () => {
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-lg">Bas Cavarat (بس كفرات)</h3>
+                <h3 className="font-bold text-lg">{aiName} (AI Assistant)</h3>
                 <p className="text-xs text-purple-100 opacity-80">{t('alwaysHelp')}</p>
               </div>
             </div>
@@ -250,8 +253,8 @@ export const AiAssistant: React.FC = () => {
               >
                 <div
                   className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
-                      ? 'bg-purple-600 text-white rounded-br-sm rtl:rounded-bl-sm rtl:rounded-br-2xl'
-                      : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-sm rtl:rounded-br-sm rtl:rounded-bl-2xl shadow-sm'
+                    ? 'bg-purple-600 text-white rounded-br-sm rtl:rounded-bl-sm rtl:rounded-br-2xl'
+                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-sm rtl:rounded-br-sm rtl:rounded-bl-2xl shadow-sm'
                     }`}
                 >
                   {renderMessageContent(msg.text, msg.role)}
