@@ -3,6 +3,7 @@
 // Production-ready Product Form Modal - Fixed TypeScript errors
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Wand2, Loader2, Trash2, Check, Plus, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/Button';
 import { Product, ProductVariant } from '@/types';
 import { generateProductDescriptionAction, generateSearchTagsAction } from '@/app/actions/gemini';
@@ -394,16 +395,22 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                             <div className="grid grid-cols-4 gap-2 mb-3">
                                 {formData.images.map((img, idx) => (
                                     <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 group">
-                                        <img src={img} alt="" className="w-full h-full object-cover" />
+                                        <Image
+                                            src={img}
+                                            alt=""
+                                            fill
+                                            sizes="100px"
+                                            className="object-cover"
+                                        />
                                         <button
                                             type="button"
                                             onClick={() => removeImage(idx)}
-                                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white z-10"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>
                                         {idx === 0 && (
-                                            <span className="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] px-1.5 py-0.5 rounded-br-md">Main</span>
+                                            <span className="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] px-1.5 py-0.5 rounded-br-md z-10">Main</span>
                                         )}
                                     </div>
                                 ))}
@@ -489,9 +496,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                                             onClick={() => setVariantImageIndex(idx)}
                                             className={`relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${variantImageIndex === idx ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-transparent opacity-70 hover:opacity-100'}`}
                                         >
-                                            <img src={img} className="w-full h-full object-cover" />
+                                            <Image src={img} alt="" fill sizes="48px" className="object-cover" />
                                             {variantImageIndex === idx && (
-                                                <div className="absolute inset-0 bg-indigo-500/20 flex items-center justify-center">
+                                                <div className="absolute inset-0 bg-indigo-500/20 flex items-center justify-center z-10">
                                                     <Check className="w-4 h-4 text-white drop-shadow-md" />
                                                 </div>
                                             )}
@@ -529,7 +536,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                                                 </div>
                                             )}
                                             {v.image ? (
-                                                <img src={v.image} className="w-8 h-8 rounded object-cover border border-gray-200" title="Linked Image" />
+                                                <div className="relative w-8 h-8 rounded overflow-hidden border border-gray-200">
+                                                    <Image src={v.image} alt="" fill sizes="32px" className="object-cover" />
+                                                </div>
                                             ) : (
                                                 <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-300">
                                                     <ImageIcon className="w-4 h-4" />

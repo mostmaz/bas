@@ -6,6 +6,7 @@ import {
     LineChart, Line, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon, RefreshCw, Sparkles } from 'lucide-react';
+import Image from 'next/image';
 import { generateSearchTagsAction } from '@/app/actions/gemini';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/Button';
@@ -125,7 +126,9 @@ export const DashboardOverview: React.FC = () => {
                             <div className="flex items-center gap-4">
                                 <div className="h-16 w-16 rounded-xl overflow-hidden border border-gray-200 dark:border-slate-600 shadow-sm shrink-0 bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
                                     {storeLogo ? (
-                                        <img src={storeLogo} alt="Current Logo" className="w-full h-full object-cover" />
+                                        <div className="relative w-full h-full">
+                                            <Image src={storeLogo} alt="Current Logo" fill sizes="64px" className="object-cover" />
+                                        </div>
                                     ) : (
                                         <ImageIcon className="h-6 w-6 text-gray-400" />
                                     )}

@@ -59,7 +59,7 @@ export default async function RootLayout({
 
   return (
     <html lang="ar" dir="rtl">
-      <body className={`${cairo.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
+      <body suppressHydrationWarning className={`${cairo.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
         <ToastProvider>
           <ShopProvider initialData={initialData}>
             <AppUrlListener />

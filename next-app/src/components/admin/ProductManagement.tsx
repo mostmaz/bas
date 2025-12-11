@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload } from 'lucide-react';
+import Image from 'next/image';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/Button';
 import { Product } from '@/types';
@@ -425,12 +426,15 @@ export const ProductManagement: React.FC = () => {
                                 filteredProducts.map((product) => (
                                     <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                                         <td className="px-6 py-4 flex items-center gap-3">
-                                            <img
-                                                src={product.image}
-                                                alt=""
-                                                loading="lazy"
-                                                className="h-10 w-10 rounded-md object-cover border border-gray-200 dark:border-slate-600"
-                                            />
+                                            <div className="relative h-10 w-10 rounded-md overflow-hidden border border-gray-200 dark:border-slate-600">
+                                                <Image
+                                                    src={product.image || '/placeholder.png'}
+                                                    alt=""
+                                                    fill
+                                                    sizes="40px"
+                                                    className="object-cover"
+                                                />
+                                            </div>
                                             <div>
                                                 <span className="font-medium text-gray-900 dark:text-white block">{product.name}</span>
                                                 <span className="text-gray-500 dark:text-slate-400 text-xs">{product.category}</span>
