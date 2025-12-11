@@ -5,33 +5,60 @@ import { supabase } from '../services/supabase';
 
 // Helper to map Product from DB with multiple images support
 const mapProductFromDB = (p: any): Product => {
-    // If images array exists in DB, use it. Otherwise, fallback to single image or empty array.
-    let images = p.images || (p.image ? [p.image] : []);
+    // 1. Handle Images
+    // Prioritize 'images' array from DB. If missing or empty, fallback to 'image' field wrapped in array.
+    let images: string[] = [];
+    if (Array.isArray(p.images) && p.images.length > 0) {
+        images = p.images;
+    } else if (p.image) {
+        images = [p.image];
+    }
 
-    // Ensure the primary 'image' property is set for backward compatibility
-    // If 'images' array has items, use the first one. Else use the legacy 'image' field.
+    // Ensure main 'image' property is set. Use 'image' from DB, or first item of 'images'.
     let mainImage = p.image;
-    if (images.length > 0 && (!mainImage || mainImage !== images[0])) {
+    if (!mainImage && images.length > 0) {
         mainImage = images[0];
     }
 
-    // Handle variants JSONB safely
+    // 2. Handle Variants
     let variants: ProductVariant[] = [];
-    if (Object.prototype.hasOwnProperty.call(p, 'variants') && p.variants) {
+    if (p.variants) {
         if (typeof p.variants === 'string') {
-            try { variants = JSON.parse(p.variants); } catch (e) { console.error("Error parsing variants JSON", e); }
+            try {
+                const parsed = JSON.parse(p.variants);
+                if (Array.isArray(parsed)) variants = parsed;
+            } catch (e) {
+                console.error("Error parsing variants JSON for product", p.id, e);
+            }
         } else if (Array.isArray(p.variants)) {
             variants = p.variants;
         }
     }
 
+    // 3. Handle Colors
+    // Ensure colors is an array of strings
+    let colors: string[] = [];
+    if (p.colors) {
+        if (Array.isArray(p.colors)) {
+            colors = p.colors;
+        } else if (typeof p.colors === 'string') {
+            try {
+                const parsed = JSON.parse(p.colors);
+                if (Array.isArray(parsed)) colors = parsed;
+                else colors = [p.colors];
+            } catch {
+                colors = [p.colors];
+            }
+        }
+    }
+
     return {
         ...p,
-        image: mainImage,
+        image: mainImage || '', // Ensure it's never undefined/null if possible
         images: images,
-        colors: p.colors || [],
+        colors: colors,
         variants: variants,
-        salePrice: p.sale_price || p.salePrice || undefined,
+        salePrice: p.sale_price !== undefined ? p.sale_price : (p.salePrice !== undefined ? p.salePrice : undefined),
         sku: p.sku || undefined,
         isHidden: p.isHidden || false
     };
