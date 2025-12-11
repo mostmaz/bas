@@ -24,50 +24,58 @@ export const FilteredProductsPage: React.FC = () => {
     });
 
     useEffect(() => {
-        if (deviceFilter) {
-            setSelectedDevice(deviceFilter);
-        }
+        setSelectedDevice(deviceFilter || '');
     }, [deviceFilter]);
+
+    useEffect(() => {
+        setFilters(prev => ({
+            ...prev,
+            selectedBrands: brandFilter ? [brandFilter] : []
+        }));
+    }, [brandFilter]);
 
     const isRTL = language === 'ar';
 
     const handleFilterApply = (newFilters: FilterState) => {
         setFilters(newFilters);
         setIsFilterOpen(false);
+
+        // Reset device selector if brands are selected in the filter
+        if (newFilters.selectedBrands.length > 0) {
+            setSelectedDevice('');
+            const newParams = new URLSearchParams(location.search);
+            newParams.delete('device');
+            // Also clear URL brand param to let advanced filter take over
+            newParams.delete('brand');
+            navigate({ search: newParams.toString() });
+        }
     };
 
     const handleDeviceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const device = e.target.value;
         setSelectedDevice(device);
-        // Update URL to reflect change, or just keep local state?
-        // If we update URL, it might reload page or just push state.
-        // Let's update URL for consistency so sharing link works.
         const newParams = new URLSearchParams(location.search);
         if (device) {
             newParams.set('device', device);
+            // Reset brand filters when selecting a device
+            setFilters(prev => ({ ...prev, selectedBrands: [] }));
         } else {
             newParams.delete('device');
         }
+        // Clear brand filter from URL when selecting a device to avoid conflicts
+        newParams.delete('brand');
         navigate({ search: newParams.toString() });
     };
 
     const filteredProducts = useMemo(() => {
         if (!products) return [];
         return products.filter(product => {
-            // Base filters from URL/State
-            const matchesBrand = !brandFilter || (product.brand && product.brand.toLowerCase() === brandFilter.toLowerCase());
+            // Device Filter
             const matchesDevice = !selectedDevice || (product.device && product.device.toLowerCase() === selectedDevice.toLowerCase());
 
-            // Advanced Filters
+            // Advanced Filters (including Brand)
             const matchesPrice = product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1];
-            // If specific brand is selected in URL, ignore advanced brand filter or AND it?
-            // Usually advanced filter overrides or adds to it.
-            // If URL has brand, we probably shouldn't allow selecting other brands in advanced filter effectively, 
-            // OR we treat URL brand as the "context" and advanced filters as refinement.
-            // Let's say if URL brand is set, we ignore advanced brand filter unless it's empty.
-            // Actually, if user selects brands in filter, they might want to see those instead or in addition.
-            // But for simplicity, let's say URL brand is the primary scope.
-            const matchesAdvancedBrand = filters.selectedBrands.length === 0 || filters.selectedBrands.some(b => b.toLowerCase() === (product.brand || '').toLowerCase());
+            const matchesBrand = filters.selectedBrands.length === 0 || filters.selectedBrands.some(b => b.toLowerCase() === (product.brand || '').toLowerCase());
 
             // Safe Color Filter (copied from Home.tsx)
             const matchesColor = filters.selectedColors.length === 0 || (product.colors && (function () {
@@ -110,9 +118,9 @@ export const FilteredProductsPage: React.FC = () => {
                 );
             })());
 
-            return matchesBrand && matchesDevice && matchesPrice && matchesAdvancedBrand && matchesColor;
+            return matchesDevice && matchesPrice && matchesBrand && matchesColor;
         });
-    }, [products, brandFilter, selectedDevice, filters]);
+    }, [products, selectedDevice, filters]);
 
     const title = brandFilter ? `${brandFilter} Products` : selectedDevice ? `${selectedDevice} Products` : 'Products';
 
