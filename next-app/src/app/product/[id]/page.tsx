@@ -32,8 +32,9 @@ const mapProductFromDB = (p: any): Product => {
     };
 };
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-    const { data } = await supabase.from('products').select('*').eq('id', params.id).single();
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const { id } = await params;
+    const { data } = await supabase.from('products').select('*').eq('id', id).single();
     if (!data) return { title: 'Product Not Found | BasCavarat' };
 
     return {
@@ -55,8 +56,9 @@ export async function generateStaticParams() {
     }));
 }
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
-    const { data: productData } = await supabase.from('products').select('*').eq('id', params.id).single();
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const { data: productData } = await supabase.from('products').select('*').eq('id', id).single();
 
     if (!productData) {
         return (
