@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import sharp from 'sharp';
 
 export async function POST(request: NextRequest) {
     try {
@@ -14,18 +15,29 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Generate unique filename
+        // Optimize image with Sharp
+        // 1. Resize to max width 1920px (prevents huge 4k/8k uploads)
+        // 2. Convert to WebP (better compression)
+        // 3. Set quality to 80% (good balance)
+        const optimizedBuffer = await sharp(buffer)
+            .resize(1920, null, {
+                withoutEnlargement: true, // Don't upscale small images
+                fit: 'inside'
+            })
+            .webp({ quality: 80 })
+            .toBuffer();
+
+        // Generate unique filename with .webp extension
         const timestamp = Date.now();
         const randomString = Math.random().toString(36).substring(7);
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${timestamp}-${randomString}.${fileExt}`;
+        const fileName = `${timestamp}-${randomString}.webp`;
 
         // Upload to Supabase Storage
         const { data, error } = await supabase.storage
             .from('product-images')
-            .upload(fileName, buffer, {
-                contentType: file.type,
-                cacheControl: '3600',
+            .upload(fileName, optimizedBuffer, {
+                contentType: 'image/webp',
+                cacheControl: '31536000', // Cache for 1 year (immutable)
                 upsert: false
             });
 
