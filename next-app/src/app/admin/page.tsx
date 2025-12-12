@@ -9,7 +9,7 @@ import { CarouselManagement } from '@/components/admin/CarouselManagement';
 import { OrderManagement } from '@/components/admin/OrderManagement';
 import { DiscountManagement } from '@/components/admin/DiscountManagement';
 import { useShop } from '@/context/ShopContext';
-import { AlertTriangle, Database, Copy, Check, X, Lock, KeyRound, LogIn } from 'lucide-react';
+import { AlertTriangle, Database, Copy, Check, X, Lock, KeyRound, LogIn, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { useToast } from '@/context/ToastContext';
@@ -40,6 +40,24 @@ function AdminDashboardContent() {
     const [copied, setCopied] = useState(false);
     const [showSql, setShowSql] = useState(false);
     const [schemaError, setSchemaError] = useState<string | null>(null);
+    const [isOptimizing, setIsOptimizing] = useState(false);
+
+    const handleOptimizeImages = async () => {
+        setIsOptimizing(true);
+        try {
+            const res = await fetch('/api/admin/optimize-images', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                addToast(data.message, 'success');
+            } else {
+                addToast(`Optimization failed: ${data.error}`, 'error');
+            }
+        } catch (e) {
+            addToast('Optimization request failed', 'error');
+        } finally {
+            setIsOptimizing(false);
+        }
+    };
 
     // Handle direct navigation to specific tabs via query params
     useEffect(() => {
@@ -364,6 +382,15 @@ create policy "Anon modification discounts" on discounts for all using (true);
                         <p className="text-gray-500 dark:text-slate-400">Overview of your store performance and inventory.</p>
                     </div>
                     <div className="flex gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={handleOptimizeImages}
+                            isLoading={isOptimizing}
+                            className="bg-white dark:bg-slate-800 text-purple-600 border-purple-200 hover:bg-purple-50"
+                        >
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Optimize Images
+                        </Button>
                         <Button
                             variant="outline"
                             onClick={() => setShowSql(!showSql)}
