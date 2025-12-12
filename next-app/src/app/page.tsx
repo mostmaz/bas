@@ -5,6 +5,8 @@ import { useShop } from '@/context/ShopContext';
 import { ProductCard } from '@/components/ProductCard';
 import { ProductSkeleton } from '@/components/ProductSkeleton';
 import { OffersCarousel } from '@/components/OffersCarousel';
+import { LazySection } from '@/components/LazySection';
+import { Pagination } from '@/components/Pagination';
 import { Filter, ChevronDown, Smartphone, Layers, LayoutGrid, Sparkles, TrendingUp, ChevronRight } from 'lucide-react';
 import { Brand } from '@/types';
 import { useRouter } from 'next/navigation';
@@ -21,6 +23,10 @@ export default function Home() {
     selectedColors: [],
     selectedBrands: []
   });
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 12;
 
   const handleDeviceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const device = e.target.value;
@@ -85,6 +91,21 @@ export default function Home() {
       })
       .slice(0, 8);
   }, [products, orders]);
+
+  // Paginated products for "All Products" section
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    const endIndex = startIndex + PRODUCTS_PER_PAGE;
+    return products.slice(startIndex, endIndex);
+  }, [products, currentPage]);
+
+  const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of products section
+    window.scrollTo({ top: 600, behavior: 'smooth' });
+  };
 
   const getBrandImage = (brand: Brand | 'All') => {
     if (brand === 'All') return ''; // Handled by icon now
@@ -183,77 +204,96 @@ export default function Home() {
       {/* Content Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 mb-20 space-y-16">
 
-        {/* Best Sellers Section */}
+        {/* Best Sellers Section - Lazy Loaded */}
         {bestSellers.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-amber-500" />
-                {t('popular')}
-                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                  {t('trending')}
-                </span>
-              </h2>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-              {bestSellers.map((product) => (
-                <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Latest Products Section */}
-        {latestProducts.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-purple-600" />
-                {t('latestDrops')}
-                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                  {t('new')}
-                </span>
-              </h2>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-              {isAppLoading || isProductsLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="min-w-[180px] w-[180px] sm:w-[220px]">
-                    <ProductSkeleton />
-                  </div>
-                ))
-              ) : (
-                latestProducts.map((product) => (
+          <LazySection>
+            <section>
+              <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <TrendingUp className="h-6 w-6 text-amber-500" />
+                  {t('popular')}
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                    {t('trending')}
+                  </span>
+                </h2>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                {bestSellers.map((product) => (
                   <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
                     <ProductCard product={product} />
                   </div>
-                ))
-              )}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          </LazySection>
         )}
 
-        {/* All Products (Popular) */}
+        {/* Latest Products Section - Lazy Loaded */}
+        {latestProducts.length > 0 && (
+          <LazySection>
+            <section>
+              <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="h-6 w-6 text-purple-600" />
+                  {t('latestDrops')}
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                    {t('new')}
+                  </span>
+                </h2>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                {isAppLoading || isProductsLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="min-w-[180px] w-[180px] sm:w-[220px]">
+                      <ProductSkeleton />
+                    </div>
+                  ))
+                ) : (
+                  latestProducts.map((product) => (
+                    <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
+                      <ProductCard product={product} />
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+          </LazySection>
+        )}
+
+        {/* All Products (Paginated Grid) */}
         <section>
           <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <LayoutGrid className="h-6 w-6 text-slate-600 dark:text-slate-400" />
               {t('viewAll')}
+              <span className="ml-2 text-sm font-normal text-slate-500 dark:text-slate-400">
+                ({products.length})
+              </span>
             </h2>
-            <button className="text-sm text-purple-600 dark:text-purple-400 font-medium flex items-center gap-1">
-              {t('viewAll')} <ChevronRight className="h-4 w-4" />
-            </button>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-            {products.slice(0, 10).map((product) => (
-              <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
-                <ProductCard product={product} />
-              </div>
-            ))}
+          {/* Grid View with Pagination */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
+            {isAppLoading || isProductsLoading ? (
+              Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
+                <ProductSkeleton key={i} />
+              ))
+            ) : (
+              paginatedProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            )}
           </div>
+
+          {/* Pagination */}
+          {!isAppLoading && !isProductsLoading && totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              className="mt-8"
+            />
+          )}
         </section>
 
       </div>

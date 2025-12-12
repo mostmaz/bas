@@ -160,12 +160,18 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children, initialDat
         if (!isSupabaseConfigured) {
             addToast("Offline Mode: Using Demo Data", "warning");
         }
+
+        // Critical data - load immediately
         refreshProducts(true);
         refreshBrands();
-        refreshDiscounts();
         refreshDevices();
-        refreshOrders();
         refreshSlides();
+
+        // Non-critical data - defer to improve initial load time
+        setTimeout(() => {
+            refreshDiscounts();
+            refreshOrders();
+        }, 1000);
     }, []);
 
     // --- ACTIONS (Settings & UI) ---
