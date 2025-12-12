@@ -102,66 +102,38 @@ export default function ProductDetails() {
         }
     };
 
-    console.log('=== Product Image Debug ===');
-    console.log('Product ID:', product.id);
-    console.log('Main Image:', product.image);
-    console.log('Images Array:', product.images);
-    console.log('Variants:', product.variants?.map(v => ({ color: v.color, image: v.image })));
-
     // 1. Add main product image (skip base64, always check for uniqueness)
     if (product.image && !isBase64Image(product.image)) {
         const norm = normalizeUrl(product.image);
-        console.log('Main image normalized:', norm);
         if (!uniqueUrls.has(norm)) {
             uniqueUrls.add(norm);
             galleryImages.push(product.image);
-            console.log('✓ Added main image');
-        } else {
-            console.log('✗ Skipped duplicate main image');
         }
     }
 
     // 2. Add additional images (skip base64, excluding main image if duplicated)
     if (product.images && Array.isArray(product.images)) {
-        product.images.forEach((url, idx) => {
-            if (!url || isBase64Image(url)) {
-                console.log(`✗ Skipped images[${idx}]: ${!url ? 'empty' : 'base64'}`);
-                return;
-            }
+        product.images.forEach((url) => {
+            if (!url || isBase64Image(url)) return;
             const norm = normalizeUrl(url);
-            console.log(`Images[${idx}] normalized:`, norm);
             if (!uniqueUrls.has(norm)) {
                 uniqueUrls.add(norm);
                 galleryImages.push(url);
-                console.log(`✓ Added images[${idx}]`);
-            } else {
-                console.log(`✗ Skipped duplicate images[${idx}]`);
             }
         });
     }
 
     // 3. Add variant images (skip base64, excluding existing images)
     if (product.variants && Array.isArray(product.variants)) {
-        product.variants.forEach((v, idx) => {
-            if (!v.image || isBase64Image(v.image)) {
-                console.log(`✗ Skipped variant[${idx}]: ${!v.image ? 'no image' : 'base64'}`);
-                return;
-            }
+        product.variants.forEach((v) => {
+            if (!v.image || isBase64Image(v.image)) return;
             const norm = normalizeUrl(v.image);
-            console.log(`Variant[${idx}] (${v.color}) normalized:`, norm);
             if (!uniqueUrls.has(norm)) {
                 uniqueUrls.add(norm);
                 galleryImages.push(v.image);
-                console.log(`✓ Added variant[${idx}]`);
-            } else {
-                console.log(`✗ Skipped duplicate variant[${idx}]`);
             }
         });
     }
-
-    console.log('Final gallery count:', galleryImages.length);
-    console.log('Unique URLs:', Array.from(uniqueUrls));
-    console.log('=== End Debug ===');
 
     // Available Variants (Stock > 0) - Only show if stock is available
     const availableVariants = product.variants ? product.variants.filter(v => v.stock > 0) : [];
