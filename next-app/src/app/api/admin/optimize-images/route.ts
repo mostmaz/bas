@@ -2,21 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import sharp from 'sharp';
 
-// Helper to process a single image URL
-async function processImage(url: string): Promise<string | null> {
+// Helper to process a single image URL or Base64 string
+async function processImage(url: string | null | undefined): Promise<string | null> {
+    if (!url) return null;
+
     try {
-        // Only process Supabase images that aren't already WebP
-        if (!url.includes('supabase.co') || url.endsWith('.webp')) {
+        let buffer: Buffer;
+
+        // Check for Base64
+        if (url.startsWith('data:image')) {
+            console.log('Processing Base64 Image...');
+            const base64Data = url.split(',')[1];
+            if (!base64Data) return null;
+            buffer = Buffer.from(base64Data, 'base64');
+        }
+        // Check for Supabase URL (that isn't already WebP)
+        else if (url.includes('supabase.co') && !url.endsWith('.webp')) {
+            console.log(`Processing URL: ${url}`);
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+            const arrayBuffer = await response.arrayBuffer();
+            buffer = Buffer.from(arrayBuffer);
+        }
+        // Skip others (already optimized or external)
+        else {
             return null;
         }
-
-        console.log(`Processing: ${url}`);
-
-        // Download image
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Failed to fetch ${url}`);
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
 
         // Optimize
         const optimizedBuffer = await sharp(buffer)
@@ -49,17 +60,14 @@ async function processImage(url: string): Promise<string | null> {
 
         return publicUrl;
     } catch (error) {
-        console.error(`Error processing ${url}:`, error);
+        console.error(`Error processing image:`, error);
         return null;
     }
 }
 
 export async function POST(request: NextRequest) {
     try {
-        // 1. Fetch products that might need optimization
-        // We can't easily filter by "not ends with .webp" in Supabase API efficiently without raw SQL or client-side filtering
-        // So we fetch all and filter in code. 
-        // For a large DB, this should be paginated.
+        // 1. Fetch products
         const { data: products, error } = await supabase
             .from('products')
             .select('*');
@@ -67,7 +75,7 @@ export async function POST(request: NextRequest) {
         if (error) throw error;
 
         let processedCount = 0;
-        const limit = 5; // Process max 5 per request to avoid timeout
+        const limit = 10; // Process max 10 per request
 
         for (const product of products) {
             if (processedCount >= limit) break;
@@ -82,7 +90,24 @@ export async function POST(request: NextRequest) {
                 updated = true;
             }
 
-            // 2. Optimize Variant Images
+            // 2. Optimize Images Array
+            if (product.images && Array.isArray(product.images)) {
+                const newImages = [...product.images];
+                let imagesUpdated = false;
+                for (let i = 0; i < newImages.length; i++) {
+                    const newImg = await processImage(newImages[i]);
+                    if (newImg) {
+                        newImages[i] = newImg;
+                        imagesUpdated = true;
+                    }
+                }
+                if (imagesUpdated) {
+                    updates.images = newImages;
+                    updated = true;
+                }
+            }
+
+            // 3. Optimize Variant Images
             if (product.variants && Array.isArray(product.variants)) {
                 const newVariants = [...product.variants];
                 let variantsUpdated = false;
@@ -104,7 +129,7 @@ export async function POST(request: NextRequest) {
                 }
             }
 
-            // 3. Update Product in DB
+            // 4. Update Product in DB
             if (updated) {
                 const { error: updateError } = await supabase
                     .from('products')
@@ -115,6 +140,7 @@ export async function POST(request: NextRequest) {
                     console.error(`Failed to update product ${product.id}`, updateError);
                 } else {
                     processedCount++;
+                    console.log(`Optimized product ${product.id}`);
                 }
             }
         }
