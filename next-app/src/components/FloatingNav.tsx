@@ -37,7 +37,7 @@ export const FloatingNav: React.FC = () => {
         { icon: Search, label: 'Search', action: () => document.getElementById('search-input')?.focus() },
         { icon: ShoppingBag, label: 'Cart', action: toggleCart, badge: totalItems },
         { icon: Heart, label: 'Wishlist', path: '/wishlist' },
-        { icon: User, label: 'Profile', path: '/profile' }, // Placeholder for profile
+        { icon: User, label: 'Profile', path: '/my-orders' }, // Redirect to My Orders for now
     ];
 
     return (
