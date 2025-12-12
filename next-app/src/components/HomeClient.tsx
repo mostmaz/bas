@@ -184,30 +184,6 @@ export const HomeClient: React.FC<HomeClientProps> = ({
             {/* Content Area */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 mb-20 space-y-16">
 
-                {/* Best Sellers Section - Lazy Loaded */}
-                {bestSellers.length > 0 && (
-                    <LazySection>
-                        <section>
-                            <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <TrendingUp className="h-6 w-6 text-amber-500" />
-                                    {t('popular')}
-                                    <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                                        {t('trending')}
-                                    </span>
-                                </h2>
-                            </div>
-                            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-                                {bestSellers.map((product) => (
-                                    <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
-                                        <ProductCard product={product} />
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    </LazySection>
-                )}
-
                 {/* Latest Products Section - Lazy Loaded */}
                 {latestProducts.length > 0 && (
                     <LazySection>
@@ -223,6 +199,30 @@ export const HomeClient: React.FC<HomeClientProps> = ({
                             </div>
                             <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
                                 {latestProducts.map((product) => (
+                                    <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
+                                        <ProductCard product={product} />
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    </LazySection>
+                )}
+
+                {/* Best Sellers Section - Lazy Loaded */}
+                {bestSellers.length > 0 && (
+                    <LazySection>
+                        <section>
+                            <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <TrendingUp className="h-6 w-6 text-amber-500" />
+                                    {t('popular')}
+                                    <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                                        {t('trending')}
+                                    </span>
+                                </h2>
+                            </div>
+                            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                                {bestSellers.map((product) => (
                                     <div key={product.id} className="min-w-[180px] w-[180px] sm:w-[220px]">
                                         <ProductCard product={product} />
                                     </div>
