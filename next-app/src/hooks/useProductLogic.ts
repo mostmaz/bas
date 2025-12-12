@@ -25,6 +25,17 @@ const mapProductFromDB = (p: any): Product => {
         }
     }
 
+    // Check for base64 images and log warnings
+    if (mainImage && mainImage.startsWith('data:image')) {
+        console.warn(`⚠️ Product ${p.id} (${p.name}) has base64 main image`);
+    }
+    if (images.some((img: string) => img && img.startsWith('data:image'))) {
+        console.warn(`⚠️ Product ${p.id} (${p.name}) has base64 images in array`);
+    }
+    if (variants.some(v => v.image && v.image.startsWith('data:image'))) {
+        console.warn(`⚠️ Product ${p.id} (${p.name}) has base64 variant images`);
+    }
+
     return {
         ...p,
         image: mainImage,

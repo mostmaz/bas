@@ -228,8 +228,12 @@ export const useOrderLogic = (
     };
 
     const refreshOrders = async () => {
-        if (!isSupabaseConfigured) return;
+        if (!isSupabaseConfigured) {
+            console.log('Supabase not configured, skipping order refresh');
+            return;
+        }
 
+        console.log('Fetching orders from Supabase...');
         const { data, error } = await supabase
             .from('orders')
             .select('*')
@@ -237,12 +241,18 @@ export const useOrderLogic = (
 
         if (error) {
             console.error('Error fetching orders:', error);
-            // addToast('Failed to fetch orders', 'error'); // Optional: might be too noisy on init
+            addToast('Failed to fetch orders: ' + error.message, 'error');
             return;
         }
 
         if (data) {
-            setOrders(data.map(mapOrderFromDB));
+            console.log('Orders fetched:', data.length, 'orders');
+            const mappedOrders = data.map(mapOrderFromDB);
+            console.log('Mapped orders:', mappedOrders);
+            setOrders(mappedOrders);
+        } else {
+            console.log('No orders data returned');
+            setOrders([]);
         }
     };
 
