@@ -18,11 +18,42 @@ export interface FilterState {
 export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, initialFilters }) => {
     const { brands, products } = useShop();
     const [filters, setFilters] = useState<FilterState>(initialFilters);
+    const [isApplying, setIsApplying] = useState(false);
 
     // Sync internal state with props when they change (e.g. reset from parent)
     useEffect(() => {
         setFilters(initialFilters);
     }, [initialFilters]);
+
+    // Prevent body scroll when modal is open (especially important for RTL/Arabic)
+    useEffect(() => {
+        if (isOpen) {
+            // Save current scroll position
+            const scrollY = window.scrollY;
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.width = '100%';
+            document.body.style.overflow = 'hidden';
+        } else {
+            // Restore scroll position
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }
+
+        return () => {
+            // Cleanup on unmount
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
 
     // Extract unique colors from products with strict validation
     const availableColors = Array.from(new Set(products.flatMap(p => {
@@ -86,9 +117,17 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
         }));
     };
 
+    const handleApply = async () => {
+        setIsApplying(true);
+        // Small delay to show loading state
+        await new Promise(resolve => setTimeout(resolve, 300));
+        onApply(filters);
+        setIsApplying(false);
+    };
+
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
-            <div className="bg-white dark:bg-slate-900 w-full sm:w-[400px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+            <div className="bg-white dark:bg-slate-900 w-full sm:w-[400px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white">Filters</h2>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
@@ -96,7 +135,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
                     </button>
                 </div>
 
-                <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar flex-1">
                     {/* Price Range */}
                     <div>
                         <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Price Range</h3>
@@ -130,7 +169,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
                                 <button
                                     key={brand.id}
                                     onClick={() => handleBrandToggle(brand.name)}
-                                    className={`px-6 py-2.5 rounded-full whitespace-nowrap font-medium text-sm transition-all border ${filters.selectedBrands.includes(brand.name)
+                                    disabled={isApplying}
+                                    className={`px-6 py-2.5 rounded-full whitespace-nowrap font-medium text-sm transition-all border disabled:opacity-50 ${filters.selectedBrands.includes(brand.name)
                                         ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md border-transparent'
                                         : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                                         }`}
@@ -149,7 +189,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
                                 <button
                                     key={color}
                                     onClick={() => handleColorToggle(color)}
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${filters.selectedColors.includes(color) ? 'ring-2 ring-offset-2 ring-purple-500 dark:ring-offset-slate-900' : ''
+                                    disabled={isApplying}
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 disabled:opacity-50 ${filters.selectedColors.includes(color) ? 'ring-2 ring-offset-2 ring-purple-500 dark:ring-offset-slate-900' : ''
                                         }`}
                                     style={{ backgroundColor: color, border: '1px solid rgba(0,0,0,0.1)' }}
                                 >
@@ -160,18 +201,27 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
                     </div>
                 </div>
 
-                <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-3">
+                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-3">
                     <button
                         onClick={() => setFilters({ priceRange: [0, 1000000], selectedColors: [], selectedBrands: [] })}
-                        className="flex-1 py-3.5 rounded-2xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                        disabled={isApplying}
+                        className="flex-1 py-3.5 rounded-2xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
                     >
                         Reset
                     </button>
                     <button
-                        onClick={() => onApply(filters)}
-                        className="flex-[2] py-3.5 bg-purple-600 text-white rounded-2xl font-bold shadow-xl shadow-purple-500/30 hover:bg-purple-700 active:scale-95 transition-all"
+                        onClick={handleApply}
+                        disabled={isApplying}
+                        className="flex-[2] py-3.5 bg-purple-600 text-white rounded-2xl font-bold shadow-xl shadow-purple-500/30 hover:bg-purple-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        Apply Filters
+                        {isApplying ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                <span>Applying...</span>
+                            </>
+                        ) : (
+                            'Apply Filters'
+                        )}
                     </button>
                 </div>
             </div>
