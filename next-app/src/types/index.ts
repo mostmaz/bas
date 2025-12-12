@@ -34,6 +34,14 @@ export interface DiscountCode {
     value: number;
     minOrderAmount?: number;
     isActive: boolean;
+    // Conditional fields
+    expiryDate?: string; // ISO date string
+    usageLimit?: number; // Maximum number of times this code can be used
+    usedCount?: number; // Current usage count
+    applicableProducts?: string[]; // Product IDs this discount applies to
+    applicableCategories?: string[]; // Categories this discount applies to
+    firstTimeOnly?: boolean; // Only for first-time customers
+    description?: string; // Admin note about the discount
 }
 
 export interface CartItem extends Product {

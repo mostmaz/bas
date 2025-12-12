@@ -80,18 +80,65 @@ export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' |
         }
     }, [totalAmount, appliedDiscount, addToast]);
 
-    const applyDiscount = (code: string, discounts: DiscountCode[]) => {
+    const applyDiscount = (code: string, discounts: DiscountCode[], cart: CartItem[], userOrderCount: number = 0) => {
         const discount = discounts.find(d => d.code === code && d.isActive);
-        if (discount) {
-            if (discount.minOrderAmount && totalAmount < discount.minOrderAmount) {
-                addToast(`Minimum order amount of ${discount.minOrderAmount} not met`, 'error');
+
+        if (!discount) {
+            addToast('Invalid or inactive discount code', 'error');
+            return;
+        }
+
+        // Check expiry date
+        if (discount.expiryDate) {
+            const expiryDate = new Date(discount.expiryDate);
+            if (new Date() > expiryDate) {
+                addToast('This discount code has expired', 'error');
                 return;
             }
-            setAppliedDiscount(discount);
-            addToast('Discount applied', 'success');
-        } else {
-            addToast('Invalid or inactive discount code', 'error');
         }
+
+        // Check usage limit
+        if (discount.usageLimit && discount.usedCount && discount.usedCount >= discount.usageLimit) {
+            addToast('This discount code has reached its usage limit', 'error');
+            return;
+        }
+
+        // Check first-time user restriction
+        if (discount.firstTimeOnly && userOrderCount > 0) {
+            addToast('This discount is only for first-time customers', 'error');
+            return;
+        }
+
+        // Check minimum order amount
+        if (discount.minOrderAmount && totalAmount < discount.minOrderAmount) {
+            addToast(`Minimum order amount of IQD ${discount.minOrderAmount.toLocaleString()} not met`, 'error');
+            return;
+        }
+
+        // Check applicable products
+        if (discount.applicableProducts && discount.applicableProducts.length > 0) {
+            const hasApplicableProduct = cart.some(item =>
+                discount.applicableProducts?.includes(item.id)
+            );
+            if (!hasApplicableProduct) {
+                addToast('This discount does not apply to items in your cart', 'error');
+                return;
+            }
+        }
+
+        // Check applicable categories
+        if (discount.applicableCategories && discount.applicableCategories.length > 0) {
+            const hasApplicableCategory = cart.some(item =>
+                discount.applicableCategories?.includes(item.category)
+            );
+            if (!hasApplicableCategory) {
+                addToast('This discount does not apply to items in your cart', 'error');
+                return;
+            }
+        }
+
+        setAppliedDiscount(discount);
+        addToast('Discount applied successfully!', 'success');
     };
 
     const removeDiscount = () => {
