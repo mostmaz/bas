@@ -27,7 +27,7 @@ export const LazySection: React.FC<LazySectionProps> = ({
                     }
                 }
             },
-            { threshold }
+            { threshold, rootMargin: '200px' }
         );
 
         if (sectionRef.current) {

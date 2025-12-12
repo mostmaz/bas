@@ -38,6 +38,10 @@ const nextConfig: NextConfig = {
   // Performance optimizations
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
 
   // Security headers
@@ -61,6 +65,10 @@ const nextConfig: NextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin'
+          },
+          {
+            key: 'Link',
+            value: '<https://drehfajljdtaeqgsaccl.supabase.co>; rel=preconnect'
           },
         ],
       },
