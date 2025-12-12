@@ -34,7 +34,7 @@ export const FloatingNav: React.FC = () => {
 
     const navItems = [
         { icon: Home, label: 'Home', path: '/' },
-        { icon: Search, label: 'Search', action: () => document.getElementById('search-input')?.focus() },
+        { icon: Search, label: 'Search', path: '/search' },
         { icon: ShoppingBag, label: 'Cart', action: toggleCart, badge: totalItems },
         { icon: Heart, label: 'Wishlist', path: '/wishlist' },
         { icon: User, label: 'Profile', path: '/my-orders' }, // Redirect to My Orders for now

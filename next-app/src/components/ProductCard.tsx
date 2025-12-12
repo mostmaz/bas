@@ -39,6 +39,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <>
       <div className="group relative flex flex-col overflow-hidden rounded-xl sm:rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-lg transition-all duration-300 hover:shadow-2xl hover:shadow-pink-500/10 hover:border-pink-500/30 hover:-translate-y-1">
+
+        {/* Product Name & Device (Moved Top) */}
+        <div className="px-3 pt-3 pb-1">
+          <p className="text-[9px] sm:text-[10px] font-medium text-purple-600 dark:text-purple-400 mb-0.5 line-clamp-1">{product.device}</p>
+          <div onClick={handleNavigate} className="cursor-pointer">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors line-clamp-1 leading-tight">
+              {product.name}
+            </h3>
+          </div>
+        </div>
+
         <div onClick={handleNavigate} className="block relative cursor-pointer">
           <div className="aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
             <Image
@@ -106,16 +117,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col p-2 sm:p-3">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
+        <div className="flex flex-1 flex-col p-2 sm:p-3 pt-1">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1 sm:gap-0">
             <div className="w-full">
-              <p className="text-[9px] sm:text-[10px] font-medium text-purple-600 dark:text-purple-400 mb-0.5 line-clamp-1">{product.device}</p>
-              <div onClick={handleNavigate} className="cursor-pointer">
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors line-clamp-1 leading-tight">
-                  {product.name}
-                </h3>
-              </div>
-
               {/* Color Indicators */}
               {uniqueDisplayColors.length > 0 && (
                 <div className="flex items-center gap-1 mt-1.5">
