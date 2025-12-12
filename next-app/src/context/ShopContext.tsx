@@ -277,7 +277,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children, initialDat
             addSlide, updateSlide, deleteSlide, refreshSlides,
             placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus,
             addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
-            appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
+            appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts, cart, orders.length), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
             isDemoActive, toggleDemoData,
             totalAmount, discountAmount, finalTotal
         }}>
