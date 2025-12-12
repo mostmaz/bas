@@ -111,17 +111,7 @@ export default function ProductDetails() {
         }
     }
 
-    // 2. Add additional images (skip base64, excluding main image if duplicated)
-    if (product.images && Array.isArray(product.images)) {
-        product.images.forEach((url) => {
-            if (!url || isBase64Image(url)) return;
-            const norm = normalizeUrl(url);
-            if (!uniqueUrls.has(norm)) {
-                uniqueUrls.add(norm);
-                galleryImages.push(url);
-            }
-        });
-    }
+    // 2. Skip additional images array (gallery images) - not needed on product page
 
     // 3. Add variant images (skip base64, excluding existing images)
     if (product.variants && Array.isArray(product.variants)) {
