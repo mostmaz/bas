@@ -74,19 +74,29 @@ export default function ProductDetails() {
     const uniqueUrls = new Set<string>();
     const galleryImages: string[] = [];
 
-    // Helper to normalize URL for comparison
+    // Helper to check if URL is base64
+    const isBase64Image = (url: string) => {
+        return url && url.startsWith('data:image');
+    };
+
+    // Helper to normalize URL for comparison - more aggressive normalization
     const normalizeUrl = (url: string) => {
+        if (!url) return '';
         try {
-            // Remove query parameters for deduplication check to handle SAS tokens/versions
-            const cleanUrl = url.split('?')[0];
-            return decodeURIComponent(cleanUrl).trim();
+            // Remove query parameters, hash, and trailing slashes
+            let cleanUrl = url.split('?')[0].split('#')[0].replace(/\/+$/, '');
+            // Decode URI components
+            cleanUrl = decodeURIComponent(cleanUrl);
+            // Convert to lowercase for case-insensitive comparison
+            cleanUrl = cleanUrl.toLowerCase().trim();
+            return cleanUrl;
         } catch {
-            return url.trim();
+            return url.toLowerCase().trim();
         }
     };
 
-    // 1. Add main product image (always check for uniqueness)
-    if (product.image) {
+    // 1. Add main product image (skip base64, always check for uniqueness)
+    if (product.image && !isBase64Image(product.image)) {
         const norm = normalizeUrl(product.image);
         if (!uniqueUrls.has(norm)) {
             uniqueUrls.add(norm);
@@ -94,10 +104,10 @@ export default function ProductDetails() {
         }
     }
 
-    // 2. Add additional images (excluding main image if duplicated)
+    // 2. Add additional images (skip base64, excluding main image if duplicated)
     if (product.images) {
-        product.images.forEach(url => {
-            if (!url) return;
+        product.images.forEach((url) => {
+            if (!url || isBase64Image(url)) return;
             const norm = normalizeUrl(url);
             if (!uniqueUrls.has(norm)) {
                 uniqueUrls.add(norm);
@@ -106,10 +116,10 @@ export default function ProductDetails() {
         });
     }
 
-    // 3. Add variant images (excluding existing images)
+    // 3. Add variant images (skip base64, excluding existing images)
     if (product.variants) {
-        product.variants.forEach(v => {
-            if (!v.image) return;
+        product.variants.forEach((v) => {
+            if (!v.image || isBase64Image(v.image)) return;
             const norm = normalizeUrl(v.image);
             if (!uniqueUrls.has(norm)) {
                 uniqueUrls.add(norm);
