@@ -102,8 +102,11 @@ export default function ProductDetails() {
         }
     };
 
-    // 1. Add main product image (skip base64, always check for uniqueness)
-    if (product.image && !isBase64Image(product.image)) {
+    // Check if product has variants
+    const hasVariants = product.variants && product.variants.length > 0;
+
+    // 1. Add main product image ONLY if no variants (skip base64, always check for uniqueness)
+    if (!hasVariants && product.image && !isBase64Image(product.image)) {
         const norm = normalizeUrl(product.image);
         if (!uniqueUrls.has(norm)) {
             uniqueUrls.add(norm);

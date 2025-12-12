@@ -88,15 +88,27 @@ export const useProductLogic = (
 
                 if (error) throw error;
 
+
                 if (data && data.length > 0) {
                     const mappedProducts = data.map(mapProductFromDB);
                     setProducts(mappedProducts);
 
-                    // 3. Update Cache (silently fail if quota exceeded)
+                    // 3. Update Cache (strip base64 images to avoid quota errors)
                     try {
-                        localStorage.setItem('products_cache', JSON.stringify(mappedProducts));
+                        // Filter out base64 images before caching
+                        const cacheableProducts = mappedProducts.map(p => ({
+                            ...p,
+                            image: p.image?.startsWith('data:image') ? '' : p.image,
+                            images: p.images?.filter((img: string) => !img?.startsWith('data:image')) || [],
+                            variants: p.variants?.map(v => ({
+                                ...v,
+                                image: v.image?.startsWith('data:image') ? '' : v.image
+                            })) || []
+                        }));
+                        localStorage.setItem('products_cache', JSON.stringify(cacheableProducts));
                     } catch (e) {
                         // Silently ignore quota errors - server-side data is already loaded
+                        console.warn('Failed to cache products:', e);
                     }
                 } else {
                     // Connected but empty - Do NOT show demo data
@@ -114,7 +126,21 @@ export const useProductLogic = (
                         if (data && data.length > 0) {
                             const mapped = data.map(mapProductFromDB);
                             setProducts(mapped);
-                            localStorage.setItem('products_cache', JSON.stringify(mapped));
+                            // Filter out base64 images before caching
+                            try {
+                                const cacheableProducts = mapped.map(p => ({
+                                    ...p,
+                                    image: p.image?.startsWith('data:image') ? '' : p.image,
+                                    images: p.images?.filter((img: string) => !img?.startsWith('data:image')) || [],
+                                    variants: p.variants?.map(v => ({
+                                        ...v,
+                                        image: v.image?.startsWith('data:image') ? '' : v.image
+                                    })) || []
+                                }));
+                                localStorage.setItem('products_cache', JSON.stringify(cacheableProducts));
+                            } catch (e) {
+                                console.warn('Failed to cache products (fallback):', e);
+                            }
                         } else {
                             setProducts([]);
                             addToast("Database connected but empty (Fallback).", "info");
