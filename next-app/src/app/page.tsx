@@ -6,7 +6,6 @@ import { ProductCard } from '@/components/ProductCard';
 import { ProductSkeleton } from '@/components/ProductSkeleton';
 import { OffersCarousel } from '@/components/OffersCarousel';
 import { LazySection } from '@/components/LazySection';
-import { Pagination } from '@/components/Pagination';
 import { Filter, ChevronDown, Smartphone, Layers, LayoutGrid, Sparkles, TrendingUp, ChevronRight } from 'lucide-react';
 import { Brand } from '@/types';
 import { useRouter } from 'next/navigation';
@@ -23,10 +22,6 @@ export default function Home() {
     selectedColors: [],
     selectedBrands: []
   });
-
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const PRODUCTS_PER_PAGE = 12;
 
   const handleDeviceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const device = e.target.value;
@@ -91,21 +86,6 @@ export default function Home() {
       })
       .slice(0, 8);
   }, [products, orders]);
-
-  // Paginated products for "All Products" section
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    const endIndex = startIndex + PRODUCTS_PER_PAGE;
-    return products.slice(startIndex, endIndex);
-  }, [products, currentPage]);
-
-  const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    // Scroll to top of products section
-    window.scrollTo({ top: 600, behavior: 'smooth' });
-  };
 
   const getBrandImage = (brand: Brand | 'All') => {
     if (brand === 'All') return ''; // Handled by icon now
@@ -259,42 +239,6 @@ export default function Home() {
             </section>
           </LazySection>
         )}
-
-        {/* All Products (Paginated Grid) */}
-        <section>
-          <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <LayoutGrid className="h-6 w-6 text-slate-600 dark:text-slate-400" />
-              {t('viewAll')}
-              <span className="ml-2 text-sm font-normal text-slate-500 dark:text-slate-400">
-                ({products.length})
-              </span>
-            </h2>
-          </div>
-
-          {/* Grid View with Pagination */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
-            {isAppLoading || isProductsLoading ? (
-              Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
-                <ProductSkeleton key={i} />
-              ))
-            ) : (
-              paginatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            )}
-          </div>
-
-          {/* Pagination */}
-          {!isAppLoading && !isProductsLoading && totalPages > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              className="mt-8"
-            />
-          )}
-        </section>
 
       </div>
     </div>
