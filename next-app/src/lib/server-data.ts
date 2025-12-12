@@ -26,7 +26,8 @@ const mapProductFromDB = (p: any): Product => {
         colors: p.colors || [],
         variants: variants,
         salePrice: p.sale_price || p.salePrice || undefined,
-        sku: p.sku || undefined
+        sku: p.sku || undefined,
+        tags: p.tags || []
     };
 };
 
@@ -131,4 +132,27 @@ export const getCachedOrders = unstable_cache(
     },
     ['orders-cache'],
     { revalidate: 3600, tags: ['orders'] }
+);
+
+export const getCachedProduct = unstable_cache(
+    async (id: string) => {
+        const { data } = await supabase.from('products').select('*').eq('id', id).single();
+        return data ? mapProductFromDB(data) : null;
+    },
+    ['product-details'],
+    { revalidate: 3600, tags: ['products'] }
+);
+
+export const getCachedRelatedProducts = unstable_cache(
+    async (device: string, excludeId: string) => {
+        const { data } = await supabase
+            .from('products')
+            .select('*')
+            .eq('device', device)
+            .neq('id', excludeId)
+            .limit(6);
+        return data ? data.map(mapProductFromDB) : [];
+    },
+    ['related-products'],
+    { revalidate: 3600, tags: ['products'] }
 );
