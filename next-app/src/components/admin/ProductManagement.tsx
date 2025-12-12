@@ -346,6 +346,71 @@ export const ProductManagement: React.FC = () => {
         }
     };
 
+    const [isFixingImages, setIsFixingImages] = useState(false);
+
+    const handleFixImages = async () => {
+        if (!window.confirm("This will scan all products for base64 images and upload them to the server. This may take a while. Continue?")) return;
+
+        setIsFixingImages(true);
+        let fixedCount = 0;
+
+        try {
+            for (const product of products) {
+                let needsUpdate = false;
+                let updatedProduct = { ...product };
+
+                // Check main image
+                if (product.image && product.image.startsWith('data:image')) {
+                    try {
+                        updatedProduct.image = await uploadImageFromUrl(product.image);
+                        needsUpdate = true;
+                    } catch (e) {
+                        console.error(`Failed to fix image for ${product.name}`, e);
+                    }
+                }
+
+                // Check gallery images
+                if (product.images && product.images.length > 0) {
+                    const newImages = await Promise.all(product.images.map(async (img) => {
+                        if (img && img.startsWith('data:image')) {
+                            needsUpdate = true;
+                            return await uploadImageFromUrl(img);
+                        }
+                        return img;
+                    }));
+                    updatedProduct.images = newImages;
+                }
+
+                // Check variants
+                if (product.variants && product.variants.length > 0) {
+                    const newVariants = await Promise.all(product.variants.map(async (v) => {
+                        if (v.image && v.image.startsWith('data:image')) {
+                            needsUpdate = true;
+                            const newUrl = await uploadImageFromUrl(v.image);
+                            return { ...v, image: newUrl };
+                        }
+                        return v;
+                    }));
+                    updatedProduct.variants = newVariants;
+                }
+
+                if (needsUpdate) {
+                    await updateProduct(updatedProduct);
+                    fixedCount++;
+                }
+            }
+
+            alert(`Image fix complete! Fixed ${fixedCount} products.`);
+            await refreshProducts();
+
+        } catch (error) {
+            console.error("Error fixing images:", error);
+            alert("An error occurred while fixing images. Check console for details.");
+        } finally {
+            setIsFixingImages(false);
+        }
+    };
+
     return (
         <div className="animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -395,6 +460,17 @@ export const ProductManagement: React.FC = () => {
                             {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Bulk Add
                         </Button>
                     </div>
+
+                    <Button
+                        variant="outline"
+                        onClick={handleFixImages}
+                        disabled={isFixingImages}
+                        className="flex items-center gap-2 bg-white dark:bg-slate-800 border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                        title="Fix Base64 Images"
+                    >
+                        <RefreshCw className={`h-4 w-4 ${isFixingImages ? 'animate-spin' : ''}`} />
+                        Fix Images
+                    </Button>
 
                     <Button
                         variant="outline"

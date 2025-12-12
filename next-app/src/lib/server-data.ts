@@ -98,3 +98,37 @@ export const getCachedDevices = unstable_cache(
     ['devices-cache'],
     { revalidate: 3600, tags: ['devices'] }
 );
+
+// Helper to map Order from DB
+const mapOrderFromDB = (data: any) => ({
+    id: data.id,
+    customerName: data.customerName || data.customername || 'Unknown',
+    phone: data.phone || '',
+    city: data.city || '',
+    address: data.address || '',
+    items: typeof data.items === 'string' ? JSON.parse(data.items) : (data.items || []),
+    totalAmount: Number(data.totalAmount || data.totalamount || 0),
+    shippingFee: Number(data.shippingFee || data.shippingfee || 0),
+    discountAmount: Number(data.discountAmount || data.discountamount || 0),
+    discountCode: data.discountCode || data.discountcode || undefined,
+    orderNumber: data.orderNumber || data.ordernumber || '',
+    status: data.status || 'Processing',
+    date: Number(data.date || Date.now()),
+});
+
+export const getCachedOrders = unstable_cache(
+    async () => {
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .order('date', { ascending: false });
+
+        if (error) {
+            console.error("Server Fetch Error (Orders):", error);
+            return [];
+        }
+        return data ? data.map(mapOrderFromDB) : [];
+    },
+    ['orders-cache'],
+    { revalidate: 3600, tags: ['orders'] }
+);

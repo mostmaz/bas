@@ -1,350 +1,82 @@
-'use client';
+import React from 'react';
+import { supabase } from '@/lib/supabase';
+import { ProductDetailsClient } from '@/components/ProductDetailsClient';
+import { Product, ProductVariant } from '@/types';
+import { Metadata } from 'next';
 
-import React, { useMemo, useState, useEffect } from 'react';
-import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
-import { useShop } from '@/context/ShopContext';
-import { ArrowLeft, Star, Truck, Banknote, Share2, Heart, Check, AlertCircle, Tag } from 'lucide-react';
-import { Button } from '@/components/Button';
-import { ProductCard } from '@/components/ProductCard';
-import { ProductVariant } from '@/types';
+// Helper to map product data
+const mapProductFromDB = (p: any): Product => {
+    let images = p.images || (p.image ? [p.image] : []);
+    let mainImage = p.image;
+    if (images.length > 0 && (!mainImage || mainImage !== images[0])) {
+        mainImage = images[0];
+    }
 
-export default function ProductDetails() {
-    const params = useParams();
-    const id = params?.id as string;
-    const { products, addToCart, t, wishlist, toggleWishlist } = useShop();
-    const router = useRouter();
-
-    const product = products.find(p => p.id === id);
-    const [activeImage, setActiveImage] = useState<string>('');
-    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-
-    useEffect(() => {
-        if (product) {
-            setActiveImage(product.image);
-            // Pre-select first variant if available and in stock
-            if (product.variants && product.variants.length > 0) {
-                const firstInStock = product.variants.find(v => v.stock > 0);
-                if (firstInStock) {
-                    setSelectedVariant(firstInStock);
-                    if (firstInStock.image) setActiveImage(firstInStock.image);
-                }
-            }
+    let variants: ProductVariant[] = [];
+    if (p.variants) {
+        if (typeof p.variants === 'string') {
+            try { variants = JSON.parse(p.variants); } catch (e) { }
+        } else if (Array.isArray(p.variants)) {
+            variants = p.variants;
         }
-    }, [product]);
+    }
 
-    const handleVariantSelect = (variant: ProductVariant) => {
-        setSelectedVariant(variant);
-        if (variant.image) {
-            setActiveImage(variant.image);
+    return {
+        ...p,
+        image: mainImage,
+        images,
+        variants,
+        salePrice: p.sale_price || p.salePrice,
+        colors: p.colors || [],
+        tags: p.tags || []
+    };
+};
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+    const { data } = await supabase.from('products').select('*').eq('id', params.id).single();
+    if (!data) return { title: 'Product Not Found | BasCavarat' };
+
+    return {
+        title: `${data.name} | BasCavarat`,
+        description: data.description?.substring(0, 160) || `Buy ${data.name} at BasCavarat`,
+        openGraph: {
+            title: data.name,
+            description: data.description?.substring(0, 160),
+            images: [data.image || ''],
         }
     };
+}
 
-    const handleImageClick = (img: string) => {
-        setActiveImage(img);
-        // Auto-select variant if image matches
-        if (product?.variants) {
-            const matchingVariant = product.variants.find(v => v.image === img && v.stock > 0);
-            if (matchingVariant) {
-                setSelectedVariant(matchingVariant);
-            }
-        }
-    };
+export async function generateStaticParams() {
+    // Pre-render the first 20 products for performance
+    const { data } = await supabase.from('products').select('id').limit(20);
+    return (data || []).map((p) => ({
+        id: p.id.toString(),
+    }));
+}
 
-    const relatedProducts = useMemo(() => {
-        if (!product) return [];
-        return products
-            .filter(p => p.id !== product.id && p.device === product.device)
-            .slice(0, 6);
-    }, [products, product]);
+export default async function ProductPage({ params }: { params: { id: string } }) {
+    const { data: productData } = await supabase.from('products').select('*').eq('id', params.id).single();
 
-    if (!product) {
+    if (!productData) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{t('noProducts')}</h2>
-                <Button onClick={() => router.push('/')}>{t('back')}</Button>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Product Not Found</h2>
             </div>
         );
     }
 
-    const isWishlisted = wishlist.includes(product.id);
+    const product = mapProductFromDB(productData);
 
-    // Merge base images with variant images for the gallery
-    // Ensure we filter out empty strings and duplicates
-    const uniqueUrls = new Set<string>();
-    const galleryImages: string[] = [];
+    // Fetch related products (same device)
+    const { data: relatedData } = await supabase
+        .from('products')
+        .select('*')
+        .eq('device', product.device)
+        .neq('id', product.id)
+        .limit(6);
 
-    // Helper to check if URL is base64
-    const isBase64Image = (url: string) => {
-        return url && url.startsWith('data:image');
-    };
+    const relatedProducts = (relatedData || []).map(mapProductFromDB);
 
-    // Helper to normalize URL for comparison - very aggressive normalization
-    const normalizeUrl = (url: string) => {
-        if (!url) return '';
-        try {
-            // Remove query parameters, hash, and trailing slashes
-            let cleanUrl = url.split('?')[0].split('#')[0].replace(/\/+$/, '');
-            // Decode URI components (handle double encoding)
-            try {
-                cleanUrl = decodeURIComponent(cleanUrl);
-                cleanUrl = decodeURIComponent(cleanUrl); // Decode twice in case of double encoding
-            } catch {
-                // If decoding fails, use as is
-            }
-            // Convert to lowercase for case-insensitive comparison
-            cleanUrl = cleanUrl.toLowerCase().trim();
-            // Remove any whitespace
-            cleanUrl = cleanUrl.replace(/\s/g, '');
-            return cleanUrl;
-        } catch {
-            return url.toLowerCase().trim().replace(/\s/g, '');
-        }
-    };
-
-    // Check if product has variants
-    const hasVariants = product.variants && product.variants.length > 0;
-
-    // 1. Add main product image ONLY if no variants (skip base64, always check for uniqueness)
-    if (!hasVariants && product.image && !isBase64Image(product.image)) {
-        const norm = normalizeUrl(product.image);
-        if (!uniqueUrls.has(norm)) {
-            uniqueUrls.add(norm);
-            galleryImages.push(product.image);
-        }
-    }
-
-    // 2. Skip additional images array (gallery images) - not needed on product page
-
-    // 3. Add variant images (skip base64, excluding existing images)
-    if (product.variants && Array.isArray(product.variants)) {
-        product.variants.forEach((v) => {
-            if (!v.image || isBase64Image(v.image)) return;
-            const norm = normalizeUrl(v.image);
-            if (!uniqueUrls.has(norm)) {
-                uniqueUrls.add(norm);
-                galleryImages.push(v.image);
-            }
-        });
-    }
-
-    // Available Variants (Stock > 0) - Only show if stock is available
-    const availableVariants = product.variants ? product.variants.filter(v => v.stock > 0) : [];
-
-    // Determine current stock display
-    const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
-
-    // Discount Calculation
-    const discountPercent = product.salePrice
-        ? Math.round(((product.price - product.salePrice) / product.price) * 100)
-        : 0;
-
-    return (
-        <div className="pt-8 pb-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-                {/* Back Button Only (Breadcrumbs Removed) */}
-                <div className="mb-8">
-                    <button onClick={() => router.back()} className="hover:text-purple-600 dark:hover:text-white flex items-center transition-colors font-medium text-slate-500 dark:text-slate-400">
-                        <ArrowLeft className="h-4 w-4 mr-1 rtl:ml-1 rtl:mr-0" /> {t('back')}
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-                    {/* Image Section */}
-                    <div className="space-y-4 flex flex-col items-center">
-                        {/* Main Image */}
-                        <div className="aspect-[3/4] w-1/2 rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/5 relative group shadow-2xl shadow-slate-200/50 dark:shadow-none transition-all">
-                            <Image
-                                src={activeImage || product.image}
-                                alt={product.name}
-                                fill
-                                sizes="(max-width: 768px) 100vw, 50vw"
-                                priority
-                                className="object-cover object-center transition-opacity duration-300"
-                            />
-                            {/* Sale Tag */}
-                            {product.salePrice && (
-                                <div className="absolute top-6 left-6 z-10 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md flex items-center gap-1">
-                                    <Tag className="h-3 w-3" /> {discountPercent}% OFF
-                                </div>
-                            )}
-
-                            <div className="absolute top-6 right-6 space-y-3 opacity-0 group-hover:opacity-100 transition-opacity rtl:right-auto rtl:left-6 z-10">
-                                <button
-                                    onClick={() => toggleWishlist(product.id)}
-                                    className={`p-3 backdrop-blur-md rounded-full shadow-lg transition-colors border border-white/20 dark:border-white/10 ${isWishlisted
-                                        ? 'bg-red-500 text-white hover:bg-red-600'
-                                        : 'bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-white hover:text-red-500 dark:hover:text-red-500 hover:bg-white dark:hover:bg-slate-900'
-                                        }`}
-                                >
-                                    <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
-                                </button>
-                                <button className="p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full shadow-lg text-slate-600 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 hover:bg-white dark:hover:bg-slate-900 transition-colors border border-white/20 dark:border-white/10">
-                                    <Share2 className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Thumbnails */}
-                        {galleryImages.length > 1 && (
-                            <div className="flex gap-3 overflow-x-auto pb-2 px-1 snap-x no-scrollbar">
-                                {galleryImages.map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => handleImageClick(img)}
-                                        className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all snap-start ${activeImage === img
-                                            ? 'border-purple-600 ring-2 ring-purple-600/20'
-                                            : 'border-transparent opacity-70 hover:opacity-100'
-                                            }`}
-                                    >
-                                        <Image
-                                            src={img}
-                                            alt={`View ${idx + 1}`}
-                                            fill
-                                            sizes="100px"
-                                            className="object-cover"
-                                        />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Details Section */}
-                    <div className="flex flex-col justify-center">
-                        <div className="mb-4">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20 uppercase tracking-wider">
-                                {product.brand}
-                            </span>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">{product.name}</h1>
-
-                        {/* Rating */}
-                        <div className="flex items-center mb-8">
-                            <div className="flex items-center text-amber-400">
-                                {[...Array(5)].map((_, i) => (
-                                    <Star key={i} className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'fill-current' : 'text-slate-200 dark:text-slate-700'}`} />
-                                ))}
-                            </div>
-                            <span className="ml-4 text-sm text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-4 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4">128 {t('reviews')}</span>
-                        </div>
-
-                        <div className="flex flex-col mb-8">
-                            {product.salePrice ? (
-                                <div className="flex items-baseline gap-3">
-                                    <div className="text-4xl font-bold text-red-600 dark:text-red-500">
-                                        IQD {product.salePrice.toLocaleString()}
-                                    </div>
-                                    <div className="text-xl text-slate-400 line-through decoration-slate-400/50">
-                                        IQD {product.price.toLocaleString()}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-4xl font-bold text-purple-700 dark:text-white flex items-baseline gap-2">
-                                    IQD {product.price.toLocaleString()}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Color/Variant Selection */}
-                        {availableVariants.length > 0 && (
-                            <div className="mb-8 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Select Color</h3>
-                                    <span className={`text-xs font-bold px-2 py-1 rounded ${currentStock < 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                                        {currentStock} in stock
-                                    </span>
-                                </div>
-
-                                <div className="flex flex-wrap gap-3">
-                                    {availableVariants.map((variant) => (
-                                        <button
-                                            key={variant.id}
-                                            onClick={() => handleVariantSelect(variant)}
-                                            className={`w-12 h-12 rounded-full border-2 shadow-sm flex items-center justify-center transition-all relative ${selectedVariant?.id === variant.id ? 'border-purple-600 scale-110 ring-4 ring-purple-500/10' : 'border-slate-200 dark:border-slate-600 hover:scale-105'}`}
-                                            style={{ backgroundColor: variant.color }}
-                                            title={`${variant.stock} available`}
-                                        >
-                                            {selectedVariant?.id === variant.id && (
-                                                <Check className={`h-6 w-6 drop-shadow-md ${['#FFFFFF', '#ffffff', '#fff'].includes(variant.color) ? 'text-black' : 'text-white'}`} />
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {selectedVariant && selectedVariant.stock < 5 && (
-                                    <div className="mt-3 flex items-center text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 py-1.5 px-3 rounded-lg w-fit">
-                                        <AlertCircle className="h-3 w-3 mr-1.5" />
-                                        Hurry! Only {selectedVariant.stock} left in stock.
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-10">
-                            {product.description}
-                            <br /><br />
-                            {t('genericProductDesc')}
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                            <Button
-                                size="lg"
-                                onClick={() => addToCart(product, selectedVariant || undefined)}
-                                disabled={currentStock < 1}
-                                className="flex-1 py-4 text-lg shadow-xl shadow-purple-600/20"
-                            >
-                                {currentStock < 1 ? 'Out of Stock' : t('addToCart')}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="lg"
-                                onClick={() => toggleWishlist(product.id)}
-                                className={`px-6 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 ${isWishlisted ? 'text-red-500 border-red-200 bg-red-50 dark:bg-red-900/10' : 'text-slate-600 dark:text-slate-300'}`}
-                            >
-                                <Heart className={`h-6 w-6 ${isWishlisted ? 'fill-current' : ''}`} />
-                            </Button>
-                        </div>
-
-                        {/* Value Props */}
-                        <div className="border-t border-slate-200 dark:border-slate-800 pt-8 space-y-6">
-                            <div className="flex items-start">
-                                <div className="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                    <Truck className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                                </div>
-                                <div className="ml-4 rtl:mr-4 rtl:ml-0">
-                                    <h4 className="text-base font-semibold text-slate-900 dark:text-white">{t('fastShipping')}</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('fastShippingDesc')}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start">
-                                <div className="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                    <Banknote className="h-6 w-6 text-green-600 dark:text-green-400" />
-                                </div>
-                                <div className="ml-4 rtl:mr-4 rtl:ml-0">
-                                    <h4 className="text-base font-semibold text-slate-900 dark:text-white">{t('qualityGuarantee')}</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('qualityDesc')}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Related Products */}
-                {relatedProducts.length > 0 && (
-                    <div className="mt-20 pt-10 border-t border-slate-200 dark:border-slate-800">
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">{t('youMightAlsoLike')}</h2>
-                        <div className="flex gap-4 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar snap-x">
-                            {relatedProducts.map(p => (
-                                <div key={p.id} className="min-w-[200px] sm:min-w-[240px] snap-start">
-                                    <ProductCard product={p} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
+    return <ProductDetailsClient product={product} relatedProducts={relatedProducts} />;
 }
