@@ -48,13 +48,20 @@ body {
   scrollbar-width: none;
   /* Firefox */
 }
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
 }
 
-.no-scrollbar {
-  -ms-overflow-style: none;
-  /* IE and Edge */
-  scrollbar-width: none;
-  /* Firefox */
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 20px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.8);
 }

@@ -5,6 +5,7 @@ import { ShoppingBag, Search, Menu, X, Moon, Sun, Globe, WifiOff, Wifi, Heart } 
 import { useShop } from '@/context/ShopContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export const Navbar: React.FC = () => {
     const { cart, toggleCart, theme, toggleTheme, language, toggleLanguage, t, isOnline, supaConnectionError, setSearchQuery, storeLogo } = useShop();
@@ -40,14 +41,10 @@ export const Navbar: React.FC = () => {
                 setSearchQuery(''); // Clear actual search so home page doesn't filter
             } else if (term === 'writbrands') {
                 // Direct access to Brands tab
-                // Next.js router.push doesn't support state directly like react-router-dom
-                // We can use query params instead
                 router.push('/admin?tab=brands');
                 setSearchValue('');
                 setSearchQuery('');
             } else {
-                // Normal search behavior is handled by the useEffect debounce, 
-                // but hitting Enter can also optionally navigate to Home if not already there
                 if (pathname !== '/') {
                     router.push('/');
                 }
@@ -79,7 +76,7 @@ export const Navbar: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
-                    <div className="flex-shrink-0 flex items-center cursor-pointer group" onClick={() => router.push('/')}>
+                    <Link href="/" className="flex-shrink-0 flex items-center cursor-pointer group">
                         <div className="relative w-10 h-10 rounded-xl mr-3 rtl:ml-3 rtl:mr-0 shadow-lg shadow-pink-500/20 group-hover:shadow-pink-500/40 transition-all duration-300 overflow-hidden">
                             <Image
                                 src={storeLogo}
@@ -91,7 +88,7 @@ export const Navbar: React.FC = () => {
                             />
                         </div>
                         <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white transition-colors">BasCavarat</span>
-                    </div>
+                    </Link>
 
                     {/* Desktop Search */}
                     <div className="hidden md:flex flex-1 items-center justify-center px-12">
@@ -101,6 +98,7 @@ export const Navbar: React.FC = () => {
                                     <Search className="h-5 w-5 text-slate-400 dark:text-slate-500" />
                                 </div>
                                 <input
+                                    id="search-input"
                                     type="text"
                                     className="block w-full pl-11 rtl:pr-11 rtl:pl-4 pr-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-full leading-5 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent sm:text-sm transition duration-200 shadow-inner"
                                     placeholder={t('searchPlaceholder')}

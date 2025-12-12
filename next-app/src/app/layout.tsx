@@ -64,7 +64,7 @@ export default async function RootLayout({
           <ShopProvider initialData={initialData}>
             <AppUrlListener />
             <SplashScreen />
-            <div className="min-h-screen flex flex-col">
+            <div className="min-h-screen flex flex-col overflow-x-hidden">
               <Navbar />
               <CartDrawer />
               <main className="flex-grow">
