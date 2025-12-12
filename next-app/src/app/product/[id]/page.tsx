@@ -85,12 +85,13 @@ export default function ProductDetails() {
         }
     };
 
-    // 1. Add main product image ONLY if no variants exist or if variants don't have images
-    const hasVariantImages = product.variants && product.variants.some(v => v.image);
-    if (product.image && !hasVariantImages) {
+    // 1. Add main product image (always check for uniqueness)
+    if (product.image) {
         const norm = normalizeUrl(product.image);
-        uniqueUrls.add(norm);
-        galleryImages.push(product.image);
+        if (!uniqueUrls.has(norm)) {
+            uniqueUrls.add(norm);
+            galleryImages.push(product.image);
+        }
     }
 
     // 2. Add additional images (excluding main image if duplicated)
