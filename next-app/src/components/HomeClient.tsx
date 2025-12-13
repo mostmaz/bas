@@ -23,9 +23,14 @@ export const HomeClient: React.FC<HomeClientProps> = ({
     initialBrands
 }) => {
     // Use context for actions and loading states, but prefer initial data for display if available
-    const { products: contextProducts, brands: contextBrands, t, isAppLoading, isProductsLoading, orders: contextOrders } = useShop();
+    const { products: contextProducts, brands: contextBrands, t, isAppLoading, isProductsLoading, orders: contextOrders, refreshOrders } = useShop();
     const router = useRouter();
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+    // Fetch orders for Best Sellers calculation (only on Home Page)
+    useEffect(() => {
+        refreshOrders(true); // Fetch only 'items' for best sellers calculation
+    }, []);
 
     // Use initial data if available (SSR/SSG), otherwise fallback to context (Client-side fetch)
     // We prioritize context data if it's populated and different, but initial render uses props

@@ -36,8 +36,9 @@ export const getCachedProducts = unstable_cache(
     async () => {
         const { data, error } = await supabase
             .from('products')
-            .select('*')
-            .order('created_at', { ascending: false });
+            .select('id, name, price, sale_price, image, images, brand, device, rating, colors, variants, tags, created_at')
+            .order('created_at', { ascending: false })
+            .limit(50);
 
         if (error) {
             console.error("Server Fetch Error (Products):", error);
@@ -119,18 +120,20 @@ const mapOrderFromDB = (data: any) => ({
 
 export const getCachedOrders = unstable_cache(
     async () => {
+        // Only fetch items for best seller calculation to avoid 2MB cache limit
         const { data, error } = await supabase
             .from('orders')
-            .select('*')
+            .select('items')
             .order('date', { ascending: false });
 
         if (error) {
             console.error("Server Fetch Error (Orders):", error);
             return [];
         }
+        // Map only items, other fields will use default fallbacks from mapOrderFromDB
         return data ? data.map(mapOrderFromDB) : [];
     },
-    ['orders-cache'],
+    ['orders-cache-minimal'], // Changed cache key to reflect new data structure
     { revalidate: 3600, tags: ['orders'] }
 );
 

@@ -17,7 +17,7 @@ import { supabase } from '@/lib/supabase';
 import { Order } from '@/types';
 
 function AdminDashboardContent() {
-    const { supaConnectionError, isOnline } = useShop();
+    const { supaConnectionError, isOnline, refreshOrders } = useShop();
     const { addToast } = useToast();
     const searchParams = useSearchParams();
 
@@ -32,9 +32,17 @@ function AdminDashboardContent() {
         const isAuth = document.cookie.split(';').some((item) => item.trim().startsWith('admin_ui=true'));
         if (isAuth) {
             setIsAuthenticated(true);
+            refreshOrders(false); // Fetch FULL orders immediately if already authenticated
         }
         setIsCheckingAuth(false);
     }, []);
+
+    // Fetch orders when authentication state changes to true (e.g. after login)
+    useEffect(() => {
+        if (isAuthenticated) {
+            refreshOrders(false);
+        }
+    }, [isAuthenticated]);
 
     const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'orders' | 'brands' | 'devices' | 'carousel' | 'discounts'>('overview');
     const [copied, setCopied] = useState(false);

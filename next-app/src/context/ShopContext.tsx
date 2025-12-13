@@ -24,7 +24,7 @@ interface ShopContextType {
     devices: Device[];
     carouselSlides: CarouselSlide[];
     orders: Order[];
-    refreshOrders: () => Promise<void>;
+    refreshOrders: (minimal?: boolean) => Promise<void>;
     discounts: DiscountCode[];
 
     // Settings
@@ -170,7 +170,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children, initialDat
         // Non-critical data - defer to improve initial load time
         setTimeout(() => {
             refreshDiscounts();
-            refreshOrders();
+            // refreshOrders(); // Moved to AdminDashboard and HomeClient to improve performance
         }, 1000);
     }, []);
 

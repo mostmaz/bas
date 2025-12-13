@@ -227,17 +227,24 @@ export const useOrderLogic = (
         }
     };
 
-    const refreshOrders = async () => {
+    const refreshOrders = async (minimal: boolean = false) => {
         if (!isSupabaseConfigured) {
             console.log('Supabase not configured, skipping order refresh');
             return;
         }
 
-        console.log('Fetching orders from Supabase...');
-        const { data, error } = await supabase
+        console.log(`Fetching orders from Supabase (Minimal: ${minimal})...`);
+
+        // If minimal is true, we only need the 'items' column to calculate best sellers
+        const query = supabase
             .from('orders')
-            .select('*')
+            .select(minimal ? 'items' : '*')
             .order('date', { ascending: false });
+
+        // If minimal, we might want to limit the number of orders fetched to recent ones to speed it up further
+        // For now, we'll fetch all to ensure accuracy of best sellers, but selecting fewer columns helps.
+
+        const { data, error } = await query;
 
         if (error) {
             console.error('Error fetching orders:', error);
@@ -247,8 +254,8 @@ export const useOrderLogic = (
 
         if (data) {
             console.log('Orders fetched:', data.length, 'orders');
+            // If minimal, we map only what we have. mapOrderFromDB handles missing fields gracefully.
             const mappedOrders = data.map(mapOrderFromDB);
-            console.log('Mapped orders:', mappedOrders);
             setOrders(mappedOrders);
         } else {
             console.log('No orders data returned');
