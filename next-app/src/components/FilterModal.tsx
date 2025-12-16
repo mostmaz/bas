@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Check } from 'lucide-react';
 import { useShop } from '@/context/ShopContext';
 
@@ -25,44 +25,46 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
     }, [initialFilters]);
 
     // Extract unique colors from products with strict validation
-    const availableColors = Array.from(new Set(products.flatMap(p => {
-        let c = p.colors;
-        const normalize = (col: string) => {
-            if (!col || typeof col !== 'string') return null;
-            const trimmed = col.trim();
-            // Check for hex code (3, 6, or 8 digits)
-            if (/^#([0-9A-F]{3}){1,2}$/i.test(trimmed)) return trimmed;
-            // Check for valid color name (simple check: alphabetic, > 2 chars)
-            if (/^[a-zA-Z]+$/.test(trimmed) && trimmed.length > 2) return trimmed;
-            return null;
-        };
+    const availableColors = useMemo(() => {
+        return Array.from(new Set(products.flatMap(p => {
+            let c = p.colors;
+            const normalize = (col: string) => {
+                if (!col || typeof col !== 'string') return null;
+                const trimmed = col.trim();
+                // Check for hex code (3, 6, or 8 digits)
+                if (/^#([0-9A-F]{3}){1,2}$/i.test(trimmed)) return trimmed;
+                // Check for valid color name (simple check: alphabetic, > 2 chars)
+                if (/^[a-zA-Z]+$/.test(trimmed) && trimmed.length > 2) return trimmed;
+                return null;
+            };
 
-        if (typeof c === 'string') {
-            try {
-                const parsed = JSON.parse(c);
-                if (Array.isArray(parsed)) return parsed.map(normalize).filter(Boolean);
-                return [normalize(parsed)].filter(Boolean);
-            } catch {
-                return [normalize(c)].filter(Boolean);
-            }
-        }
-        if (Array.isArray(c)) {
-            return c.flat().map(item => {
-                if (typeof item === 'string') {
-                    if (item.startsWith('[') || item.startsWith('{')) {
-                        try {
-                            const parsed = JSON.parse(item);
-                            if (Array.isArray(parsed)) return parsed.map(normalize).filter(Boolean);
-                            return [normalize(parsed)].filter(Boolean);
-                        } catch { return [normalize(item)].filter(Boolean); }
-                    }
-                    return [normalize(item)].filter(Boolean);
+            if (typeof c === 'string') {
+                try {
+                    const parsed = JSON.parse(c);
+                    if (Array.isArray(parsed)) return parsed.map(normalize).filter(Boolean);
+                    return [normalize(parsed)].filter(Boolean);
+                } catch {
+                    return [normalize(c)].filter(Boolean);
                 }
-                return [];
-            }).flat();
-        }
-        return [];
-    }).flat())).filter(Boolean) as string[];
+            }
+            if (Array.isArray(c)) {
+                return c.flat().map(item => {
+                    if (typeof item === 'string') {
+                        if (item.startsWith('[') || item.startsWith('{')) {
+                            try {
+                                const parsed = JSON.parse(item);
+                                if (Array.isArray(parsed)) return parsed.map(normalize).filter(Boolean);
+                                return [normalize(parsed)].filter(Boolean);
+                            } catch { return [normalize(item)].filter(Boolean); }
+                        }
+                        return [normalize(item)].filter(Boolean);
+                    }
+                    return [];
+                }).flat();
+            }
+            return [];
+        }).flat())).filter(Boolean) as string[];
+    }, [products]);
 
     if (!isOpen) return null;
 

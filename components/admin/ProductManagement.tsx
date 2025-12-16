@@ -46,6 +46,8 @@ export const ProductManagement: React.FC = () => {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
   // File Input Ref for Bulk Upload
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Extract Unique Devices for Filter
@@ -58,6 +60,18 @@ export const ProductManagement: React.FC = () => {
   const filteredProducts = useMemo(() => {
     return products.filter(p => selectedDevice === 'All' || p.device === selectedDevice);
   }, [products, selectedDevice]);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  // Reset page when filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDevice]);
 
   const handleAddClick = () => {
     setEditingProduct(null);
@@ -657,14 +671,14 @@ export const ProductManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-              {filteredProducts.length === 0 ? (
+              {paginatedProducts.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400 italic">
                     No products found for the selected device.
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map((product) => (
+                paginatedProducts.map((product) => (
                   <tr key={product.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${selectedProducts.has(product.id) ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''} ${product.isHidden ? 'opacity-60 grayscale' : ''}`}>
                     <td className="px-6 py-4">
                       <button onClick={() => handleSelectProduct(product.id)} className="text-gray-400 hover:text-indigo-600">
@@ -731,6 +745,62 @@ export const ProductManagement: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {filteredProducts.length > itemsPerPage && (
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-4 px-4 gap-4">
+          <div className="text-sm text-gray-500 dark:text-slate-400">
+            Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredProducts.length)}</span> of <span className="font-medium">{filteredProducts.length}</span> products
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="bg-white dark:bg-slate-800"
+            >
+              Previous
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let p = i + 1;
+                if (totalPages > 5) {
+                  if (currentPage <= 3) {
+                    p = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    p = totalPages - 4 + i;
+                  } else {
+                    p = currentPage - 2 + i;
+                  }
+                }
+
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p)}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === p
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
+                      }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="bg-white dark:bg-slate-800"
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       <ProductFormModal
         isOpen={isModalOpen}

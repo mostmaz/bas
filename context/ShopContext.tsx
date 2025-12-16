@@ -54,6 +54,7 @@ interface ShopContextType {
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   addBrand: (name: string, logo?: string) => Promise<void>;
+  updateBrand: (id: string, name: string, logo?: string) => Promise<void>;
   deleteBrand: (id: string) => Promise<void>;
   addDevice: (name: string) => Promise<void>;
   deleteDevice: (id: string) => Promise<void>;
@@ -137,7 +138,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   });
 
   // --- HOOKS ---
-  const { brands, setBrands, refreshBrands, addBrand, deleteBrand } = useBrandLogic(isSupabaseConfigured, addToast);
+  const { brands, setBrands, refreshBrands, addBrand, updateBrand, deleteBrand } = useBrandLogic(isSupabaseConfigured, addToast);
   const { devices, setDevices, refreshDevices, addDevice, deleteDevice } = useDeviceLogic(isSupabaseConfigured, addToast);
   const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides } = useSlideLogic(isSupabaseConfigured, addToast);
 
@@ -290,7 +291,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading,
       refreshBrands, refreshProducts, refreshDevices,
       addProduct, updateProduct, deleteProduct,
-      addBrand, deleteBrand,
+      addBrand, updateBrand, deleteBrand,
       addDevice, deleteDevice,
       addSlide, updateSlide, deleteSlide, refreshSlides,
       placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus,

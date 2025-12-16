@@ -43,5 +43,17 @@ export const useBrandLogic = (isSupabaseConfigured: boolean, addToast: (msg: str
         }
     };
 
-    return { brands, setBrands, refreshBrands, addBrand, deleteBrand };
+    const updateBrand = async (id: string, name: string, logo?: string) => {
+        if (isSupabaseConfigured) {
+            const { error } = await supabase.from('brands').update({ name, logo }).eq('id', id);
+            if (error) throw error;
+            await refreshBrands();
+            addToast('Brand updated successfully', 'success');
+        } else {
+            setBrands(prev => prev.map(b => b.id === id ? { ...b, name, logo } : b));
+            addToast('Brand updated locally (Demo)', 'success');
+        }
+    };
+
+    return { brands, setBrands, refreshBrands, addBrand, updateBrand, deleteBrand };
 };

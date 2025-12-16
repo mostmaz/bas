@@ -12,7 +12,7 @@ function FilteredProductsContent() {
     const { products, isProductsLoading, language, t, devices } = useShop();
     const searchParams = useSearchParams();
     const router = useRouter();
-    
+
     const brandFilter = searchParams.get('brand');
     const deviceFilter = searchParams.get('device');
 
@@ -58,7 +58,7 @@ function FilteredProductsContent() {
         const device = e.target.value;
         setSelectedDevice(device);
         const newParams = new URLSearchParams(searchParams.toString());
-        
+
         if (device) {
             newParams.set('device', device);
             // Reset brand filters when selecting a device
@@ -66,15 +66,57 @@ function FilteredProductsContent() {
         } else {
             newParams.delete('device');
         }
-        
+
         // Clear brand filter from URL when selecting a device to avoid conflicts
         newParams.delete('brand');
         router.push(`/filtered-products?${newParams.toString()}`);
     };
 
-    const filteredProducts = useMemo(() => {
+    // Optimization: Pre-calculate normalized colors to avoid expensive parsing on every filter change
+    const processedProducts = useMemo(() => {
         if (!products) return [];
-        return products.filter(product => {
+        return products.map(product => {
+            const pColors = product.colors;
+            const normalize = (col: string) => {
+                if (!col || typeof col !== 'string') return null;
+                const trimmed = col.trim();
+                if (/^#([0-9A-F]{3}){1,2}$/i.test(trimmed)) return trimmed;
+                if (/^[a-zA-Z]+$/.test(trimmed) && trimmed.length > 2) return trimmed;
+                return null;
+            };
+
+            let extractedColors: string[] = [];
+            if (typeof pColors === 'string') {
+                try {
+                    const parsed = JSON.parse(pColors);
+                    if (Array.isArray(parsed)) extractedColors = parsed.map(normalize).filter(Boolean) as string[];
+                    else extractedColors = [normalize(parsed)].filter(Boolean) as string[];
+                } catch {
+                    extractedColors = [normalize(pColors)].filter(Boolean) as string[];
+                }
+            } else if (Array.isArray(pColors)) {
+                extractedColors = pColors.flat().map(item => {
+                    if (typeof item === 'string') {
+                        if (item.startsWith('[') || item.startsWith('{')) {
+                            try {
+                                const parsed = JSON.parse(item);
+                                if (Array.isArray(parsed)) return parsed.map(normalize).filter(Boolean);
+                                return [normalize(parsed)].filter(Boolean);
+                            } catch { return [normalize(item)].filter(Boolean); }
+                        }
+                        return [normalize(item)].filter(Boolean);
+                    }
+                    return [];
+                }).flat() as string[];
+            }
+
+            return { ...product, _normalizedColors: extractedColors };
+        });
+    }, [products]);
+
+    const filteredProducts = useMemo(() => {
+        if (!processedProducts) return [];
+        return processedProducts.filter(product => {
             // Device Filter
             const matchesDevice = !selectedDevice || (product.device && product.device.toLowerCase() === selectedDevice.toLowerCase());
 
@@ -82,50 +124,15 @@ function FilteredProductsContent() {
             const matchesPrice = product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1];
             const matchesBrand = filters.selectedBrands.length === 0 || filters.selectedBrands.some(b => b.toLowerCase() === (product.brand || '').toLowerCase());
 
-            // Safe Color Filter
-            const matchesColor = filters.selectedColors.length === 0 || (product.colors && (function () {
-                const pColors = product.colors;
-                const normalize = (col: string) => {
-                    if (!col || typeof col !== 'string') return null;
-                    const trimmed = col.trim();
-                    if (/^#([0-9A-F]{3}){1,2}$/i.test(trimmed)) return trimmed;
-                    if (/^[a-zA-Z]+$/.test(trimmed) && trimmed.length > 2) return trimmed;
-                    return null;
-                };
-
-                let extractedColors: string[] = [];
-                if (typeof pColors === 'string') {
-                    try {
-                        const parsed = JSON.parse(pColors);
-                        if (Array.isArray(parsed)) extractedColors = parsed.map(normalize).filter(Boolean) as string[];
-                        else extractedColors = [normalize(parsed)].filter(Boolean) as string[];
-                    } catch {
-                        extractedColors = [normalize(pColors)].filter(Boolean) as string[];
-                    }
-                } else if (Array.isArray(pColors)) {
-                    extractedColors = pColors.flat().map(item => {
-                        if (typeof item === 'string') {
-                            if (item.startsWith('[') || item.startsWith('{')) {
-                                try {
-                                    const parsed = JSON.parse(item);
-                                    if (Array.isArray(parsed)) return parsed.map(normalize).filter(Boolean);
-                                    return [normalize(parsed)].filter(Boolean);
-                                } catch { return [normalize(item)].filter(Boolean); }
-                            }
-                            return [normalize(item)].filter(Boolean);
-                        }
-                        return [];
-                    }).flat() as string[];
-                }
-
-                return filters.selectedColors.some(filterColor =>
-                    extractedColors.some(c => c.toLowerCase() === filterColor.toLowerCase())
+            // Optimized Color Filter using pre-calculated values
+            const matchesColor = filters.selectedColors.length === 0 ||
+                filters.selectedColors.some(filterColor =>
+                    product._normalizedColors.some(c => c.toLowerCase() === filterColor.toLowerCase())
                 );
-            })());
 
             return matchesDevice && matchesPrice && matchesBrand && matchesColor;
         });
-    }, [products, selectedDevice, filters]);
+    }, [processedProducts, selectedDevice, filters]);
 
     const title = brandFilter ? `${brandFilter} Products` : selectedDevice ? `${selectedDevice} Products` : 'Products';
 

@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
-import { Trash2, Wand2, Loader2, Upload, Plus, RefreshCw } from 'lucide-react';
+import { Trash2, Wand2, Loader2, Upload, Plus, RefreshCw, Pencil } from 'lucide-react';
+import { Brand } from '../../types';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 import { generateBrandLogo } from '../../services/geminiService';
 
 export const BrandManagement: React.FC = () => {
-  const { brands, addBrand, deleteBrand, refreshBrands } = useShop();
+  const { brands, addBrand, updateBrand, deleteBrand, refreshBrands } = useShop();
+  const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [newBrandName, setNewBrandName] = useState('');
   const [generatedLogo, setGeneratedLogo] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -44,17 +46,22 @@ export const BrandManagement: React.FC = () => {
     setIsSubmitting(true);
     try {
       // Pass the generated logo if available, otherwise undefined
-      await addBrand(newBrandName.trim(), generatedLogo || undefined);
+      if (editingBrand) {
+        await updateBrand(editingBrand.id, newBrandName.trim(), generatedLogo || undefined);
+        setEditingBrand(null);
+      } else {
+        await addBrand(newBrandName.trim(), generatedLogo || undefined);
+      }
       setNewBrandName('');
       setGeneratedLogo(null);
     } catch (error: any) {
       console.error("Error adding brand:", error);
       const msg = getErrorMessage(error);
-      
+
       if (msg.includes('logo') && (msg.includes('does not exist') || msg.includes('PGRST204') || msg.includes('schema cache'))) {
-         alert("Database Error: The 'logo' column is missing. Please go to the Dashboard Overview, run the SQL script again, and restart Supabase schema cache if possible.");
+        alert("Database Error: The 'logo' column is missing. Please go to the Dashboard Overview, run the SQL script again, and restart Supabase schema cache if possible.");
       } else {
-         alert(`Failed to add brand: ${msg}`);
+        alert(`Failed to add brand: ${msg}`);
       }
     } finally {
       setIsSubmitting(false);
@@ -73,6 +80,12 @@ export const BrandManagement: React.FC = () => {
         setDeletingId(null);
       }
     }
+  };
+
+  const handleEditBrand = (brand: Brand) => {
+    setEditingBrand(brand);
+    setNewBrandName(brand.name);
+    setGeneratedLogo(brand.logo || null);
   };
 
   const handleRefresh = async () => {
@@ -96,10 +109,10 @@ export const BrandManagement: React.FC = () => {
     <div className="animate-in fade-in duration-500">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800 dark:text-white">Brand Management</h2>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleRefresh} 
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
           disabled={isRefreshing}
           className="gap-2"
         >
@@ -107,11 +120,11 @@ export const BrandManagement: React.FC = () => {
           Refresh List
         </Button>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Add Brand Card */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 h-fit">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Add New Brand</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{editingBrand ? 'Edit Brand' : 'Add New Brand'}</h3>
           <form onSubmit={handleAddBrand} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Brand Name</label>
@@ -130,57 +143,71 @@ export const BrandManagement: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Brand Logo</label>
               <div className="flex items-center gap-4">
-                 <div className="h-24 w-24 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 flex items-center justify-center relative group shrink-0">
-                    {generatedLogo ? (
-                      <img src={generatedLogo} alt="Logo Preview" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-xs text-gray-400 text-center px-2">No logo</span>
-                    )}
-                    {isGenerating && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 text-white animate-spin" />
-                      </div>
-                    )}
-                 </div>
-                 
-                 <div className="flex flex-col gap-2 w-full">
-                   <Button 
-                     type="button" 
-                     onClick={handleGenerateLogo}
-                     disabled={isGenerating || !newBrandName.trim() || isSubmitting}
-                     className="text-xs w-full sm:w-auto"
-                     variant="secondary"
-                   >
-                     <Wand2 className="h-3 w-3 mr-2" />
-                     {isGenerating ? 'Creating...' : 'Generate with AI'}
-                   </Button>
-                   
-                   <label className={`inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                      <Upload className="h-3 w-3 mr-2" /> Upload Image
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        accept="image/*" 
-                        onChange={handleImageUpload} 
-                        disabled={isSubmitting}
-                      />
-                   </label>
-                 </div>
+                <div className="h-24 w-24 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 flex items-center justify-center relative group shrink-0">
+                  {generatedLogo ? (
+                    <img src={generatedLogo} alt="Logo Preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-xs text-gray-400 text-center px-2">No logo</span>
+                  )}
+                  {isGenerating && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2 w-full">
+                  <Button
+                    type="button"
+                    onClick={handleGenerateLogo}
+                    disabled={isGenerating || !newBrandName.trim() || isSubmitting}
+                    className="text-xs w-full sm:w-auto"
+                    variant="secondary"
+                  >
+                    <Wand2 className="h-3 w-3 mr-2" />
+                    {isGenerating ? 'Creating...' : 'Generate with AI'}
+                  </Button>
+
+                  <label className={`inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <Upload className="h-3 w-3 mr-2" /> Upload Image
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={isSubmitting}
+                    />
+                  </label>
+                </div>
               </div>
               {generatedLogo && !isGenerating && (
                 <p className="text-xs text-green-600 mt-2">Logo ready to save.</p>
               )}
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={!newBrandName.trim() || isSubmitting} 
+            <Button
+              type="submit"
+              disabled={!newBrandName.trim() || isSubmitting}
               className="w-full"
               isLoading={isSubmitting}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Brand
+              {editingBrand ? 'Update Brand' : 'Add Brand'}
             </Button>
+            {editingBrand && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEditingBrand(null);
+                  setNewBrandName('');
+                  setGeneratedLogo(null);
+                }}
+                className="w-full"
+              >
+                Cancel Edit
+              </Button>
+            )}
           </form>
         </div>
 
@@ -201,11 +228,11 @@ export const BrandManagement: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-lg bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
                       {brand.logo ? (
-                        <img 
-                          src={brand.logo} 
-                          alt={brand.name} 
+                        <img
+                          src={brand.logo}
+                          alt={brand.name}
                           loading="lazy"
-                          className="h-full w-full object-cover" 
+                          className="h-full w-full object-cover"
                         />
                       ) : (
                         <span className="text-lg font-bold text-violet-600 dark:text-violet-400">{brand.name.charAt(0)}</span>
@@ -216,18 +243,27 @@ export const BrandManagement: React.FC = () => {
                       <span className="text-[10px] text-gray-400 font-mono">{brand.id}</span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleDeleteBrand(brand.id)}
-                    disabled={deletingId === brand.id}
-                    className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
-                    title="Delete Brand"
-                  >
-                    {deletingId === brand.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditBrand(brand)}
+                      className="text-gray-400 hover:text-indigo-600 p-2 rounded-full hover:bg-indigo-50 dark:hover:bg-slate-700 transition-colors"
+                      title="Edit Brand"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteBrand(brand.id)}
+                      disabled={deletingId === brand.id}
+                      className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                      title="Delete Brand"
+                    >
+                      {deletingId === brand.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               ))
             )}
