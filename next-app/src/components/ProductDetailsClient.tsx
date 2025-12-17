@@ -136,22 +136,22 @@ export const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({ prod
                     </button>
                 </div>
 
-                {/* Mobile Header (Brand, Name, Rating) */}
-                <div className="lg:hidden mb-6 flex flex-col items-center text-center">
-                    <div className="mb-3">
+                {/* Unified Header (Brand, Name, Rating) */}
+                <div className="mb-6 flex flex-col items-center text-center lg:items-start lg:text-left">
+                    <div className="mb-3 lg:mb-4">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20 uppercase tracking-wider">
                             {product.brand}
                         </span>
                     </div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">{product.name}</h1>
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4 lg:mb-6 leading-tight">{product.name}</h1>
 
-                    <div className="flex items-center mb-2 justify-center">
+                    <div className="flex items-center mb-6 lg:mb-8 justify-center lg:justify-start">
                         <div className="flex items-center text-amber-400">
                             {[...Array(5)].map((_, i) => (
-                                <Star key={i} className={`h-4 w-4 ${i < Math.floor(product.rating) ? 'fill-current' : 'text-slate-200 dark:text-slate-700'}`} />
+                                <Star key={i} className={`h-4 w-4 lg:h-5 lg:w-5 ${i < Math.floor(product.rating) ? 'fill-current' : 'text-slate-200 dark:text-slate-700'}`} />
                             ))}
                         </div>
-                        <span className="ml-3 text-xs text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-3 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-3">128 {t('reviews')}</span>
+                        <span className="ml-3 lg:ml-4 text-xs lg:text-sm text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-3 lg:pl-4 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-3 lg:rtl:pr-4">128 {t('reviews')}</span>
                     </div>
                 </div>
 
@@ -218,24 +218,7 @@ export const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({ prod
 
                     {/* Details Section */}
                     <div className="flex flex-col justify-center">
-                        <div className="hidden lg:block">
-                            <div className="mb-4">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20 uppercase tracking-wider">
-                                    {product.brand}
-                                </span>
-                            </div>
-                            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">{product.name}</h1>
 
-                            {/* Rating */}
-                            <div className="flex items-center mb-8">
-                                <div className="flex items-center text-amber-400">
-                                    {[...Array(5)].map((_, i) => (
-                                        <Star key={i} className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'fill-current' : 'text-slate-200 dark:text-slate-700'}`} />
-                                    ))}
-                                </div>
-                                <span className="ml-4 text-sm text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-4 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4">128 {t('reviews')}</span>
-                            </div>
-                        </div>
 
                         <div className="flex flex-col mb-8">
                             {product.salePrice ? (
