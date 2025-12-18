@@ -34,7 +34,7 @@ export const AdminDashboard: React.FC = () => {
         try {
           // Check specifically for 'images', 'colors', 'variants', 'sku' which are critical for the new features
           // Using a raw query attempt to catch column missing errors explicitly
-          const { error } = await supabase.from('products').select('images, colors, variants, sale_price, sku').limit(1);
+          const { error } = await supabase.from('products').select('images, colors, variants, sale_price, sku, gift_product_id, bonus_message').limit(1);
 
           if (error) {
             console.error("Schema check failed:", error);
@@ -59,6 +59,8 @@ export const AdminDashboard: React.FC = () => {
               else if (lowerMsg.includes('sku')) missingItem = "'sku'";
 
               else if (lowerMsg.includes('ishidden')) missingItem = "'isHidden'";
+              else if (lowerMsg.includes('gift_product_id')) missingItem = "'gift_product_id'";
+              else if (lowerMsg.includes('bonus_message')) missingItem = "'bonus_message'";
 
               const alertMsg = `CRITICAL: Database Schema Cache Stale. Please run the DB Setup script.`;
               setSchemaError(alertMsg);
@@ -139,6 +141,8 @@ alter table products add column if not exists variants jsonb;
 alter table products add column if not exists sale_price numeric;
 alter table products add column if not exists sku text;
 alter table products add column if not exists isHidden boolean default false;
+alter table products add column if not exists gift_product_id text;
+alter table products add column if not exists bonus_message text;
 alter table products add column if not exists created_at timestamptz default now();
 
 -- 2. Ensure Brands table has logo
@@ -170,7 +174,9 @@ create table if not exists products (
   stock numeric,
   colors text[],
   variants jsonb,
-  isHidden boolean default false
+  isHidden boolean default false,
+  gift_product_id text,
+  bonus_message text
 );
 
 create table if not exists brands (
