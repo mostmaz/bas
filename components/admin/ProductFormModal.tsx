@@ -53,7 +53,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
     images: [] as string[],
     stock: '10',
     colors: [] as string[], // Legacy simple colors
-    variants: [] as ProductVariant[]
+    variants: [] as ProductVariant[],
+    isHidden: false,
+    giftProductId: '',
+    bonusMessage: ''
   };
 
   const [formData, setFormData] = useState(defaultState);
@@ -72,7 +75,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         images: initialData.images && initialData.images.length > 0 ? initialData.images : [initialData.image],
         stock: initialData.stock.toString(),
         colors: initialData.colors || [],
-        variants: initialData.variants || []
+        variants: initialData.variants || [],
+        isHidden: initialData.isHidden || false,
+        giftProductId: initialData.giftProductId || '',
+        bonusMessage: initialData.bonusMessage || ''
       });
       setIsSaleEnabled(!!initialData.salePrice);
     } else {
@@ -247,7 +253,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
       images: finalImages,
       stock: parseInt(formData.stock),
       colors: formData.colors,
-      variants: formData.variants
+      variants: formData.variants,
+      isHidden: formData.isHidden,
+      giftProductId: formData.giftProductId,
+      bonusMessage: formData.bonusMessage
     });
   };
 
@@ -355,6 +364,24 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Visibility Toggle */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-200 dark:border-slate-700">
+            <div>
+              <span className="block text-sm font-medium text-gray-700 dark:text-slate-300">Visibility</span>
+              <span className="text-xs text-gray-500 dark:text-slate-400">Hide from store listings?</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={formData.isHidden}
+                onChange={(e) => setFormData({ ...formData, isHidden: e.target.checked })}
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+              <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">{formData.isHidden ? 'Hidden' : 'Visible'}</span>
+            </label>
           </div>
 
           <div>
@@ -564,6 +591,38 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
               readOnly
               title="Calculated from variants"
             />
+          </div>
+
+          {/* Bonus / Gift Section */}
+          <div className="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-xl border border-amber-200 dark:border-amber-800/30">
+            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-3 flex items-center gap-2">
+              <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
+              Free Gift Configuration
+            </h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Gift Product ID (Optional)</label>
+                <input
+                  type="text"
+                  className="w-full text-sm border border-gray-300 dark:border-slate-600 rounded-md px-3 py-2 dark:bg-slate-800 dark:text-white outline-none focus:border-amber-500"
+                  value={formData.giftProductId}
+                  onChange={e => setFormData({ ...formData, giftProductId: e.target.value })}
+                  placeholder="Enter ID of the free gift product"
+                />
+                <p className="text-[10px] text-gray-500 mt-1">This product will be automatically added to cart.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Bonus Message (Optional)</label>
+                <input
+                  type="text"
+                  className="w-full text-sm border border-gray-300 dark:border-slate-600 rounded-md px-3 py-2 dark:bg-slate-800 dark:text-white outline-none focus:border-amber-500"
+                  value={formData.bonusMessage}
+                  onChange={e => setFormData({ ...formData, bonusMessage: e.target.value })}
+                  placeholder="e.g. Includes Free Screen Protector!"
+                />
+                <p className="text-[10px] text-gray-500 mt-1">Displayed above the Add to Cart button.</p>
+              </div>
+            </div>
           </div>
 
           <div className="pt-2 flex gap-3">

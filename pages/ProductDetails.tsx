@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
-import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag } from 'lucide-react';
+import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag, Gift } from 'lucide-react';
 import { Button } from '../components/Button';
 import { ProductCard } from '../components/ProductCard';
 import { ProductVariant } from '../types';
@@ -258,6 +258,18 @@ export const ProductDetails: React.FC = () => {
                   </div>
                 )}
 
+                {/* Bonus Message */}
+                {product.bonusMessage && (
+                  <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
+                    <div className="p-1 bg-amber-100 dark:bg-amber-800 rounded-full shrink-0">
+                      <Gift className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                      {product.bonusMessage}
+                    </p>
+                  </div>
+                )}
+
                 {/* Add to Cart Button (Inside Variant Box) */}
                 <div className="mt-6">
                   <Button
@@ -275,6 +287,17 @@ export const ProductDetails: React.FC = () => {
             {/* Add to Cart Button (Outside Variant Box - if no variants) */}
             {availableVariants.length === 0 && (
               <div className="mb-8">
+                {/* Bonus Message */}
+                {product.bonusMessage && (
+                  <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
+                    <div className="p-1 bg-amber-100 dark:bg-amber-800 rounded-full shrink-0">
+                      <Gift className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                      {product.bonusMessage}
+                    </p>
+                  </div>
+                )}
                 <Button
                   size="lg"
                   onClick={() => addToCart(product, selectedVariant || undefined)}

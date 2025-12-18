@@ -25,6 +25,8 @@ export interface Product {
   colors?: string[]; // Legacy: Array of hex codes
   variants?: ProductVariant[]; // New: Detailed variant system
   isHidden?: boolean; // New: Visibility toggle
+  giftProductId?: string; // New: ID of a product to be added as a free gift
+  bonusMessage?: string; // New: Message to display when a bonus product is available
 }
 
 export interface DiscountCode {
@@ -39,6 +41,7 @@ export interface DiscountCode {
 export interface CartItem extends Product {
   quantity: number;
   selectedVariant?: ProductVariant; // Track which variant was added
+  isGift?: boolean; // New: Flag to indicate if this item is a free gift
 }
 
 export interface ChatMessage {

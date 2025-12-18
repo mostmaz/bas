@@ -112,7 +112,10 @@ export const Home: React.FC = () => {
         // console.log(`Filtered out ${product.name} due to color. Product Colors:`, product.colors, "Selected:", filters.selectedColors);
       }
 
-      return matchesBrandFilter && matchesDevice && matchesPrice && matchesBrand && matchesColor;
+      // Hidden Filter
+      const isVisible = !product.isHidden;
+
+      return matchesBrandFilter && matchesDevice && matchesPrice && matchesBrand && matchesColor && isVisible;
     });
   }, [products, selectedBrandFilter, selectedDevice, filters]);
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CartItem, Product, ProductVariant, DiscountCode } from '../types';
 
-export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void) => {
+export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void, products: Product[]) => {
     const [cart, setCart] = useState<CartItem[]>(() => {
         try {
             const saved = localStorage.getItem('cart');
@@ -21,29 +21,57 @@ export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' |
 
     const addToCart = (product: Product, variant?: ProductVariant) => {
         setCart(prev => {
+            let newCart = [...prev];
+
+            // 1. Add Main Product
             const compositeId = (variant && variant.id) ? `${product.id}-${variant.id}` : product.id;
-            const existing = prev.find(item => {
+            const existingIndex = newCart.findIndex(item => {
                 const itemCompositeId = (item.selectedVariant && item.selectedVariant.id) ? `${item.id}-${item.selectedVariant.id}` : item.id;
                 return itemCompositeId === compositeId;
             });
 
-            if (existing) {
-                return prev.map(item => {
-                    const itemCompositeId = (item.selectedVariant && item.selectedVariant.id) ? `${item.id}-${item.selectedVariant.id}` : item.id;
-                    return itemCompositeId === compositeId ? { ...item, quantity: item.quantity + 1 } : item;
+            if (existingIndex >= 0) {
+                newCart[existingIndex] = { ...newCart[existingIndex], quantity: newCart[existingIndex].quantity + 1 };
+            } else {
+                const displayImage = (variant && variant.image) ? variant.image : product.image;
+                newCart.push({
+                    ...product,
+                    image: displayImage,
+                    quantity: 1,
+                    selectedVariant: variant
                 });
             }
 
-            const displayImage = (variant && variant.image) ? variant.image : product.image;
-            return [...prev, {
-                ...product,
-                image: displayImage,
-                quantity: 1,
-                selectedVariant: variant
-            }];
+            // 2. Add Gift Product
+            if (product.giftProductId) {
+                const giftProduct = products.find(p => p.id === product.giftProductId);
+                if (giftProduct) {
+                    // Check if gift is already in cart as a gift
+                    const existingGiftIndex = newCart.findIndex(item => item.id === giftProduct.id && item.isGift);
+                    if (existingGiftIndex === -1) {
+                        newCart.push({
+                            ...giftProduct,
+                            quantity: 1,
+                            isGift: true,
+                            price: 0,
+                            salePrice: 0
+                        });
+                    }
+                }
+            }
+
+            return newCart;
         });
+
         setIsCartOpen(true);
         addToast(`${product.name} ${variant ? `(${variant.color})` : ''} added to cart`, 'success');
+
+        if (product.giftProductId) {
+            const giftProduct = products.find(p => p.id === product.giftProductId);
+            if (giftProduct) {
+                addToast(`Free gift added: ${giftProduct.name}`, 'success');
+            }
+        }
     };
 
     const removeFromCart = (id: string) => {
@@ -69,6 +97,7 @@ export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' |
 
     // Calculations
     const totalAmount = cart.reduce((sum, item) => {
+        if (item.isGift) return sum;
         const price = item.salePrice || item.price;
         return sum + (price * item.quantity);
     }, 0);

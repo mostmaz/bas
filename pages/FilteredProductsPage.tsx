@@ -125,7 +125,10 @@ export const FilteredProductsPage: React.FC = () => {
                 );
             })());
 
-            return matchesDevice && matchesPrice && matchesBrand && matchesColor;
+            // Hidden Filter
+            const isVisible = !product.isHidden;
+
+            return matchesDevice && matchesPrice && matchesBrand && matchesColor && isVisible;
         });
     }, [products, selectedDevice, filters]);
 
