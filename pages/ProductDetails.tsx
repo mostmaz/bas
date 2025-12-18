@@ -132,6 +132,15 @@ export const ProductDetails: React.FC = () => {
           </button>
         </div>
 
+        <div className="mb-8">
+          <div className="mb-4">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20 uppercase tracking-wider">
+              {product.brand}
+            </span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">{product.name}</h1>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Image Section */}
           <div className="space-y-4">
@@ -191,12 +200,6 @@ export const ProductDetails: React.FC = () => {
 
           {/* Details Section */}
           <div className="flex flex-col justify-center">
-            <div className="mb-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20 uppercase tracking-wider">
-                {product.brand}
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">{product.name}</h1>
 
             {/* Rating */}
             <div className="flex items-center mb-8">

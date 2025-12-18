@@ -60,7 +60,9 @@ const mapProductFromDB = (p: any): Product => {
         variants: variants,
         salePrice: p.sale_price !== undefined ? p.sale_price : (p.salePrice !== undefined ? p.salePrice : undefined),
         sku: p.sku || undefined,
-        isHidden: p.isHidden || false
+        isHidden: p.isHidden || false,
+        giftProductId: p.gift_product_id || undefined,
+        bonusMessage: p.bonus_message || undefined
     };
 };
 
@@ -164,7 +166,9 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 variants: product.variants,
                 sale_price: product.salePrice,
                 sku: product.sku,
-                isHidden: product.isHidden
+                isHidden: product.isHidden,
+                gift_product_id: product.giftProductId,
+                bonus_message: product.bonusMessage
             };
 
             const { error } = await supabase.from('products').insert([dbProduct]);
@@ -176,7 +180,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                     console.warn("Schema mismatch detected during add: column missing. Retrying insert without advanced fields.");
                     addToast("Warning: Database Schema Outdated. Added without complex data.", 'warning');
 
-                    const { images, colors, variants, sale_price, sku, isHidden, ...legacyProduct } = dbProduct;
+                    const { images, colors, variants, sale_price, sku, isHidden, gift_product_id, bonus_message, ...legacyProduct } = dbProduct;
                     const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
 
                     const { error: retryError } = await supabase.from('products').insert([safeProduct]);
@@ -218,7 +222,9 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 variants: product.variants,
                 sale_price: product.salePrice,
                 sku: product.sku,
-                isHidden: product.isHidden
+                isHidden: product.isHidden,
+                gift_product_id: product.giftProductId,
+                bonus_message: product.bonusMessage
             };
 
             const { error } = await supabase.from('products').update(dbProduct).eq('id', product.id);
@@ -229,7 +235,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                     console.warn("Schema mismatch detected: column missing. Retrying update without advanced fields.");
                     addToast("Warning: Database Schema Outdated. Updated without complex data.", 'warning');
 
-                    const { images, colors, variants, sale_price, sku, isHidden, ...legacyProduct } = dbProduct;
+                    const { images, colors, variants, sale_price, sku, isHidden, gift_product_id, bonus_message, ...legacyProduct } = dbProduct;
                     const safeProduct = { ...legacyProduct, image: product.images?.[0] || product.image };
 
                     const { error: retryError } = await supabase.from('products').update(safeProduct).eq('id', product.id);

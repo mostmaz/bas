@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Wand2, Loader2, Trash2, Check, Plus, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Wand2, Loader2, Trash2, Check, Plus, Image as ImageIcon, Copy } from 'lucide-react';
 import { Button } from '../Button';
 import { Product, ProductVariant } from '../../types';
 import { generateProductDescription } from '../../services/geminiService';
@@ -266,7 +266,18 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200 border border-gray-200 dark:border-slate-700 flex flex-col max-h-[90vh]">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center shrink-0">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{initialData ? 'Edit Product' : 'Add New Product'}</h3>
+          <div className="flex flex-col">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{initialData ? 'Edit Product' : 'Add New Product'}</h3>
+            {initialData && (
+              <button
+                onClick={() => { navigator.clipboard.writeText(initialData.id); alert("ID Copied"); }}
+                className="text-xs text-gray-400 flex items-center gap-1 hover:text-indigo-500 w-fit mt-0.5"
+                title="Click to copy ID"
+              >
+                ID: {initialData.id} <Copy className="h-3 w-3" />
+              </button>
+            )}
+          </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200">
             <X className="h-5 w-5" />
           </button>

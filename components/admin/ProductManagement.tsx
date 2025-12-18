@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, Database, AlertTriangle, CheckSquare, Square, Eye, EyeOff, Smartphone } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, Database, AlertTriangle, CheckSquare, Square, Eye, EyeOff, Smartphone, Copy } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 import { Product } from '../../types';
@@ -705,7 +705,21 @@ export const ProductManagement: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-slate-400">
-                      {product.sku || '-'}
+                      <div className="flex flex-col gap-1.5">
+                        <span>{product.sku || '-'}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(product.id);
+                            alert("Product ID copied!");
+                          }}
+                          className="flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-800 w-fit transition-colors"
+                          title="Click to copy Product ID"
+                        >
+                          <span className="truncate max-w-[60px]">{product.id}</span>
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-gray-600 dark:text-slate-300">
                       <div className="flex flex-col text-xs">
@@ -780,8 +794,8 @@ export const ProductManagement: React.FC = () => {
                     key={p}
                     onClick={() => setCurrentPage(p)}
                     className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === p
-                        ? 'bg-indigo-600 text-white'
-                        : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
                       }`}
                   >
                     {p}
