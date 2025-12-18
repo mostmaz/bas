@@ -61,8 +61,8 @@ const mapProductFromDB = (p: any): Product => {
         salePrice: p.sale_price !== undefined ? p.sale_price : (p.salePrice !== undefined ? p.salePrice : undefined),
         sku: p.sku || undefined,
         isHidden: p.isHidden || false,
-        giftProductId: p.gift_product_id || undefined,
-        bonusMessage: p.bonus_message || undefined
+        giftProductId: p.gift_product_id || p.giftProductId || undefined,
+        bonusMessage: p.bonus_message || p.bonusMessage || undefined
     };
 };
 
