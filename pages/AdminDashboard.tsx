@@ -34,7 +34,12 @@ export const AdminDashboard: React.FC = () => {
         try {
           // Check specifically for 'images', 'colors', 'variants', 'sku' which are critical for the new features
           // Using a raw query attempt to catch column missing errors explicitly
-          const { error } = await supabase.from('products').select('images, colors, variants, sale_price, sku, gift_product_id, bonus_message').limit(1);
+          const { error: readError } = await supabase.from('products').select('images, colors, variants, sale_price, sku, gift_product_id, bonus_message').limit(1);
+
+          // Also check WRITE capability for new columns (to catch stale schema cache for updates)
+          const { error: writeError } = await supabase.from('products').update({ gift_product_id: 'test' }).eq('id', '00000000-0000-0000-0000-000000000000');
+
+          const error = readError || (writeError && (writeError.code === '42703' || writeError.code === 'PGRST204') ? writeError : null);
 
           if (error) {
             console.error("Schema check failed:", error);

@@ -167,8 +167,8 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 sale_price: product.salePrice,
                 sku: product.sku,
                 isHidden: product.isHidden,
-                gift_product_id: product.giftProductId,
-                bonus_message: product.bonusMessage
+                gift_product_id: product.giftProductId || null,
+                bonus_message: product.bonusMessage || null
             };
 
             const { error } = await supabase.from('products').insert([dbProduct]);
@@ -178,6 +178,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 // Check for schema mismatch errors
                 if (error.code === '42703' || error.code === 'PGRST204' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku') || lowerMsg.includes('ishidden')) {
                     console.warn("Schema mismatch detected during add: column missing. Retrying insert without advanced fields.");
+                    console.error("Schema Error Details:", error);
                     addToast("Warning: Database Schema Outdated. Added without complex data.", 'warning');
 
                     const { images, colors, variants, sale_price, sku, isHidden, gift_product_id, bonus_message, ...legacyProduct } = dbProduct;
@@ -223,8 +224,8 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 sale_price: product.salePrice,
                 sku: product.sku,
                 isHidden: product.isHidden,
-                gift_product_id: product.giftProductId,
-                bonus_message: product.bonusMessage
+                gift_product_id: product.giftProductId || null,
+                bonus_message: product.bonusMessage || null
             };
 
             const { error } = await supabase.from('products').update(dbProduct).eq('id', product.id);
@@ -233,6 +234,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 const lowerMsg = (error.message || '').toLowerCase();
                 if (error.code === '42703' || error.code === 'PGRST204' || lowerMsg.includes('images') || lowerMsg.includes('colors') || lowerMsg.includes('variants') || lowerMsg.includes('sale_price') || lowerMsg.includes('sku') || lowerMsg.includes('ishidden')) {
                     console.warn("Schema mismatch detected: column missing. Retrying update without advanced fields.");
+                    console.error("Schema Error Details:", error);
                     addToast("Warning: Database Schema Outdated. Updated without complex data.", 'warning');
 
                     const { images, colors, variants, sale_price, sku, isHidden, gift_product_id, bonus_message, ...legacyProduct } = dbProduct;
