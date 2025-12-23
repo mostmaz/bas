@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, Database, AlertTriangle, CheckSquare, Square, Eye, EyeOff, Smartphone, Copy } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, Database, AlertTriangle, CheckSquare, Square, Eye, EyeOff, Smartphone, Copy, Shuffle } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 import { Product } from '../../types';
@@ -522,9 +522,31 @@ export const ProductManagement: React.FC = () => {
     }
   };
 
+  const handleShuffle = async () => {
+    if (!window.confirm("This will randomize the order of products in 'Latest' and 'Popular' sections. Continue?")) return;
+    setIsSaving(true);
+    try {
+      const productsToShuffle = [...products].sort(() => Math.random() - 0.5).slice(0, 20);
+
+      await Promise.all(productsToShuffle.map(async (p) => {
+        const randomTime = new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)).toISOString();
+        const { error } = await supabase.from('products').update({ created_at: randomTime }).eq('id', p.id);
+        if (error) throw error;
+      }));
+
+      await refreshProducts();
+      alert("Products shuffled successfully!");
+    } catch (e) {
+      console.error("Shuffle error:", e);
+      alert("Failed to shuffle products.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const triggerFileUpload = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Reset to ensure change event fires even for same file
+      fileInputRef.current.value = '';
       fileInputRef.current.click();
     }
   };
@@ -602,10 +624,19 @@ export const ProductManagement: React.FC = () => {
           >
             {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />} Fix Images
           </Button>
+
+          <Button
+            variant="outline"
+            onClick={handleShuffle}
+            disabled={isSaving}
+            className="flex items-center gap-2 bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800"
+            title="Shuffle products in Latest/Popular"
+          >
+            <Shuffle className="h-4 w-4" /> Shuffle
+          </Button>
         </div>
       </div>
 
-      {/* Batch Actions Toolbar */}
       {selectedProducts.size > 0 && (
         <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg flex items-center justify-between animate-in slide-in-from-top-2">
           <div className="flex items-center gap-2 text-sm text-indigo-900 dark:text-indigo-200 font-medium">
@@ -752,69 +783,71 @@ export const ProductManagement: React.FC = () => {
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </tr >
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </tbody >
+          </table >
+        </div >
+      </div >
 
       {/* Pagination Controls */}
-      {filteredProducts.length > itemsPerPage && (
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-4 px-4 gap-4">
-          <div className="text-sm text-gray-500 dark:text-slate-400">
-            Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredProducts.length)}</span> of <span className="font-medium">{filteredProducts.length}</span> products
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="bg-white dark:bg-slate-800"
-            >
-              Previous
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let p = i + 1;
-                if (totalPages > 5) {
-                  if (currentPage <= 3) {
-                    p = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    p = totalPages - 4 + i;
-                  } else {
-                    p = currentPage - 2 + i;
-                  }
-                }
-
-                return (
-                  <button
-                    key={p}
-                    onClick={() => setCurrentPage(p)}
-                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === p
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
-                      }`}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
+      {
+        filteredProducts.length > itemsPerPage && (
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-4 px-4 gap-4">
+            <div className="text-sm text-gray-500 dark:text-slate-400">
+              Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredProducts.length)}</span> of <span className="font-medium">{filteredProducts.length}</span> products
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="bg-white dark:bg-slate-800"
-            >
-              Next
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="bg-white dark:bg-slate-800"
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let p = i + 1;
+                  if (totalPages > 5) {
+                    if (currentPage <= 3) {
+                      p = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      p = totalPages - 4 + i;
+                    } else {
+                      p = currentPage - 2 + i;
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === p
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="bg-white dark:bg-slate-800"
+              >
+                Next
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <ProductFormModal
         isOpen={isModalOpen}
@@ -824,34 +857,36 @@ export const ProductManagement: React.FC = () => {
       />
 
       {/* Confirmation Modal for Image Migration */}
-      {showMigrateConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center gap-4 mb-4 text-amber-600 dark:text-amber-500">
-              <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full">
-                <Database className="h-6 w-6" />
+      {
+        showMigrateConfirm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-slate-700">
+              <div className="flex items-center gap-4 mb-4 text-amber-600 dark:text-amber-500">
+                <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                  <Database className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Fix Product Images?</h3>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Fix Product Images?</h3>
-            </div>
 
-            <p className="text-gray-600 dark:text-slate-300 mb-6 leading-relaxed">
-              This will scan all products for "Base64" images (which slow down the app) and upload them to the server.
-              <br /><br />
-              <strong>This process may take a few minutes.</strong> Please do not close the tab.
-            </p>
+              <p className="text-gray-600 dark:text-slate-300 mb-6 leading-relaxed">
+                This will scan all products for "Base64" images (which slow down the app) and upload them to the server.
+                <br /><br />
+                <strong>This process may take a few minutes.</strong> Please do not close the tab.
+              </p>
 
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowMigrateConfirm(false)}>
-                Cancel
-              </Button>
-              <Button onClick={executeMigration} disabled={isSaving}>
-                {isSaving ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
-                {isSaving ? 'Fixing...' : 'Yes, Fix Images'}
-              </Button>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setShowMigrateConfirm(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={executeMigration} disabled={isSaving}>
+                  {isSaving ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {isSaving ? 'Fixing...' : 'Yes, Fix Images'}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };

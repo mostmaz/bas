@@ -19,7 +19,8 @@ export const SlideFormModal: React.FC<SlideFormModalProps> = ({ isOpen, onClose,
     description: '',
     color: 'from-violet-600 to-fuchsia-600',
     image: '',
-    imagePosition: 'center'
+    imagePosition: 'center',
+    link: ''
   };
   const [newSlide, setNewSlide] = useState(defaultState);
   const [uploading, setUploading] = useState(false);
@@ -134,8 +135,8 @@ export const SlideFormModal: React.FC<SlideFormModalProps> = ({ isOpen, onClose,
                           type="button"
                           onClick={() => setNewSlide({ ...newSlide, imagePosition: pos.id })}
                           className={`p-1.5 rounded-md transition-all ${(newSlide.imagePosition || 'center') === pos.id
-                              ? 'bg-indigo-600 text-white shadow-sm'
-                              : 'text-gray-500 hover:bg-white dark:hover:bg-slate-700'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-500 hover:bg-white dark:hover:bg-slate-700'
                             }`}
                           title={pos.id}
                         >
@@ -160,6 +161,10 @@ export const SlideFormModal: React.FC<SlideFormModalProps> = ({ isOpen, onClose,
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Description (Optional)</label>
             <textarea rows={2} className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md px-3 py-2 dark:text-white outline-none" value={newSlide.description} onChange={e => setNewSlide({ ...newSlide, description: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Link URL (Optional)</label>
+            <input type="text" placeholder="e.g. /products/123 or https://google.com" className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md px-3 py-2 dark:text-white outline-none" value={newSlide.link || ''} onChange={e => setNewSlide({ ...newSlide, link: e.target.value })} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Gradient Color (Optional)</label>

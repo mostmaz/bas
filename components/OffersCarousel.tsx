@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 
 import { optimizeImage } from '../utils/imageUtils';
@@ -25,22 +26,40 @@ export const OffersCarousel: React.FC = () => {
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden shadow-xl h-[150px] md:h-[190px] group border border-gray-100 dark:border-white/5 transition-all">
-      {carouselSlides.map((offer, idx) => (
-        <div
-          key={offer.id}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-        >
-          <div className="w-full h-full relative overflow-hidden">
-            <img
-              src={optimizeImage(offer.image, 800)}
-              alt={offer.title || "Slide"}
-              loading={idx === 0 ? "eager" : "lazy"}
-              className="w-full h-full object-cover"
-              style={{ objectPosition: offer.imagePosition || 'center' }}
-            />
+      {carouselSlides.map((offer, idx) => {
+        const Content = (
+          <img
+            src={optimizeImage(offer.image, 800)}
+            alt={offer.title || "Slide"}
+            loading={idx === 0 ? "eager" : "lazy"}
+            className="w-full h-full object-cover"
+            style={{ objectPosition: offer.imagePosition || 'center' }}
+          />
+        );
+
+        return (
+          <div
+            key={offer.id}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+          >
+            {offer.link ? (
+              offer.link.startsWith('http') ? (
+                <a href={offer.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full relative overflow-hidden">
+                  {Content}
+                </a>
+              ) : (
+                <Link to={offer.link} className="block w-full h-full relative overflow-hidden">
+                  {Content}
+                </Link>
+              )
+            ) : (
+              <div className="w-full h-full relative overflow-hidden">
+                {Content}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Controls */}
       <button
