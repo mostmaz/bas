@@ -14,6 +14,7 @@ export const FilteredProductsPage: React.FC = () => {
     const queryParams = new URLSearchParams(location.search);
     const brandFilter = queryParams.get('brand');
     const deviceFilter = queryParams.get('device');
+    const idsFilter = queryParams.get('ids');
 
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [selectedDevice, setSelectedDevice] = useState(deviceFilter || '');
@@ -76,7 +77,15 @@ export const FilteredProductsPage: React.FC = () => {
 
     const filteredProducts = useMemo(() => {
         if (!products) return [];
-        return products.filter(product => {
+
+        // If IDs filter is present, strictly filter by these IDs first
+        let candidateProducts = products;
+        if (idsFilter) {
+            const allowedIds = new Set(idsFilter.split(','));
+            candidateProducts = products.filter(p => allowedIds.has(p.id));
+        }
+
+        return candidateProducts.filter(product => {
             // Device Filter
             const matchesDevice = !selectedDevice || (product.device && product.device.toLowerCase() === selectedDevice.toLowerCase());
 
@@ -125,14 +134,18 @@ export const FilteredProductsPage: React.FC = () => {
                 );
             })());
 
-            // Hidden Filter
+            // Hidden Filter - Show hidden if specifically requested via IDs, otherwise hide
+            // If idsFilter is present, we assume the user wants to see them even if hidden (e.g. sharing a draft collection)
+            // OR we can stick to strict visibility. Let's stick to strict visibility unless it's a specific "preview" mode.
+            // Actually, for "Selected Products" it might be useful to share hidden ones? 
+            // Let's keep isHidden logic as is for now: hidden products are hidden.
             const isVisible = !product.isHidden;
 
             return matchesDevice && matchesPrice && matchesBrand && matchesColor && isVisible;
         });
-    }, [products, selectedDevice, filters]);
+    }, [products, selectedDevice, filters, idsFilter]);
 
-    const title = brandFilter ? `${brandFilter} Products` : selectedDevice ? `${selectedDevice} Products` : 'Products';
+    const title = idsFilter ? 'Selected Products' : brandFilter ? `${brandFilter} Products` : selectedDevice ? `${selectedDevice} Products` : 'Products';
 
     return (
         <div className="min-h-screen pt-4 pb-24 px-4 bg-white dark:bg-slate-950 transition-colors">

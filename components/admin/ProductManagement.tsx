@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, Database, AlertTriangle, CheckSquare, Square, Eye, EyeOff, Smartphone, Copy, Shuffle } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, Database, AlertTriangle, CheckSquare, Square, Eye, EyeOff, Smartphone, Copy, Shuffle, Link as LinkIcon } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 import { Product } from '../../types';
@@ -674,6 +674,19 @@ export const ProductManagement: React.FC = () => {
               onClick={handleBatchDelete}
             >
               <Trash2 className="h-4 w-4 mr-2" /> Delete
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                const ids = Array.from(selectedProducts).join(',');
+                const url = `${window.location.origin}/#/filtered-products?ids=${ids}`;
+                navigator.clipboard.writeText(url);
+                alert(`Page URL copied to clipboard!\n\n${url}`);
+              }}
+              className="bg-white dark:bg-slate-800"
+            >
+              <LinkIcon className="h-4 w-4 mr-2" /> Generate Page
             </Button>
           </div>
         </div>
