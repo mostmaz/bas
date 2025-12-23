@@ -34,7 +34,8 @@ export const AdminDashboard: React.FC = () => {
         try {
           // Check specifically for 'images', 'colors', 'variants', 'sku' which are critical for the new features
           // Using a raw query attempt to catch column missing errors explicitly
-          const { error: readError } = await supabase.from('products').select('images, colors, variants, sale_price, sku, gift_product_id, bonus_message').limit(1);
+          // Note: ishidden must be lowercase to match Postgres column if created without quotes
+          const { error: readError } = await supabase.from('products').select('images, colors, variants, sale_price, sku, ishidden, gift_product_id, bonus_message').limit(1);
 
           // Also check WRITE capability for new columns (to catch stale schema cache for updates)
           const { error: writeError } = await supabase.from('products').update({ gift_product_id: 'test' }).eq('id', '00000000-0000-0000-0000-000000000000');
@@ -63,7 +64,7 @@ export const AdminDashboard: React.FC = () => {
               else if (lowerMsg.includes('sale_price')) missingItem = "'sale_price'";
               else if (lowerMsg.includes('sku')) missingItem = "'sku'";
 
-              else if (lowerMsg.includes('ishidden')) missingItem = "'isHidden'";
+              else if (lowerMsg.includes('ishidden')) missingItem = "'ishidden'";
               else if (lowerMsg.includes('gift_product_id')) missingItem = "'gift_product_id'";
               else if (lowerMsg.includes('bonus_message')) missingItem = "'bonus_message'";
 

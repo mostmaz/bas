@@ -109,7 +109,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="flex flex-1 flex-col p-3 sm:p-5">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
             <div className="w-full">
-              <p className="text-[10px] sm:text-xs font-medium text-purple-600 dark:text-purple-400 mb-0.5 sm:mb-1 line-clamp-1">{product.device}</p>
+              <p className="text-xs sm:text-sm font-bold text-purple-600 dark:text-purple-400 mb-0.5 sm:mb-1 line-clamp-1">{product.device}</p>
               <div onClick={handleNavigate} className="cursor-pointer">
                 <h3 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors line-clamp-1 leading-tight">
                   {product.name}
