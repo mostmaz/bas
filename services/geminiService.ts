@@ -1,8 +1,20 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Product } from "../types";
 
-// ✅ Vite-safe API key access (configured in vite.config.ts)
-const genAI = new GoogleGenerativeAI(process.env.API_KEY as string);
+// Lazy initialization to prevent app crash if API_KEY is missing
+let genAI: GoogleGenerativeAI | null = null;
+
+const getGenAI = () => {
+  if (!genAI) {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      console.warn("Gemini API Key is missing. AI features will be disabled.");
+      return null;
+    }
+    genAI = new GoogleGenerativeAI(apiKey);
+  }
+  return genAI;
+};
 
 /**
  * Chat with the Shop Assistant.
@@ -64,7 +76,10 @@ Checkout Process:
 ALWAYS include a direct link for products: [Product Name](/product/ID)
 `;
 
-    const model = genAI.getGenerativeModel({
+    const genAIInstance = getGenAI();
+    if (!genAIInstance) return "AI Assistant is currently unavailable (Missing API Key).";
+
+    const model = genAIInstance.getGenerativeModel({
       model: "gemini-2.0-flash",
       systemInstruction,
     });
@@ -85,7 +100,10 @@ export const generateProductDescription = async (
   imageBase64?: string
 ): Promise<string> => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const genAIInstance = getGenAI();
+    if (!genAIInstance) return "AI unavailable.";
+
+    const model = genAIInstance.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     let prompt = `Write a creative, premium, and sales-oriented product description in Arabic (max 50 words) for a phone case named "${productName}". Focus on protection, style, and quality.`;
 
@@ -148,7 +166,10 @@ export const generateBrandLogo = async (brandName: string): Promise<string> => {
     Use a modern color palette.
     Return ONLY the raw <svg>...</svg> code. Do not include markdown code blocks or any other text.`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const genAIInstance = getGenAI();
+    if (!genAIInstance) return "AI unavailable.";
+
+    const model = genAIInstance.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
