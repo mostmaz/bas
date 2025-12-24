@@ -7,6 +7,7 @@ import { DeviceManagement } from '../components/admin/DeviceManagement';
 import { CarouselManagement } from '../components/admin/CarouselManagement';
 import { OrderManagement } from '../components/admin/OrderManagement';
 import { DiscountManagement } from '../components/admin/DiscountManagement';
+import { CollectionManagement } from '../components/admin/CollectionManagement';
 import { useShop } from '../context/ShopContext';
 import { AlertTriangle, Database, Copy, Check, X, Lock, KeyRound, LogIn } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -25,7 +26,7 @@ export const AdminDashboard: React.FC = () => {
   const [pin, setPin] = useState('');
   const [schemaError, setSchemaError] = useState<string | null>(null);
   const [showSql, setShowSql] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections'>('overview');
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -309,6 +310,23 @@ create policy "Public Upload" on storage.objects for insert with check ( bucket_
 create policy "Public Delete" on storage.objects for delete using ( bucket_id = 'product-images' );
 
 -- 8. Reload Schema Cache (Fix PGRST204)
+-- 11. Create Collections table
+create table if not exists collections (
+  id text primary key default gen_random_uuid()::text,
+  title text,
+  product_ids text[],
+  slug text unique,
+  created_at timestamptz default now()
+);
+
+-- 12. Collections RLS
+alter table collections enable row level security;
+drop policy if exists "Public access collections" on collections;
+create policy "Public access collections" on collections for all using (true);
+drop policy if exists "Anon modification collections" on collections;
+create policy "Anon modification collections" on collections for all using (true);
+
+-- 8. Reload Schema Cache (Fix PGRST204)
 NOTIFY pgrst, 'reload config';
 `;
 
@@ -441,7 +459,7 @@ NOTIFY pgrst, 'reload config';
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap gap-2 bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm mb-8 w-fit border border-gray-200 dark:border-slate-700">
-          {(['overview', 'inventory', 'brands', 'devices', 'carousel', 'orders', 'discounts'] as const).map((tab) => (
+          {(['overview', 'inventory', 'brands', 'devices', 'carousel', 'orders', 'discounts', 'collections'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -463,6 +481,7 @@ NOTIFY pgrst, 'reload config';
         {activeTab === 'carousel' && <CarouselManagement />}
         {activeTab === 'orders' && <OrderManagement />}
         {activeTab === 'discounts' && <DiscountManagement />}
+        {activeTab === 'collections' && <CollectionManagement />}
       </div>
     </div>
   );
