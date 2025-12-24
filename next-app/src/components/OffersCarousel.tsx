@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useShop } from '@/context/ShopContext';
@@ -32,17 +33,31 @@ export const OffersCarousel: React.FC = () => {
                     key={offer.id}
                     className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                 >
-                    <div className="w-full h-full relative overflow-hidden">
-                        <Image
-                            src={offer.image}
-                            alt={offer.title || "Slide"}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 1200px"
-                            priority={idx === 0}
-                            className="object-cover"
-                            style={{ objectPosition: offer.imagePosition || 'center' }}
-                        />
-                    </div>
+                    {offer.link ? (
+                        <Link href={offer.link} className="w-full h-full block relative overflow-hidden">
+                            <Image
+                                src={offer.image}
+                                alt={offer.title || "Slide"}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 1200px"
+                                priority={idx === 0}
+                                className="object-cover"
+                                style={{ objectPosition: offer.imagePosition || 'center' }}
+                            />
+                        </Link>
+                    ) : (
+                        <div className="w-full h-full relative overflow-hidden">
+                            <Image
+                                src={offer.image}
+                                alt={offer.title || "Slide"}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 1200px"
+                                priority={idx === 0}
+                                className="object-cover"
+                                style={{ objectPosition: offer.imagePosition || 'center' }}
+                            />
+                        </div>
+                    )}
                 </div>
             ))}
 

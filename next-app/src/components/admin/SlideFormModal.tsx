@@ -17,7 +17,8 @@ export const SlideFormModal: React.FC<SlideFormModalProps> = ({ isOpen, onClose,
         subtitle: '',
         description: '',
         color: 'from-violet-600 to-fuchsia-600',
-        image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80'
+        image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
+        link: ''
     };
     const [newSlide, setNewSlide] = useState(defaultState);
 
@@ -54,6 +55,10 @@ export const SlideFormModal: React.FC<SlideFormModalProps> = ({ isOpen, onClose,
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Image URL</label>
                         <input required type="text" className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md px-3 py-2 dark:text-white outline-none" value={newSlide.image} onChange={e => setNewSlide({ ...newSlide, image: e.target.value })} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Link (Optional)</label>
+                        <input type="text" className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md px-3 py-2 dark:text-white outline-none" placeholder="/shop or /product/123" value={newSlide.link} onChange={e => setNewSlide({ ...newSlide, link: e.target.value })} />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Gradient Color</label>

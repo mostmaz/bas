@@ -45,6 +45,9 @@ export const CarouselManagement: React.FC = () => {
                                     <span className="text-xs font-bold tracking-wider text-indigo-600 dark:text-indigo-400 uppercase mb-1 block">{slide.subtitle}</span>
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{slide.title}</h3>
                                     <p className="text-gray-600 dark:text-slate-400 text-sm">{slide.description}</p>
+                                    {slide.link && (
+                                        <p className="text-indigo-600 dark:text-indigo-400 text-xs mt-2 font-medium">Link: {slide.link}</p>
+                                    )}
                                 </div>
                                 <button
                                     onClick={() => deleteSlide(slide.id)}

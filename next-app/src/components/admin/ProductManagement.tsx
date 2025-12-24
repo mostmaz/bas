@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, CheckSquare, Link as LinkIcon, Square } from 'lucide-react';
 import Image from 'next/image';
 import { useShop } from '@/context/ShopContext';
 import { Button } from '@/components/Button';
@@ -47,6 +47,9 @@ export const ProductManagement: React.FC = () => {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isBatchEditing, setIsBatchEditing] = useState(false);
+    const [batchEdits, setBatchEdits] = useState<{ [id: string]: { name: string; price: number } }>({});
+    const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
     // Filter State
     const [selectedDevice, setSelectedDevice] = useState<string>('All');
@@ -411,6 +414,75 @@ export const ProductManagement: React.FC = () => {
         }
     };
 
+    const handleSelectAll = () => {
+        if (selectedProducts.size === filteredProducts.length) {
+            setSelectedProducts(new Set());
+        } else {
+            setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
+        }
+    };
+
+    const handleSelectProduct = (id: string) => {
+        const newSelected = new Set(selectedProducts);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedProducts(newSelected);
+    };
+
+    const handleBatchEditStart = () => {
+        const initialEdits: { [id: string]: { name: string; price: number } } = {};
+        filteredProducts.forEach(p => {
+            if (selectedProducts.has(p.id)) {
+                initialEdits[p.id] = { name: p.name, price: p.price };
+            }
+        });
+        setBatchEdits(initialEdits);
+        setIsBatchEditing(true);
+    };
+
+    const handleBatchEditSave = async () => {
+        if (!window.confirm(`Save changes for ${Object.keys(batchEdits).length} products?`)) return;
+
+        setIsSaving(true);
+        try {
+            const updates = Object.entries(batchEdits).map(async ([id, changes]) => {
+                const product = products.find(p => p.id === id);
+                if (!product) return;
+
+                await updateProduct({
+                    ...product,
+                    name: changes.name,
+                    price: changes.price
+                });
+            });
+
+            await Promise.all(updates);
+            await refreshProducts();
+            setIsBatchEditing(false);
+            setBatchEdits({});
+            setSelectedProducts(new Set());
+            alert("Batch updates saved successfully!");
+        } catch (error) {
+            console.error("Batch update failed:", error);
+            alert("Some updates failed. Check console.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleBatchInputChange = (id: string, field: 'name' | 'price', value: string | number) => {
+        setBatchEdits(prev => ({
+            ...prev,
+            [id]: {
+                ...prev[id],
+                [field]: value
+            }
+        }));
+    };
+
     return (
         <div className="animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -485,13 +557,80 @@ export const ProductManagement: React.FC = () => {
                         <Plus className="h-4 w-4" /> Add Product
                     </Button>
                 </div>
-            </div>
+            </div >
 
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+            {
+                selectedProducts.size > 0 && (
+                    <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg flex items-center justify-between animate-in slide-in-from-top-2">
+                        <div className="flex items-center gap-2 text-sm text-indigo-900 dark:text-indigo-200 font-medium">
+                            <CheckSquare className="h-4 w-4" />
+                            {selectedProducts.size} Selected
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {!isBatchEditing ? (
+                                <>
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={handleBatchEditStart}
+                                        className="bg-white dark:bg-slate-800 text-indigo-600 border border-indigo-200 hover:bg-indigo-50"
+                                    >
+                                        <Pencil className="h-4 w-4 mr-2" /> Batch Edit
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={() => {
+                                            const ids = Array.from(selectedProducts).join(',');
+                                            const url = `${window.location.origin}/filtered-products?ids=${ids}`;
+                                            navigator.clipboard.writeText(url);
+                                            alert(`Page URL copied to clipboard!\n\n${url}`);
+                                        }}
+                                        className="bg-white dark:bg-slate-800"
+                                    >
+                                        <LinkIcon className="h-4 w-4 mr-2" /> Generate Page
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setIsBatchEditing(false)}
+                                        className="bg-white dark:bg-slate-800"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={handleBatchEditSave}
+                                        disabled={isSaving}
+                                        className="bg-indigo-600 text-white hover:bg-indigo-700"
+                                    >
+                                        {isSaving ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <CheckSquare className="h-4 w-4 mr-2" />}
+                                        Save Changes
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )
+            }
+
+            < div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden" >
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-slate-400 font-medium border-b border-gray-200 dark:border-slate-700">
                             <tr>
+                                <th className="px-6 py-3 w-10">
+                                    <button onClick={handleSelectAll} className="text-gray-400 hover:text-indigo-600">
+                                        {selectedProducts.size > 0 && selectedProducts.size === filteredProducts.length ? (
+                                            <CheckSquare className="h-5 w-5 text-indigo-600" />
+                                        ) : (
+                                            <Square className="h-5 w-5" />
+                                        )}
+                                    </button>
+                                </th>
                                 <th className="px-6 py-3">Product</th>
                                 <th className="px-6 py-3">SKU</th>
                                 <th className="px-6 py-3">Specs</th>
@@ -503,15 +642,24 @@ export const ProductManagement: React.FC = () => {
                         <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                             {filteredProducts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400 italic">
+                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400 italic">
                                         No products found for the selected device.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredProducts.map((product) => (
-                                    <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                                    <tr key={product.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${selectedProducts.has(product.id) ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}>
+                                        <td className="px-6 py-4">
+                                            <button onClick={() => handleSelectProduct(product.id)} className="text-gray-400 hover:text-indigo-600">
+                                                {selectedProducts.has(product.id) ? (
+                                                    <CheckSquare className="h-5 w-5 text-indigo-600" />
+                                                ) : (
+                                                    <Square className="h-5 w-5" />
+                                                )}
+                                            </button>
+                                        </td>
                                         <td className="px-6 py-4 flex items-center gap-3">
-                                            <div className="relative h-10 w-10 rounded-md overflow-hidden border border-gray-200 dark:border-slate-600">
+                                            <div className="relative h-10 w-10 rounded-md overflow-hidden border border-gray-200 dark:border-slate-600 shrink-0">
                                                 <Image
                                                     src={product.image || '/placeholder.png'}
                                                     alt=""
@@ -520,9 +668,20 @@ export const ProductManagement: React.FC = () => {
                                                     className="object-cover"
                                                 />
                                             </div>
-                                            <div>
-                                                <span className="font-medium text-gray-900 dark:text-white block">{product.name}</span>
-                                                <span className="text-gray-500 dark:text-slate-400 text-xs">{product.category}</span>
+                                            <div className="flex-1">
+                                                {isBatchEditing && batchEdits[product.id] ? (
+                                                    <input
+                                                        type="text"
+                                                        value={batchEdits[product.id].name}
+                                                        onChange={(e) => handleBatchInputChange(product.id, 'name', e.target.value)}
+                                                        className="w-full border border-indigo-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    />
+                                                ) : (
+                                                    <>
+                                                        <span className="font-medium text-gray-900 dark:text-white block">{product.name}</span>
+                                                        <span className="text-gray-500 dark:text-slate-400 text-xs">{product.category}</span>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-slate-400">
@@ -534,7 +693,18 @@ export const ProductManagement: React.FC = () => {
                                                 <span className="text-gray-500 dark:text-slate-500">{product.brand}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-900 dark:text-white font-medium">IQD {product.price.toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-gray-900 dark:text-white font-medium">
+                                            {isBatchEditing && batchEdits[product.id] ? (
+                                                <input
+                                                    type="number"
+                                                    value={batchEdits[product.id].price}
+                                                    onChange={(e) => handleBatchInputChange(product.id, 'price', Number(e.target.value))}
+                                                    className="w-24 border border-indigo-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                />
+                                            ) : (
+                                                `IQD ${product.price.toLocaleString()}`
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.stock > 10 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                                 }`}>
@@ -565,7 +735,7 @@ export const ProductManagement: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </div >
 
             <ProductFormModal
                 isOpen={isModalOpen}
@@ -573,6 +743,6 @@ export const ProductManagement: React.FC = () => {
                 initialData={editingProduct}
                 onSave={handleSaveProduct}
             />
-        </div>
+        </div >
     );
 };

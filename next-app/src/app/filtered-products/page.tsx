@@ -15,6 +15,7 @@ function FilteredProductsContent() {
 
     const brandFilter = searchParams.get('brand');
     const deviceFilter = searchParams.get('device');
+    const idsFilter = searchParams.get('ids');
 
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [selectedDevice, setSelectedDevice] = useState(deviceFilter || '');
@@ -116,7 +117,15 @@ function FilteredProductsContent() {
 
     const filteredProducts = useMemo(() => {
         if (!processedProducts) return [];
-        return processedProducts.filter(product => {
+
+        // If IDs filter is present, strictly filter by these IDs first
+        let candidateProducts = processedProducts;
+        if (idsFilter) {
+            const allowedIds = new Set(idsFilter.split(','));
+            candidateProducts = processedProducts.filter(p => allowedIds.has(p.id));
+        }
+
+        return candidateProducts.filter(product => {
             // Device Filter
             const matchesDevice = !selectedDevice || (product.device && product.device.toLowerCase() === selectedDevice.toLowerCase());
 
@@ -132,9 +141,9 @@ function FilteredProductsContent() {
 
             return matchesDevice && matchesPrice && matchesBrand && matchesColor;
         });
-    }, [processedProducts, selectedDevice, filters]);
+    }, [processedProducts, selectedDevice, filters, idsFilter]);
 
-    const title = brandFilter ? `${brandFilter} Products` : selectedDevice ? `${selectedDevice} Products` : 'Products';
+    const title = idsFilter ? 'Selected Products' : brandFilter ? `${brandFilter} Products` : selectedDevice ? `${selectedDevice} Products` : 'Products';
 
     return (
         <div className="min-h-screen pt-4 pb-24 px-4 bg-white dark:bg-slate-950 transition-colors">
