@@ -23,6 +23,7 @@ interface ShopContextType {
   carouselSlides: CarouselSlide[];
   orders: Order[];
   refreshOrders: () => Promise<void>;
+  searchOrdersByPhone: (phone: string) => Promise<Order[]>;
   discounts: DiscountCode[];
 
   // Settings
@@ -49,6 +50,7 @@ interface ShopContextType {
   // Actions
   refreshBrands: () => Promise<void>;
   refreshProducts: (silent?: boolean) => Promise<void>;
+  fetchProductDetails: (id: string) => Promise<void>;
   refreshDevices: () => Promise<void>;
   addProduct: (product: Omit<Product, 'id' | 'rating'> & { id?: string, rating?: number }) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
@@ -143,9 +145,9 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides } = useSlideLogic(isSupabaseConfigured, addToast);
 
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
-  const { products, setProducts, refreshProducts, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
+  const { products, setProducts, refreshProducts, fetchProductDetails, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
   const { cart, isCartOpen, appliedDiscount, addToCart, removeFromCart, updateCartQuantity, clearCart, toggleCart, applyDiscount, removeDiscount, totalAmount, discountAmount, finalTotal } = useCartLogic(addToast, products);
-  const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
+  const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
 
   // Calculate Effective Shipping Fee
   const shippingFee = totalAmount >= freeShippingThreshold ? 0 : baseShippingFee;
@@ -159,7 +161,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     refreshBrands();
     refreshDiscounts();
     refreshDevices();
-    refreshOrders();
+    // refreshOrders(); // Deferred to Admin Dashboard or on-demand
     refreshSlides();
 
     // Fetch Settings
@@ -290,11 +292,11 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       shippingFee, baseShippingFee, freeShippingThreshold, updateShippingFee, updateFreeShippingThreshold, storeLogo, updateStoreLogo,
       isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading,
       refreshBrands, refreshProducts, refreshDevices,
-      addProduct, updateProduct, deleteProduct,
+      addProduct, updateProduct, deleteProduct, fetchProductDetails,
       addBrand, updateBrand, deleteBrand,
       addDevice, deleteDevice,
       addSlide, updateSlide, deleteSlide, refreshSlides,
-      placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus,
+      placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone,
       addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
       appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
       isDemoActive, toggleDemoData,

@@ -12,7 +12,8 @@ import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 
 // Lazy Load Pages
 const Home = React.lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
-const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+// const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+import { AdminDashboard } from './pages/AdminDashboard';
 const ProductDetails = React.lazy(() => import('./pages/ProductDetails').then(module => ({ default: module.ProductDetails })));
 const Checkout = React.lazy(() => import('./pages/Checkout').then(module => ({ default: module.Checkout })));
 const OrderSuccess = React.lazy(() => import('./pages/OrderSuccess').then(module => ({ default: module.OrderSuccess })));

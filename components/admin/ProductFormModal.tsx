@@ -34,7 +34,7 @@ const COLOR_OPTIONS = [
 ];
 
 export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, initialData, onSave }) => {
-    const { brands, devices } = useShop();
+    const { brands, devices, products, fetchProductDetails } = useShop();
     const { addToast } = useToast();
     const [isGenerating, setIsGenerating] = useState(false);
     const [isProcessingImage, setIsProcessingImage] = useState(false);
@@ -63,28 +63,37 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
 
     const [formData, setFormData] = useState(defaultState);
 
+    // Find the live product data from context to ensure we have the latest (including description)
+    const liveProduct = initialData ? products.find(p => p.id === initialData.id) : null;
+    const productToUse = liveProduct || initialData;
+
     useEffect(() => {
-        if (initialData) {
+        if (productToUse) {
+            // Fetch full details if description is missing (optimization)
+            if (!productToUse.description && productToUse.id) {
+                fetchProductDetails(productToUse.id);
+            }
+
             setFormData({
-                name: initialData.name,
-                sku: initialData.sku || '',
-                price: initialData.price.toString(),
-                salePrice: initialData.salePrice ? initialData.salePrice.toString() : '',
-                category: initialData.category || 'Mobile Case',
-                device: initialData.device,
-                brand: initialData.brand,
-                description: initialData.description,
-                images: initialData.images && initialData.images.length > 0 ? initialData.images : [initialData.image],
-                stock: initialData.stock.toString(),
-                colors: initialData.colors || [],
-                variants: initialData.variants || []
+                name: productToUse.name,
+                sku: productToUse.sku || '',
+                price: productToUse.price.toString(),
+                salePrice: productToUse.salePrice ? productToUse.salePrice.toString() : '',
+                category: productToUse.category || 'Mobile Case',
+                device: productToUse.device,
+                brand: productToUse.brand,
+                description: productToUse.description || '',
+                images: productToUse.images && productToUse.images.length > 0 ? productToUse.images : [productToUse.image],
+                stock: productToUse.stock.toString(),
+                colors: productToUse.colors || [],
+                variants: productToUse.variants || []
             });
-            setIsSaleEnabled(!!initialData.salePrice);
+            setIsSaleEnabled(!!productToUse.salePrice);
         } else {
             setFormData({ ...defaultState, brand: brands[0]?.name || 'CaseCraft' });
             setIsSaleEnabled(false);
         }
-    }, [initialData, isOpen, brands]);
+    }, [productToUse, isOpen, brands, fetchProductDetails]);
 
     // Recalculate total stock when variants change
     useEffect(() => {
@@ -230,7 +239,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
 
         // Auto-generate search tags if missing
         // Removed tag generation as it's not supported in Vite yet
-        let finalTags = formData.tags;
+        // let finalTags = formData.tags;
 
         // Fallback if no images
         const finalImages = formData.images.length > 0

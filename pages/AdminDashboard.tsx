@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardOverview } from '../components/admin/DashboardOverview';
 import { ProductManagement } from '../components/admin/ProductManagement';
@@ -17,7 +16,7 @@ import { supabase } from '../services/supabase';
 import { Order } from '../types';
 
 export const AdminDashboard: React.FC = () => {
-  const { supaConnectionError, isOnline } = useShop();
+  const { supaConnectionError, isOnline, refreshOrders } = useShop();
   const { addToast } = useToast();
   const location = useLocation();
 
@@ -26,7 +25,7 @@ export const AdminDashboard: React.FC = () => {
   const [pin, setPin] = useState('');
   const [schemaError, setSchemaError] = useState<string | null>(null);
   const [showSql, setShowSql] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'low-stock' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections'>('overview');
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -86,6 +85,13 @@ export const AdminDashboard: React.FC = () => {
     };
     checkHealth();
   }, [isAuthenticated, isOnline, supaConnectionError, addToast]);
+
+  // Fetch orders on login
+  useEffect(() => {
+    if (isAuthenticated && isOnline) {
+      refreshOrders();
+    }
+  }, [isAuthenticated, isOnline, refreshOrders]);
 
   // Order Notification System
   useEffect(() => {
@@ -459,7 +465,7 @@ NOTIFY pgrst, 'reload config';
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap gap-2 bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm mb-8 w-fit border border-gray-200 dark:border-slate-700">
-          {(['overview', 'inventory', 'brands', 'devices', 'carousel', 'orders', 'discounts', 'collections'] as const).map((tab) => (
+          {(['overview', 'inventory', 'low-stock', 'brands', 'devices', 'carousel', 'orders', 'discounts', 'collections'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -468,7 +474,7 @@ NOTIFY pgrst, 'reload config';
                 : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
                 }`}
             >
-              {tab}
+              {tab === 'low-stock' ? 'Low Stock' : tab}
             </button>
           ))}
         </div>
@@ -476,6 +482,7 @@ NOTIFY pgrst, 'reload config';
         {/* Tab Content */}
         {activeTab === 'overview' && <DashboardOverview />}
         {activeTab === 'inventory' && <ProductManagement />}
+        {activeTab === 'low-stock' && <ProductManagement filter="low-stock" />}
         {activeTab === 'brands' && <BrandManagement />}
         {activeTab === 'devices' && <DeviceManagement />}
         {activeTab === 'carousel' && <CarouselManagement />}

@@ -344,5 +344,26 @@ export const useOrderLogic = (
         }
     };
 
-    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus };
+    const searchOrdersByPhone = async (phone: string): Promise<Order[]> => {
+        if (!isSupabaseConfigured) return [];
+
+        // Sanitize phone for search
+        const cleanPhone = phone.replace(/\D/g, '');
+        if (!cleanPhone) return [];
+
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .ilike('phone', `%${cleanPhone}%`)
+            .order('date', { ascending: false });
+
+        if (error) {
+            console.error('Error searching orders:', error);
+            return [];
+        }
+
+        return data ? data.map(mapOrderFromDB) : [];
+    };
+
+    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone };
 };

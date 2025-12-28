@@ -41,7 +41,7 @@ const uploadImageFromUrl = async (url: string): Promise<string> => {
   }
 };
 
-export const ProductManagement: React.FC = () => {
+export const ProductManagement: React.FC<{ filter?: 'low-stock' }> = ({ filter }) => {
   const { products, deleteProduct, addProduct, updateProduct, refreshProducts } = useShop();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -70,8 +70,28 @@ export const ProductManagement: React.FC = () => {
 
   // Filter Logic
   const filteredProducts = useMemo(() => {
-    return products.filter(p => selectedDevice === 'All' || p.device === selectedDevice);
-  }, [products, selectedDevice]);
+    let result = products;
+
+    // 1. Filter by Device
+    if (selectedDevice !== 'All') {
+      result = result.filter(p => p.device === selectedDevice);
+    }
+
+    // 2. Filter by "Low Stock" mode
+    if (filter === 'low-stock') {
+      result = result.filter(p => p.stock <= 10);
+    }
+
+    // 3. Hide "Collection" items unless we are in a specific collection view (not handled here yet, but standard products tab shouldn't show them)
+    // Assuming 'Collection' category is used for collections.
+    // If filter is NOT low-stock (i.e. standard inventory), hide collections.
+    // If filter IS low-stock, we might still want to hide them or show them if they track stock?
+    // For now, let's hide Collections from the main list to avoid clutter.
+    // Use a more robust check if possible, but category is good.
+    result = result.filter(p => p.category !== 'Collection');
+
+    return result;
+  }, [products, selectedDevice, filter]);
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);

@@ -10,7 +10,7 @@ import { optimizeImage } from '../utils/imageUtils';
 
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { products, addToCart, t, wishlist, toggleWishlist } = useShop();
+  const { products, addToCart, t, wishlist, toggleWishlist, fetchProductDetails } = useShop();
   const navigate = useNavigate();
 
   const product = products.find(p => p.id === id);
@@ -19,6 +19,11 @@ export const ProductDetails: React.FC = () => {
 
   useEffect(() => {
     if (product) {
+      // Fetch full details if description is missing (optimization)
+      if (!product.description && id) {
+        fetchProductDetails(id);
+      }
+
       setActiveImage(product.image);
       // Pre-select first variant if available and in stock
       if (product.variants && product.variants.length > 0) {
@@ -29,7 +34,7 @@ export const ProductDetails: React.FC = () => {
         }
       }
     }
-  }, [product]);
+  }, [product, id, fetchProductDetails]);
 
   // ... (keep handleVariantSelect and handleImageClick as is)
   const handleVariantSelect = (variant: ProductVariant) => {

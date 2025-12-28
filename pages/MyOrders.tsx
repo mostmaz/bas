@@ -6,21 +6,27 @@ import { Package, Search, Phone, Calendar, MapPin, ChevronDown, ChevronUp } from
 import { Order } from '../types';
 
 export const MyOrders: React.FC = () => {
-  const { orders, t } = useShop();
+  const { t, searchOrdersByPhone } = useShop();
   const [phone, setPhone] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [foundOrders, setFoundOrders] = useState<Order[]>([]);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone.trim()) return;
 
-    const normalizedPhone = phone.replace(/\D/g, ''); // Remove non-digits
-    const results = orders.filter(o => o.phone.replace(/\D/g, '').includes(normalizedPhone));
-    
-    setFoundOrders(results);
-    setHasSearched(true);
+    setIsSearching(true);
+    try {
+      const results = await searchOrdersByPhone(phone);
+      setFoundOrders(results);
+      setHasSearched(true);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const toggleExpand = (id: string) => {
@@ -28,7 +34,7 @@ export const MyOrders: React.FC = () => {
   };
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'Delivered': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       case 'Shipped': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
       case 'Processing': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
@@ -82,7 +88,7 @@ export const MyOrders: React.FC = () => {
             foundOrders.map((order) => (
               <div key={order.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
                 {/* Order Header Card */}
-                <div 
+                <div
                   onClick={() => toggleExpand(order.id)}
                   className="p-4 sm:p-6 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                 >
@@ -98,7 +104,7 @@ export const MyOrders: React.FC = () => {
                       {translateStatus(order.status)}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-sm font-medium text-slate-900 dark:text-white">{order.items.length} {t('items')}</p>
@@ -135,11 +141,11 @@ export const MyOrders: React.FC = () => {
                         {order.items.map((item, idx) => (
                           <li key={idx} className="flex items-center gap-3">
                             <div className="h-12 w-12 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0">
-                              <img 
-                                src={item.image} 
-                                alt="" 
+                              <img
+                                src={item.image}
+                                alt=""
                                 loading="lazy"
-                                className="h-full w-full object-cover" 
+                                className="h-full w-full object-cover"
                               />
                             </div>
                             <div className="flex-1">

@@ -93,12 +93,11 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
         if (isSupabaseConfigured) {
             try {
                 // 2. Fetch fresh data from Supabase
-                // Optimization: Select specific fields if description/variants are huge, 
-                // but for now we keep '*' to ensure details page works without refetch.
-                // We can optimize 'variants' if it's a huge JSONB.
+                // Optimization: Select specific fields to reduce payload size.
+                // Exclude 'description' as it can be large.
                 const { data, error } = await supabase
                     .from('products')
-                    .select('*')
+                    .select('id, name, price, sale_price, image, images, category, brand, device, stock, rating, colors, variants, sku, ishidden, created_at, gift_product_id, bonus_message')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -148,6 +147,37 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
         }
         setIsProductsLoading(false);
         if (!silent) setIsAppLoading(false);
+    };
+
+    const fetchProductDetails = async (id: string) => {
+        if (!isSupabaseConfigured) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                const fullProduct = mapProductFromDB(data);
+
+                setProducts(prev => {
+                    const updated = prev.map(p => p.id === id ? fullProduct : p);
+                    // Update cache
+                    try {
+                        localStorage.setItem('products_cache', JSON.stringify(updated));
+                    } catch (e) {
+                        console.error("Cache update error", e);
+                    }
+                    return updated;
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching product details:", error);
+        }
     };
 
     const addProduct = async (product: Omit<Product, 'id' | 'rating'> & { id?: string, rating?: number }) => {
@@ -252,7 +282,10 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                     throw error; // Throw to caller
                 }
             }
-            await refreshProducts();
+            // Instead of full refresh, just update local state if possible, but full refresh ensures consistency
+            // await refreshProducts(); 
+            // Let's try to update locally to avoid full fetch
+            setProducts(prev => prev.map(p => p.id === product.id ? product : p));
             addToast('Product updated successfully', 'success');
         } else {
             setProducts(prev => prev.map(p => p.id === product.id ? product : p));
@@ -268,7 +301,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 addToast('Failed to delete product', 'error');
                 return;
             }
-            await refreshProducts();
+            setProducts(prev => prev.filter(p => p.id !== id));
             addToast('Product deleted', 'success');
         } else {
             setProducts(prev => prev.filter(p => p.id !== id));
@@ -276,5 +309,5 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
         }
     };
 
-    return { products, setProducts, refreshProducts, addProduct, updateProduct, deleteProduct, isProductsLoading };
+    return { products, setProducts, refreshProducts, fetchProductDetails, addProduct, updateProduct, deleteProduct, isProductsLoading };
 };

@@ -5,6 +5,8 @@ import { Brand } from '../../types';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 import { generateBrandLogo } from '../../services/geminiService';
+import { supabase } from '../../services/supabase';
+import { compressImage } from '../../utils/imageCompression';
 
 export const BrandManagement: React.FC = () => {
   const { brands, addBrand, updateBrand, deleteBrand, refreshBrands } = useShop();
@@ -14,6 +16,7 @@ export const BrandManagement: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleGenerateLogo = async () => {
@@ -94,14 +97,43 @@ export const BrandManagement: React.FC = () => {
     setIsRefreshing(false);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setGeneratedLogo(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      // Compress image
+      let fileToUpload = file;
+      if (file.type.startsWith('image/')) {
+        try {
+          fileToUpload = await compressImage(file);
+        } catch (e) {
+          console.warn("Compression failed, using original", e);
+        }
+      }
+
+      const filename = `brand_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images') // Reuse product-images bucket
+        .upload(filename, fileToUpload, {
+          contentType: fileToUpload.type || 'image/jpeg',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filename);
+
+      setGeneratedLogo(publicUrl);
+    } catch (error: any) {
+      console.error("Upload failed:", error);
+      alert(`Upload failed: ${error.message}`);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -154,6 +186,14 @@ export const BrandManagement: React.FC = () => {
                       <Loader2 className="h-6 w-6 text-white animate-spin" />
                     </div>
                   )}
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="flex flex-col items-center">
+                        <Loader2 className="h-6 w-6 text-white animate-spin mb-1" />
+                        <span className="text-[10px] text-white font-medium">Uploading...</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2 w-full">
@@ -175,7 +215,7 @@ export const BrandManagement: React.FC = () => {
                       className="hidden"
                       accept="image/*"
                       onChange={handleImageUpload}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isUploading}
                     />
                   </label>
                 </div>
