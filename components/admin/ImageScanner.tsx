@@ -98,6 +98,9 @@ export const ImageScanner: React.FC = () => {
                 const item = results[i];
                 setProgress({ current: i + 1, total: results.length });
 
+                // Add a small delay so the progress bar is visible to the user
+                await new Promise(resolve => setTimeout(resolve, 500));
+
                 try {
                     // 1. Convert to Blob
                     const blob = await base64ToBlob(item.data);
@@ -170,11 +173,22 @@ export const ImageScanner: React.FC = () => {
             </div>
 
             {isConverting && (
-                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                    <div
-                        className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
-                        style={{ width: `${(progress.current / progress.total) * 100}%` }}
-                    ></div>
+                <div className="space-y-2">
+                    <div className="flex justify-between text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <span>Converting items...</span>
+                        <span>{Math.round((progress.current / progress.total) * 100)}% ({progress.current}/{progress.total})</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-6 dark:bg-gray-700 overflow-hidden shadow-inner">
+                        <div
+                            className="h-6 rounded-full transition-all duration-300 relative"
+                            style={{
+                                width: `${(progress.current / progress.total) * 100}%`,
+                                backgroundImage: 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
+                                backgroundSize: '1rem 1rem',
+                                backgroundColor: '#4f46e5' // indigo-600
+                            }}
+                        ></div>
+                    </div>
                 </div>
             )}
 

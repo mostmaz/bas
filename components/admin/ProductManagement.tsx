@@ -387,15 +387,20 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock' }> = ({ filter }
   };
 
   const [isFixingImages, setIsFixingImages] = useState(false);
+  const [fixProgress, setFixProgress] = useState({ current: 0, total: 0 });
 
   const handleFixImages = async () => {
     if (!window.confirm("This will scan all products for base64 images and upload them to the server. This may take a while. Continue?")) return;
 
     setIsFixingImages(true);
+    setFixProgress({ current: 0, total: products.length });
     let fixedCount = 0;
 
     try {
-      for (const product of products) {
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        setFixProgress(prev => ({ ...prev, current: i + 1 }));
+
         let needsUpdate = false;
         let updatedProduct = { ...product };
 
@@ -448,6 +453,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock' }> = ({ filter }
       alert("An error occurred while fixing images. Check console for details.");
     } finally {
       setIsFixingImages(false);
+      setFixProgress({ current: 0, total: 0 });
     }
   };
 
@@ -628,6 +634,24 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock' }> = ({ filter }
           </Button>
         </div>
       </div >
+
+      {isFixingImages && (
+        <div className="mb-6 bg-white dark:bg-slate-800 p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 shadow-sm animate-in fade-in slide-in-from-top-2">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="font-medium text-amber-700 dark:text-amber-400">Fixing Images...</span>
+            <span className="text-gray-500 dark:text-gray-400">{Math.round((fixProgress.current / fixProgress.total) * 100)}% ({fixProgress.current}/{fixProgress.total})</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-slate-700 overflow-hidden">
+            <div 
+              className="bg-amber-500 h-2.5 rounded-full transition-all duration-300 ease-out" 
+              style={{ width: `${(fixProgress.current / fixProgress.total) * 100}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Please do not close this page. We are converting base64 images to secure URLs.
+          </p>
+        </div>
+      )}
 
       {
         selectedProducts.size > 0 && (
