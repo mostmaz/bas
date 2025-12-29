@@ -2,18 +2,37 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { ProductCard } from '../components/ProductCard';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { expandSearchQuery } from '../utils/searchUtils';
 
 export const SearchPage: React.FC = () => {
   const { products, t, language } = useShop();
-  const [query, setQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+  const [query, setQuery] = useState(initialQuery);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Sync state with URL param
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null && q !== query) {
+      setQuery(q);
+    }
+  }, [searchParams]);
+
+  const updateSearch = (newQuery: string) => {
+    setQuery(newQuery);
+    if (newQuery) {
+      setSearchParams({ q: newQuery });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -27,7 +46,7 @@ export const SearchPage: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(p => {
+  const filteredProducts = (products || []).filter(p => {
     if (!query) return false;
 
     const searchTerms = expandSearchQuery(query);
@@ -35,10 +54,10 @@ export const SearchPage: React.FC = () => {
     return searchTerms.some(term => {
       const lowerTerm = term.toLowerCase();
       return (
-        p.name.toLowerCase().includes(lowerTerm) ||
-        p.description.toLowerCase().includes(lowerTerm) ||
-        p.category.toLowerCase().includes(lowerTerm) ||
-        p.brand.toLowerCase().includes(lowerTerm)
+        (p.name || '').toLowerCase().includes(lowerTerm) ||
+        (p.description || '').toLowerCase().includes(lowerTerm) ||
+        (p.category || '').toLowerCase().includes(lowerTerm) ||
+        (p.brand || '').toLowerCase().includes(lowerTerm)
       );
     });
   });
@@ -64,14 +83,14 @@ export const SearchPage: React.FC = () => {
               ref={inputRef}
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => updateSearch(e.target.value)}
               onKeyDown={handleSearch}
               placeholder={t('searchPlaceholder')}
               className="block w-full pl-10 rtl:pr-10 rtl:pl-3 pr-10 rtl:pl-10 py-3 border border-slate-200 dark:border-slate-800 rounded-2xl leading-5 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
             />
             {query && (
               <button
-                onClick={() => setQuery('')}
+                onClick={() => updateSearch('')}
                 className="absolute inset-y-0 right-0 rtl:left-0 rtl:right-auto pr-3 rtl:pl-3 flex items-center text-slate-400 hover:text-slate-600"
               >
                 <X className="h-5 w-5" />
@@ -109,7 +128,7 @@ export const SearchPage: React.FC = () => {
               {['iPhone 15', 'Samsung', 'Marble', 'Minimalist', 'Eco', 'Urban'].map(term => (
                 <button
                   key={term}
-                  onClick={() => setQuery(term)}
+                  onClick={() => updateSearch(term)}
                   className="px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full text-sm text-slate-700 dark:text-slate-300 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                 >
                   {term}

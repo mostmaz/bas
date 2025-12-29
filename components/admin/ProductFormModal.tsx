@@ -120,19 +120,19 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
 
                 // Compress image before upload
                 let fileToUpload = file;
-                try {
-                    // Only compress images
-                    if (file.type.startsWith('image/')) {
-                        fileToUpload = await compressImage(file);
-                    }
-                } catch (compError) {
-                    console.warn("Compression failed, using original file", compError);
-                }
+                // try {
+                //     // Only compress images
+                //     if (file.type.startsWith('image/')) {
+                //         fileToUpload = await compressImage(file);
+                //     }
+                // } catch (compError) {
+                //     console.warn("Compression failed, using original file", compError);
+                // }
 
                 const filename = `product_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
 
                 const { data, error } = await supabase.storage
-                    .from('products')
+                    .from('product-images')
                     .upload(filename, fileToUpload, {
                         contentType: fileToUpload.type || 'image/jpeg',
                         upsert: false
@@ -141,7 +141,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                 if (error) throw error;
 
                 const { data: { publicUrl } } = supabase.storage
-                    .from('products')
+                    .from('product-images')
                     .getPublicUrl(filename);
 
                 newImages.push(publicUrl);

@@ -22,7 +22,7 @@ const uploadImageFromUrl = async (url: string): Promise<string> => {
     const filename = `bulk_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
 
     const { data, error } = await supabase.storage
-      .from('products')
+      .from('product-images')
       .upload(filename, blob, {
         contentType: blob.type || 'image/jpeg',
         upsert: false
@@ -31,7 +31,7 @@ const uploadImageFromUrl = async (url: string): Promise<string> => {
     if (error) throw error;
 
     const { data: { publicUrl } } = supabase.storage
-      .from('products')
+      .from('product-images')
       .getPublicUrl(filename);
 
     return publicUrl;
@@ -642,8 +642,8 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock' }> = ({ filter }
             <span className="text-gray-500 dark:text-gray-400">{Math.round((fixProgress.current / fixProgress.total) * 100)}% ({fixProgress.current}/{fixProgress.total})</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-slate-700 overflow-hidden">
-            <div 
-              className="bg-amber-500 h-2.5 rounded-full transition-all duration-300 ease-out" 
+            <div
+              className="bg-amber-500 h-2.5 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${(fixProgress.current / fixProgress.total) * 100}%` }}
             ></div>
           </div>

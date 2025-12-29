@@ -34,7 +34,7 @@ export const Navbar: React.FC = () => {
     if (e.key === 'Enter') {
       const term = searchValue.toLowerCase().trim();
       if (term) {
-        navigate('/search');
+        navigate(`/search?q=${encodeURIComponent(term)}`);
       }
     }
   };
