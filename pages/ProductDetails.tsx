@@ -123,7 +123,7 @@ export const ProductDetails: React.FC = () => {
     : 0;
 
   return (
-    <div className="pt-8 pb-16">
+    <div key={id} className="pt-8 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Back Button */}

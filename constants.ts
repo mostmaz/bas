@@ -17,16 +17,16 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'Artistic',
     device: 'iPhone 15',
     brand: 'CaseCraft',
-    image: 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4?auto=format&fit=crop&w=500&q=70&fm=webp',
+    image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=500&q=70&fm=webp',
     images: [
-      'https://images.unsplash.com/photo-1603351154351-5cf233d327e4?auto=format&fit=crop&w=500&q=70&fm=webp',
+      'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=500&q=70&fm=webp',
       'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=500&q=70&fm=webp'
     ],
     rating: 4.8,
     stock: 15,
     colors: ['#8B5CF6', '#3B82F6'],
     variants: [
-      { id: 'v1', color: '#8B5CF6', stock: 10, image: 'https://images.unsplash.com/photo-1603351154351-5cf233d327e4?auto=format&fit=crop&w=500&q=70&fm=webp' },
+      { id: 'v1', color: '#8B5CF6', stock: 10, image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=500&q=70&fm=webp' },
       { id: 'v2', color: '#3B82F6', stock: 5, image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=500&q=70&fm=webp' }
     ]
   },

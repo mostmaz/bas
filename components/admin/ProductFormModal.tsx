@@ -68,6 +68,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
     const productToUse = liveProduct || initialData;
 
     useEffect(() => {
+        if (!isOpen) return;
+
         if (productToUse) {
             // Fetch full details if description is missing (optimization)
             if (!productToUse.description && productToUse.id) {
@@ -90,10 +92,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
             });
             setIsSaleEnabled(!!productToUse.salePrice);
         } else {
+            // Only reset to default if we are opening in create mode
+            // We use a functional update or check if it's already initialized to avoid overwriting if brands load late?
+            // Actually, for create mode, we just want to set defaults once when opening.
             setFormData({ ...defaultState, brand: brands[0]?.name || 'CaseCraft' });
             setIsSaleEnabled(false);
         }
-    }, [productToUse, isOpen, brands, fetchProductDetails]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, productToUse?.id]); // Only re-run if modal opens or product ID changes
 
     // Recalculate total stock when variants change
     useEffect(() => {
@@ -120,14 +126,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
 
                 // Compress image before upload
                 let fileToUpload = file;
-                // try {
-                //     // Only compress images
-                //     if (file.type.startsWith('image/')) {
-                //         fileToUpload = await compressImage(file);
-                //     }
-                // } catch (compError) {
-                //     console.warn("Compression failed, using original file", compError);
-                // }
+                try {
+                    // Only compress images
+                    if (file.type.startsWith('image/')) {
+                        fileToUpload = await compressImage(file);
+                    }
+                } catch (compError) {
+                    console.warn("Compression failed, using original file", compError);
+                }
 
                 const filename = `product_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
 
@@ -244,7 +250,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         // Fallback if no images
         const finalImages = formData.images.length > 0
             ? formData.images
-            : ['https://images.unsplash.com/photo-1603351154351-5cf233d327e4?auto=format&fit=crop&w=600&q=75'];
+            : ['https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=600&q=75'];
 
         onSave({
             name: formData.name,
