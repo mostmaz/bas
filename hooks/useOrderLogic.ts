@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Order, Product } from '../types';
 import { supabase } from '../services/supabase';
-import { sendOrderNotification } from '../services/emailService';
+import { sendOrderNotification, sendWhatsAppNotification, sendTwilioWhatsAppNotification } from '../services/emailService';
 
 // Helper to map database lowercase columns to camelCase Order interface
 const mapOrderFromDB = (data: any): Order => ({
@@ -100,8 +100,11 @@ export const useOrderLogic = (
             };
             setOrders(prev => [optimisticOrder, ...prev]);
 
-            // Send Email Notification
+            // Send Notifications
             sendOrderNotification(optimisticOrder);
+            sendWhatsAppNotification(optimisticOrder);
+            sendTwilioWhatsAppNotification(optimisticOrder, 'admin');
+            sendTwilioWhatsAppNotification(optimisticOrder, 'customer');
 
             // Optimistic Update: Update product stock in state without re-fetching all products
             setProducts(prev => prev.map(p => {
@@ -137,8 +140,11 @@ export const useOrderLogic = (
             };
             setOrders(prev => [localOrder, ...prev]);
 
-            // Send Email Notification
+            // Send Notifications
             sendOrderNotification(localOrder);
+            sendWhatsAppNotification(localOrder);
+            sendTwilioWhatsAppNotification(localOrder, 'admin');
+            sendTwilioWhatsAppNotification(localOrder, 'customer');
 
             setProducts(prev => prev.map(p => {
                 const item = orderData.items.find(i => i.id === p.id);

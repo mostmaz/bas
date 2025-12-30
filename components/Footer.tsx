@@ -11,6 +11,8 @@ export const Footer: React.FC = () => {
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const isActive = (path: string) => location.pathname === path;
+  const isAdmin = location.pathname === '/admin';
+  if (isAdmin) return null;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 bg-white dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl z-40 transition-all">

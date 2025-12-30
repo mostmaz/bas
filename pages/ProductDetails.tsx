@@ -11,7 +11,7 @@ import { optimizeImage } from '../utils/imageUtils';
 
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { products, addToCart, t, wishlist, toggleWishlist, fetchProductDetails, language } = useShop();
+  const { products, addToCart, t, wishlist, toggleWishlist, fetchProductDetails, language, isCartOpen } = useShop();
   const navigate = useNavigate();
 
   const product = products.find(p => p.id === id);
@@ -361,12 +361,14 @@ export const ProductDetails: React.FC = () => {
         </div>
       </div>
 
-      <ProductBottomNav
-        product={product}
-        selectedVariant={selectedVariant}
-        currentStock={currentStock}
-        onAddToCart={() => addToCart(product, selectedVariant || undefined)}
-      />
+      {!isCartOpen && (
+        <ProductBottomNav
+          product={product}
+          selectedVariant={selectedVariant}
+          currentStock={currentStock}
+          onAddToCart={() => addToCart(product, selectedVariant || undefined)}
+        />
+      )}
     </div>
   );
 };

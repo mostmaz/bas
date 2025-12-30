@@ -193,7 +193,15 @@ export const TRANSLATIONS = {
         wasit: 'Wasit',
         maysan: 'Maysan',
         saladin: 'Saladin',
-        halabja: 'Halabja'
+        halabja: 'Halabja',
+        received: 'received',
+        importantInfo: 'Important Information',
+        estimatedDelivery: 'Estimated Delivery',
+        reachYouIn: 'Your order should reach you in',
+        hours: 'hours',
+        uponDelivery: 'Upon Delivery',
+        checkOrder: 'Please check your order',
+        beforePaying: 'before paying'
     },
     ar: {
         home: 'الرئيسية',
@@ -318,7 +326,15 @@ export const TRANSLATIONS = {
         wasit: 'واسط',
         maysan: 'ميسان',
         saladin: 'صلاح الدين',
-        halabja: 'حلبجة'
+        halabja: 'حلبجة',
+        received: 'استلمنا',
+        importantInfo: 'معلومات مهمة',
+        estimatedDelivery: 'وقت التوصيل المتوقع',
+        reachYouIn: 'سيصلك طلبك خلال',
+        hours: 'ساعة',
+        uponDelivery: 'عند الاستلام',
+        checkOrder: 'يرجى التحقق من طلبك',
+        beforePaying: 'قبل الدفع'
     }
 };
 
@@ -349,10 +365,17 @@ export const IRAQI_GOVERNORATES = [
 ];
 
 export const EMAILJS_CONFIG = {
-    SERVICE_ID: '320254',
-    TEMPLATE_ID: 'template_l5a9ibb',
-    PUBLIC_KEY: 't87f32aAOSQ9bpd22',
-    TARGET_EMAIL: 'mostmaz73@gmail.com'
+    SERVICE_ID: import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_1aqnoan',
+    TEMPLATE_ID: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_l5a9ibb',
+    PUBLIC_KEY: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 't87f32aAOSQ9bpd22',
+    TARGET_EMAIL: import.meta.env.VITE_EMAILJS_TARGET_EMAIL || 'mostmaz73@gmail.com, sifyanalkhafaf1@gmail.com'
+};
+
+export const TWILIO_CONFIG = {
+    ACCOUNT_SID: import.meta.env.VITE_TWILIO_ACCOUNT_SID || 'YOUR_TWILIO_ACCOUNT_SID',
+    AUTH_TOKEN: import.meta.env.VITE_TWILIO_AUTH_TOKEN || 'YOUR_TWILIO_AUTH_TOKEN',
+    FROM_NUMBER: import.meta.env.VITE_TWILIO_FROM_NUMBER || 'whatsapp:+14155238886',
+    ADMIN_NUMBER: import.meta.env.VITE_TWILIO_ADMIN_NUMBER || '+9647502062804'
 };
 
 export const INITIAL_ORDERS: any[] = [];

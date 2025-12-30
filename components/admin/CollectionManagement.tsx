@@ -85,7 +85,7 @@ export const CollectionManagement: React.FC = () => {
                     </p>
                 </div>
             ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {collections.map((collection) => (
                         <div key={collection.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex justify-between items-start mb-3">

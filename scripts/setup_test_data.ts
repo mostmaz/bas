@@ -12,7 +12,7 @@ const TEST_PRODUCT = {
     price: 999,
     category: 'Test',
     // Small 1x1 red pixel base64 image
-    image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=600&q=75',
     stock: 1,
     ishidden: true
 };

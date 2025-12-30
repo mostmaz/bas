@@ -292,7 +292,7 @@ create policy "Public Delete" on products for delete using (true);
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-slate-900">
       {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 fixed h-full z-20 hidden lg:flex flex-col">
+      <aside className="w-64 bg-white dark:bg-slate-800 border-e border-gray-200 dark:border-slate-700 fixed inset-y-0 start-0 h-full z-20 hidden lg:flex flex-col">
         <div className="p-6 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
@@ -422,15 +422,15 @@ create policy "Public Delete" on products for delete using (true);
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 p-4 lg:p-8 overflow-y-auto h-screen">
+      <main className="flex-1 lg:ms-64 p-4 lg:p-8 overflow-y-auto h-screen">
         {/* Schema Error Alert */}
         {schemaError && (
-          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-r-xl shadow-sm animate-in slide-in-from-top-2">
+          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border-s-4 border-red-500 p-4 rounded-e-xl shadow-sm animate-in slide-in-from-top-2">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <AlertTriangle className="h-5 w-5 text-red-400" aria-hidden="true" />
               </div>
-              <div className="ml-3 flex-1">
+              <div className="ms-3 flex-1">
                 <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Database Schema Error</h3>
                 <div className="mt-2 text-sm text-red-700 dark:text-red-300">
                   <p>{schemaError}</p>
@@ -499,7 +499,7 @@ create policy "Public Delete" on products for delete using (true);
           <div className="space-y-8">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
-                <Database className="h-5 w-5 mr-2 text-gray-500" /> Database Maintenance
+                <Database className="h-5 w-5 me-2 text-gray-500" /> Database Maintenance
               </h3>
               <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
                 If you are experiencing issues with missing columns or schema errors (e.g. notification bar not working), you can view and run the database setup script manually.
