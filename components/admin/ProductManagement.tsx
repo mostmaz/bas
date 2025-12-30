@@ -393,6 +393,11 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
   const [fixTagsProgress, setFixTagsProgress] = useState({ current: 0, total: 0 });
 
   const handleFixTags = async () => {
+    if (products.length === 0) {
+      alert("No products to process.");
+      return;
+    }
+
     if (!window.confirm("This will use AI to generate smart search tags for all products. This may take a while. Continue?")) return;
 
     setIsFixingTags(true);
@@ -568,6 +573,44 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
         [field]: value
       }
     }));
+  };
+
+  const handleBulkPriceUpdate = async () => {
+    if (selectedProducts.size === 0) return;
+
+    const priceStr = prompt(`Enter new price for ${selectedProducts.size} selected products:`);
+    if (!priceStr) return;
+
+    const newPrice = parseFloat(priceStr);
+    if (isNaN(newPrice) || newPrice < 0) {
+      alert("Invalid price entered.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to set the price to ${newPrice} for ${selectedProducts.size} products?`)) return;
+
+    setIsSaving(true);
+    try {
+      const updates = Array.from(selectedProducts).map(async (id) => {
+        const product = products.find(p => p.id === id);
+        if (!product) return;
+
+        await updateProduct({
+          ...product,
+          price: newPrice
+        });
+      });
+
+      await Promise.all(updates);
+      await refreshProducts();
+      setSelectedProducts(new Set());
+      alert("Bulk price update successful!");
+    } catch (error) {
+      console.error("Bulk price update failed:", error);
+      alert("Failed to update prices. Check console.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleBulkPriceUpdate = async () => {
@@ -838,6 +881,14 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
                     className="bg-white dark:bg-slate-800"
                   >
                     <LinkIcon className="h-4 w-4 mr-2" /> Generate Page
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleBulkPriceUpdate}
+                    className="bg-white dark:bg-slate-800 text-green-600 border border-green-200 hover:bg-green-50"
+                  >
+                    <Layers className="h-4 w-4 mr-2" /> Update Price
                   </Button>
                   <Button
                     size="sm"
