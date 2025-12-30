@@ -22,16 +22,18 @@ const REVENUE_DATA = [
 const COLORS = ['#4f46e5', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
 
 export const DashboardOverview: React.FC = () => {
-  const { products, orders, baseShippingFee, updateShippingFee, freeShippingThreshold, updateFreeShippingThreshold, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo } = useShop();
+  const { products, orders, baseShippingFee, updateShippingFee, freeShippingThreshold, updateFreeShippingThreshold, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo, notificationMessage, updateNotificationMessage } = useShop();
   const [tempShippingFee, setTempShippingFee] = useState(baseShippingFee.toString());
   const [tempThreshold, setTempThreshold] = useState(freeShippingThreshold.toString());
+  const [tempNotificationMessage, setTempNotificationMessage] = useState(notificationMessage || '');
   const lowStockProducts = products.filter(p => p.stock < 10);
 
   // Sync local state with context values when they change (e.g. after fetch)
   React.useEffect(() => {
     setTempShippingFee(baseShippingFee.toString());
     setTempThreshold(freeShippingThreshold.toString());
-  }, [baseShippingFee, freeShippingThreshold]);
+    setTempNotificationMessage(notificationMessage || '');
+  }, [baseShippingFee, freeShippingThreshold, notificationMessage]);
 
   // Dynamic Revenue Calculation (Excluding Cancelled)
   const totalRevenue = useMemo(() => {
@@ -171,6 +173,28 @@ export const DashboardOverview: React.FC = () => {
                 </label>
               </div>
               <p className="text-xs text-gray-500 mt-2">This image will update the App Logo, Splash Screen, and Website Favicon.</p>
+            </div>
+
+            {/* Notification Message */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Notification Bar Message (RTL)</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={tempNotificationMessage}
+                  onChange={(e) => setTempNotificationMessage(e.target.value)}
+                  placeholder="Enter notification text (e.g. Special Offer...)"
+                  className="flex-1 border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 text-right"
+                  dir="rtl"
+                />
+                <Button
+                  onClick={() => updateNotificationMessage(tempNotificationMessage)}
+                  variant="secondary"
+                  className="shrink-0"
+                >
+                  <Save className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>

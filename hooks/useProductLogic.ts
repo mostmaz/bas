@@ -97,7 +97,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 // Exclude 'description' as it can be large.
                 const { data, error } = await supabase
                     .from('products')
-                    .select('id, name, price, sale_price, image, images, category, brand, device, stock, rating, colors, variants, sku, ishidden, created_at, gift_product_id, bonus_message')
+                    .select('id, name, price, sale_price, image, category, brand, device, stock, rating, colors, sku, ishidden, created_at')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;

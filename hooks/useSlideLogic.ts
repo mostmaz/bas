@@ -57,18 +57,21 @@ export const useSlideLogic = (isSupabaseConfigured: boolean, addToast: (msg: str
         }
     };
 
+    const [isLoading, setIsLoading] = useState(true);
+
     const refreshSlides = async () => {
+        setIsLoading(true);
         if (isSupabaseConfigured) {
             const { data, error } = await supabase.from('slides').select('*');
             if (error) {
                 console.error("Error fetching slides:", error);
-                return;
             }
             if (data) setCarouselSlides(data);
         } else {
             setCarouselSlides(INITIAL_SLIDES);
         }
+        setIsLoading(false);
     };
 
-    return { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides };
+    return { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides, isLoading };
 };

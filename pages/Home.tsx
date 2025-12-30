@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Filter, ChevronDown, Smartphone } from 'lucide-react';
 
 export const Home: React.FC = () => {
-  const { products, devices, brands, isProductsLoading, t } = useShop();
+  const { products, devices, brands, isProductsLoading, t, notificationMessage, isBrandsLoading } = useShop();
   const navigate = useNavigate();
   const [selectedBrandFilter, setSelectedBrandFilter] = useState('All');
   const [selectedDevice, setSelectedDevice] = useState<string>('');
@@ -179,30 +179,49 @@ export const Home: React.FC = () => {
 
       {/* Brands (formerly Categories) */}
       <div className="mt-8 px-6">
-        <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
-          {displayBrands.map((brand) => (
-            <button
-              key={brand.id}
-              onClick={() => handleBrandSelect(brand.name)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all flex items-center gap-2 ${selectedBrandFilter === brand.name
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                }`}
-            >
-              {brand.logo && (
-                <img src={brand.logo} alt={brand.name} className="w-5 h-5 object-contain" />
-              )}
-              {brand.name}
-            </button>
-          ))}
+        <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+          {isBrandsLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-9 w-24 bg-gray-200 dark:bg-slate-800 rounded-full animate-pulse flex-shrink-0" />
+            ))
+          ) : (
+            displayBrands.map((brand) => (
+              <button
+                key={brand.id}
+                onClick={() => handleBrandSelect(brand.name)}
+                className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all flex-shrink-0 flex items-center gap-2 ${selectedBrandFilter === brand.name
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
+              >
+                {brand.logo && (
+                  <img src={brand.logo} alt={brand.name} className="w-5 h-5 object-contain" />
+                )}
+                {brand.name}
+              </button>
+            ))
+          )}
         </div>
       </div>
+
+      {/* Notification Bar */}
+      {notificationMessage && (
+        <div className="mt-4 px-6">
+          <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl py-1.5 px-3 text-center">
+            <p className="text-xs font-medium text-indigo-800 dark:text-indigo-200" dir="rtl">
+              {notificationMessage}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Best Sellers Section */}
       {bestSellers.length > 0 && (
         <div className="mt-8 px-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('bestSellers')}</h3>
+          <div className="flex items-center justify-end mb-4 relative">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white pr-4 border-r-4 border-purple-600 rounded-sm">
+              {t('bestSellers')}
+            </h3>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
             {bestSellers.map(product => (
@@ -217,8 +236,10 @@ export const Home: React.FC = () => {
       {/* Latest Added Section */}
       {latestProducts.length > 0 && (
         <div className="mt-6 px-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('latestDrops')}</h3>
+          <div className="flex items-center justify-end mb-4 relative">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white pr-4 border-r-4 border-emerald-500 rounded-sm">
+              {t('latestDrops')}
+            </h3>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
             {latestProducts.map(product => (
@@ -232,9 +253,13 @@ export const Home: React.FC = () => {
 
       {/* Products Grid */}
       <div className="mt-8 px-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('popular')}</h3>
-          <button className="text-sm text-purple-600 dark:text-purple-400 font-medium">{t('viewAll')}</button>
+        <div className="flex items-center justify-between mb-4 flex-row-reverse">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white pr-4 border-r-4 border-indigo-600 rounded-sm">
+            {t('popular')}
+          </h3>
+          <button className="text-sm text-purple-600 dark:text-purple-400 font-medium hover:text-purple-700 transition-colors">
+            {t('viewAll')}
+          </button>
         </div>
 
         {selectedDevice && filteredProducts.length === 0 ? (

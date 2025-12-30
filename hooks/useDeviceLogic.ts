@@ -4,9 +4,7 @@ import { DEVICES } from '../constants';
 import { supabase } from '../services/supabase';
 
 export const useDeviceLogic = (isSupabaseConfigured: boolean, addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void) => {
-    const [devices, setDevices] = useState<Device[]>(() =>
-        DEVICES.filter(d => d !== 'All').map((d, i) => ({ id: i.toString(), name: d }))
-    );
+    const [devices, setDevices] = useState<Device[]>(() => isSupabaseConfigured ? [] : DEVICES);
 
     const refreshDevices = async () => {
         if (isSupabaseConfigured) {

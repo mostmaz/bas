@@ -9,6 +9,8 @@ export const Navbar: React.FC = () => {
   const { cart, toggleCart, theme, toggleTheme, language, toggleLanguage, t, isOnline, supaConnectionError, setSearchQuery, storeLogo } = useShop();
   const navigate = useNavigate();
   const location = useLocation();
+  const isProductPage = location.pathname.startsWith('/product/');
+  // console.log('Navbar rendered, isProductPage:', isProductPage);
   const [searchValue, setSearchValue] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -42,7 +44,7 @@ export const Navbar: React.FC = () => {
   const isAdmin = location.pathname === '/admin';
 
   return (
-    <nav className="sticky top-0 z-40 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 transition-colors duration-300">
+    <nav className={`sticky top-0 z-40 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl transition-colors duration-300 ${isProductPage ? '' : 'border-b border-slate-200 dark:border-white/10'}`}>
       {/* Connectivity Banner if Offline */}
       {!isOnline && isAdmin && !supaConnectionError && (
         <div className="bg-amber-500 text-white text-xs py-1 text-center font-medium px-4">
@@ -61,15 +63,15 @@ export const Navbar: React.FC = () => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className={`flex justify-between items-center ${isProductPage ? 'h-10' : 'h-20'}`}>
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center cursor-pointer group" onClick={() => navigate('/')}>
             <img
               src={storeLogo}
               alt="BasCavarat Logo"
-              className="w-10 h-10 rounded-xl mr-3 rtl:ml-3 rtl:mr-0 object-cover shadow-lg shadow-pink-500/20 group-hover:shadow-pink-500/40 transition-all duration-300"
+              className={`${isProductPage ? 'w-8 h-8 mr-2 rtl:ml-2' : 'w-10 h-10 mr-3 rtl:ml-3'} rounded-xl rtl:mr-0 object-cover shadow-lg shadow-pink-500/20 group-hover:shadow-pink-500/40 transition-all duration-300`}
             />
-            <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white transition-colors">BasCavarat</span>
+            <span className={`font-bold ${isProductPage ? 'text-lg' : 'text-2xl'} tracking-tight text-slate-900 dark:text-white transition-colors`}>BasCavarat</span>
           </div>
 
           {/* Desktop Search */}
@@ -81,7 +83,7 @@ export const Navbar: React.FC = () => {
                 </div>
                 <input
                   type="text"
-                  className="block w-full pl-11 rtl:pr-11 rtl:pl-4 pr-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-full leading-5 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent sm:text-sm transition duration-200 shadow-inner"
+                  className={`block w-full pl-11 rtl:pr-11 rtl:pl-4 pr-4 ${isProductPage ? 'py-1' : 'py-2.5'} border border-slate-200 dark:border-slate-800 rounded-full leading-5 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent sm:text-sm transition duration-200 shadow-inner`}
                   placeholder={t('searchPlaceholder')}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
@@ -109,22 +111,26 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center space-x-2 rtl:space-x-reverse">
 
             {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-              aria-label="Toggle Theme"
-            >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
+            {!isProductPage && (
+              <button
+                onClick={toggleTheme}
+                className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                aria-label="Toggle Theme"
+              >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
+            )}
 
             {/* Language Toggle */}
-            <button
-              onClick={toggleLanguage}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors font-medium text-sm w-10 h-10 flex items-center justify-center"
-              aria-label="Switch Language"
-            >
-              {language === 'en' ? 'AR' : 'EN'}
-            </button>
+            {!isProductPage && (
+              <button
+                onClick={toggleLanguage}
+                className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors font-medium text-sm w-10 h-10 flex items-center justify-center"
+                aria-label="Switch Language"
+              >
+                {language === 'en' ? 'AR' : 'EN'}
+              </button>
+            )}
 
             {isAdmin ? (
               <button
@@ -146,7 +152,7 @@ export const Navbar: React.FC = () => {
 
                 <button
                   onClick={toggleCart}
-                  className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors group"
+                  className={`relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors group ${isProductPage ? 'hidden' : ''}`}
                 >
                   <span className="sr-only">Cart</span>
                   <ShoppingBag className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
@@ -160,14 +166,16 @@ export const Navbar: React.FC = () => {
             )}
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
-            </div>
+            {!isProductPage && (
+              <div className="md:hidden">
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                  {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

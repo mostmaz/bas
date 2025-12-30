@@ -6,7 +6,7 @@ import { useShop } from '../context/ShopContext';
 import { optimizeImage } from '../utils/imageUtils';
 
 export const OffersCarousel: React.FC = () => {
-  const { carouselSlides, language } = useShop();
+  const { carouselSlides, language, isSlidesLoading } = useShop();
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -21,6 +21,16 @@ export const OffersCarousel: React.FC = () => {
   const prev = () => setCurrent(c => (c === 0 ? carouselSlides.length - 1 : c - 1));
 
   const isRTL = language === 'ar';
+
+  if (isSlidesLoading) {
+    return (
+      <div className="relative w-full rounded-2xl overflow-hidden shadow-xl h-[150px] md:h-[190px] bg-gray-200 dark:bg-slate-800 animate-pulse border border-gray-100 dark:border-white/5">
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (carouselSlides.length === 0) return null;
 

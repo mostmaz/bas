@@ -34,6 +34,8 @@ interface ShopContextType {
   updateFreeShippingThreshold: (threshold: number) => Promise<void>;
   storeLogo: string;
   updateStoreLogo: (logo: string) => Promise<void>;
+  notificationMessage: string;
+  updateNotificationMessage: (message: string) => Promise<void>;
 
   // UI State
   isCartOpen: boolean;
@@ -46,6 +48,8 @@ interface ShopContextType {
   supaConnectionError: string | null;
   isAppLoading: boolean;
   isProductsLoading: boolean;
+  isSlidesLoading: boolean;
+  isBrandsLoading: boolean;
 
   // Actions
   refreshBrands: () => Promise<void>;
@@ -139,10 +143,12 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     }
   });
 
+  const [notificationMessage, setNotificationMessage] = useState<string>('');
+
   // --- HOOKS ---
-  const { brands, setBrands, refreshBrands, addBrand, updateBrand, deleteBrand } = useBrandLogic(isSupabaseConfigured, addToast);
+  const { brands, setBrands, refreshBrands, addBrand, updateBrand, deleteBrand, isLoading: isBrandsLoading } = useBrandLogic(isSupabaseConfigured, addToast);
   const { devices, setDevices, refreshDevices, addDevice, deleteDevice } = useDeviceLogic(isSupabaseConfigured, addToast);
-  const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides } = useSlideLogic(isSupabaseConfigured, addToast);
+  const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides, isLoading: isSlidesLoading } = useSlideLogic(isSupabaseConfigured, addToast);
 
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
   const { products, setProducts, refreshProducts, fetchProductDetails, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
@@ -167,11 +173,12 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     // Fetch Settings
     const fetchSettings = async () => {
       if (isSupabaseConfigured) {
-        const { data, error } = await supabase.from('store_settings').select('shipping_fee, free_shipping_threshold, logo').limit(1);
+        const { data, error } = await supabase.from('store_settings').select('shipping_fee, free_shipping_threshold, logo, notification_message').limit(1);
         if (data && data.length > 0) {
           if (data[0].shipping_fee !== undefined) setBaseShippingFee(data[0].shipping_fee);
           if (data[0].free_shipping_threshold !== undefined) setFreeShippingThreshold(data[0].free_shipping_threshold);
           if (data[0].logo) setStoreLogo(data[0].logo);
+          if (data[0].notification_message) setNotificationMessage(data[0].notification_message);
         }
       }
     };
@@ -245,6 +252,19 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     }
   };
 
+  const updateNotificationMessage = async (message: string) => {
+    setNotificationMessage(message);
+    if (isSupabaseConfigured) {
+      const { data } = await supabase.from('store_settings').select('id').limit(1);
+      if (data && data.length > 0) {
+        await supabase.from('store_settings').update({ notification_message: message }).eq('id', data[0].id);
+      } else {
+        await supabase.from('store_settings').insert([{ notification_message: message }]);
+      }
+      addToast('Notification updated', 'success');
+    }
+  };
+
   const toggleDemoData = async () => {
     if (isDemoActive) {
       setIsDemoActive(false);
@@ -290,7 +310,8 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     <ShopContext.Provider value={{
       products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
       shippingFee, baseShippingFee, freeShippingThreshold, updateShippingFee, updateFreeShippingThreshold, storeLogo, updateStoreLogo,
-      isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading,
+      notificationMessage, updateNotificationMessage,
+      isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading, isSlidesLoading, isBrandsLoading,
       refreshBrands, refreshProducts, refreshDevices,
       addProduct, updateProduct, deleteProduct, fetchProductDetails,
       addBrand, updateBrand, deleteBrand,

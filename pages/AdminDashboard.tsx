@@ -37,11 +37,12 @@ export const AdminDashboard: React.FC = () => {
           // Using a raw query attempt to catch column missing errors explicitly
           // Note: ishidden must be lowercase to match Postgres column if created without quotes
           const { error: readError } = await supabase.from('products').select('images, colors, variants, sale_price, sku, ishidden, gift_product_id, bonus_message').limit(1);
+          const { error: settingsError } = await supabase.from('store_settings').select('notification_message').limit(1);
 
           // Also check WRITE capability for new columns (to catch stale schema cache for updates)
           const { error: writeError } = await supabase.from('products').update({ gift_product_id: 'test' }).eq('id', '00000000-0000-0000-0000-000000000000');
 
-          const error = readError || (writeError && (writeError.code === '42703' || writeError.code === 'PGRST204') ? writeError : null);
+          const error = readError || settingsError || (writeError && (writeError.code === '42703' || writeError.code === 'PGRST204') ? writeError : null);
 
           if (error) {
             console.error("Schema check failed:", error);
@@ -68,6 +69,7 @@ export const AdminDashboard: React.FC = () => {
               else if (lowerMsg.includes('ishidden')) missingItem = "'ishidden'";
               else if (lowerMsg.includes('gift_product_id')) missingItem = "'gift_product_id'";
               else if (lowerMsg.includes('bonus_message')) missingItem = "'bonus_message'";
+              else if (lowerMsg.includes('notification_message')) missingItem = "'notification_message' (in store_settings)";
 
               const alertMsg = `CRITICAL: Database Schema Cache Stale. Please run the DB Setup script.`;
               setSchemaError(alertMsg);
@@ -164,6 +166,7 @@ alter table brands add column if not exists logo text;
 
 -- 3. Ensure Store Settings has logo
 alter table store_settings add column if not exists logo text;
+alter table store_settings add column if not exists notification_message text;
 
 -- 4. Ensure Orders table has new columns (Fix for Order failed error)
 alter table orders add column if not exists discountamount numeric;
@@ -492,7 +495,25 @@ create policy "Public Delete" on products for delete using (true);
         {activeTab === 'orders' && <OrderManagement />}
         {activeTab === 'discounts' && <DiscountManagement />}
         {activeTab === 'collections' && <CollectionManagement />}
-        {activeTab === 'maintenance' && <ImageScanner />}
+        {activeTab === 'maintenance' && (
+          <div className="space-y-8">
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
+                <Database className="h-5 w-5 mr-2 text-gray-500" /> Database Maintenance
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
+                If you are experiencing issues with missing columns or schema errors (e.g. notification bar not working), you can view and run the database setup script manually.
+              </p>
+              <button
+                onClick={() => setShowSql(!showSql)}
+                className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-200 dark:border-indigo-800"
+              >
+                {showSql ? 'Hide Setup Script' : 'View Database Setup Script'}
+              </button>
+            </div>
+            <ImageScanner />
+          </div>
+        )}
       </main>
     </div>
   );

@@ -1,20 +1,23 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
-import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag, Gift } from 'lucide-react';
+import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag, Gift, Loader2 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { ProductCard } from '../components/ProductCard';
 import { ProductVariant } from '../types';
+import { ProductBottomNav } from '../components/ProductBottomNav';
 
 import { optimizeImage } from '../utils/imageUtils';
 
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { products, addToCart, t, wishlist, toggleWishlist, fetchProductDetails } = useShop();
+  const { products, addToCart, t, wishlist, toggleWishlist, fetchProductDetails, language } = useShop();
   const navigate = useNavigate();
 
   const product = products.find(p => p.id === id);
   const [activeImage, setActiveImage] = useState<string>('');
+  const [isImageLoading, setIsImageLoading] = useState<boolean>(true);
+  const [loadedThumbnails, setLoadedThumbnails] = useState<Set<string>>(new Set());
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
   useEffect(() => {
@@ -36,7 +39,6 @@ export const ProductDetails: React.FC = () => {
     }
   }, [product, id, fetchProductDetails]);
 
-  // ... (keep handleVariantSelect and handleImageClick as is)
   const handleVariantSelect = (variant: ProductVariant) => {
     setSelectedVariant(variant);
     if (variant.image) {
@@ -45,7 +47,10 @@ export const ProductDetails: React.FC = () => {
   };
 
   const handleImageClick = (img: string) => {
-    setActiveImage(img);
+    if (img !== activeImage) {
+      setIsImageLoading(true);
+      setActiveImage(img);
+    }
     // Auto-select variant if image matches
     if (product?.variants) {
       const matchingVariant = product.variants.find(v => v.image === img && v.stock > 0);
@@ -74,7 +79,6 @@ export const ProductDetails: React.FC = () => {
   const isWishlisted = wishlist.includes(product.id);
 
   // Merge base images with variant images for the gallery
-  // Ensure we filter out empty strings and duplicates
   const baseImages = product.images && product.images.length > 0 ? product.images : [product.image];
   const variantImages = product.variants ? product.variants.map(v => v.image).filter(img => img && img.length > 0) : [];
 
@@ -84,7 +88,6 @@ export const ProductDetails: React.FC = () => {
 
   const addImage = (img: string) => {
     if (!img) return;
-    // Normalize by removing query params and decoding, to catch duplicates like "img.jpg?v=1" vs "img.jpg"
     try {
       const normalized = decodeURIComponent(img).split('?')[0].split('#')[0].trim().toLowerCase();
       if (!normalizedImages.has(normalized)) {
@@ -92,14 +95,12 @@ export const ProductDetails: React.FC = () => {
         normalizedImages.add(normalized);
       }
     } catch (e) {
-      // Fallback for malformed URIs
       if (!uniqueImages.has(img)) {
         uniqueImages.add(img);
       }
     }
   };
 
-  // User request: Hide main images if product has variants with images
   if (variantImages.length > 0) {
     variantImages.forEach(addImage);
   } else {
@@ -107,54 +108,30 @@ export const ProductDetails: React.FC = () => {
   }
 
   const galleryImages = Array.from(uniqueImages);
-
-  // Available Variants (Stock > 0) - Only show if stock is available
-  // Only hide variants if they have 0 stock to prevent selection
-  // Safeguard against undefined variants with optional chaining
   const availableVariants = product.variants ? product.variants.filter(v => v.stock > 0) : [];
-
-  // Determine current stock display
-  // If a variant is selected, show its stock. Otherwise show total product stock.
   const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
 
-  // Discount Calculation
   const discountPercent = product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
   return (
-    <div key={id} className="pt-8 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {/* Back Button */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all font-medium text-sm"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
-            {t('back')}
-          </button>
-        </div>
-
-        <div className="mb-8">
-          <div className="mb-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20 uppercase tracking-wider">
-              {product.brand}
-            </span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">{product.name}</h1>
-        </div>
-
+    <div key={id} className="pt-0 pb-32">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Image Section */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="aspect-[3/4] w-full rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/5 relative group shadow-2xl shadow-slate-200/50 dark:shadow-none transition-all">
+            <div className="aspect-square w-full rounded-none sm:rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border-b sm:border border-slate-200 dark:border-white/5 relative group shadow-2xl shadow-slate-200/50 dark:shadow-none transition-all">
+              <div className={`absolute inset-0 flex items-center justify-center z-20 bg-slate-100 dark:bg-slate-800 transition-opacity duration-500 ${isImageLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <Loader2 className="w-10 h-10 text-purple-600 animate-spin" />
+              </div>
               <img
+                key={activeImage}
                 src={optimizeImage(activeImage || product.image, 800)}
                 alt={product.name}
-                className="w-full h-full object-cover object-center transition-opacity duration-300"
+                onLoad={() => setIsImageLoading(false)}
+                className={`w-full h-full object-cover object-center transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
               />
               {/* Sale Tag */}
               {product.salePrice && (
@@ -181,62 +158,63 @@ export const ProductDetails: React.FC = () => {
 
             {/* Thumbnails */}
             {galleryImages.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2 px-1 snap-x no-scrollbar">
-                {galleryImages.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleImageClick(img)}
-                    className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all snap-start ${activeImage === img
-                      ? 'border-purple-600 ring-2 ring-purple-600/20'
-                      : 'border-transparent opacity-70 hover:opacity-100'
-                      }`}
-                  >
-                    <img
-                      src={optimizeImage(img, 200)}
-                      alt={`View ${idx + 1}`}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
+              <div className="flex gap-3 overflow-x-auto pb-2 px-4 sm:px-1 snap-x no-scrollbar">
+                {galleryImages.map((img, idx) => {
+                  const isThumbLoaded = loadedThumbnails.has(img);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleImageClick(img)}
+                      className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all snap-start ${activeImage === img
+                        ? 'border-purple-600 ring-2 ring-purple-600/20'
+                        : 'border-transparent opacity-70 hover:opacity-100'
+                        }`}
+                    >
+                      <div className={`absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800 transition-opacity duration-300 ${!isThumbLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                        <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
+                      </div>
+                      <img
+                        src={optimizeImage(img, 200)}
+                        alt={`View ${idx + 1}`}
+                        loading="lazy"
+                        onLoad={() => setLoadedThumbnails(prev => new Set(prev).add(img))}
+                        className={`w-full h-full object-cover transition-opacity duration-300 ${!isThumbLoaded ? 'opacity-0' : 'opacity-100'}`}
+                      />
+                    </button>
+                  );
+                })}
               </div>
             )}
+
+            {/* Product Name & Price */}
+            <div className="mx-4 sm:mx-0 mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-row-reverse rtl:flex-row justify-between items-center gap-4">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight text-right flex-1">{product.name}</h1>
+
+              <div className="flex flex-col items-end shrink-0">
+                {product.salePrice ? (
+                  <div className="flex flex-col items-end">
+                    <div className="text-2xl font-bold text-red-600 dark:text-red-500">
+                      IQD {product.salePrice.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-slate-400 line-through decoration-slate-400/50">
+                      IQD {product.price.toLocaleString()}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-2xl font-bold text-purple-700 dark:text-white">
+                    IQD {product.price.toLocaleString()}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Details Section */}
-          <div className="flex flex-col justify-center">
-
-            {/* Rating */}
-            <div className="flex items-center mb-8">
-              <div className="flex items-center text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'fill-current' : 'text-slate-200 dark:text-slate-700'}`} />
-                ))}
-              </div>
-              <span className="ml-4 text-sm text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-4 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4">128 {t('reviews')}</span>
-            </div>
-
-            <div className="flex flex-col mb-8">
-              {product.salePrice ? (
-                <div className="flex items-baseline gap-3">
-                  <div className="text-4xl font-bold text-red-600 dark:text-red-500">
-                    IQD {product.salePrice.toLocaleString()}
-                  </div>
-                  <div className="text-xl text-slate-400 line-through decoration-slate-400/50">
-                    IQD {product.price.toLocaleString()}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-4xl font-bold text-purple-700 dark:text-white flex items-baseline gap-2">
-                  IQD {product.price.toLocaleString()}
-                </div>
-              )}
-            </div>
-
+          <div className="flex flex-col justify-center px-4 sm:px-0">
             {/* Color/Variant Selection */}
             {availableVariants.length > 0 && (
               <div className="mb-8 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
-                <div className="flex justify-between items-center mb-4">
+                <div className={`flex justify-between items-center mb-4 ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('selectColor')}</h3>
                   <span className={`text-xs font-bold px-2 py-1 rounded ${currentStock < 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
                     {currentStock} {t('inStock')}
@@ -248,7 +226,7 @@ export const ProductDetails: React.FC = () => {
                     <button
                       key={variant.id}
                       onClick={() => handleVariantSelect(variant)}
-                      className={`w-12 h-12 rounded-full border-2 shadow-sm flex items-center justify-center transition-all relative ${selectedVariant?.id === variant.id ? 'border-purple-600 scale-110 ring-4 ring-purple-500/10' : 'border-slate-200 dark:border-slate-600 hover:scale-105'}`}
+                      className={`w-8 h-8 rounded-full border-2 shadow-sm flex items-center justify-center transition-all relative ${selectedVariant?.id === variant.id ? 'border-purple-600 scale-110 ring-2 ring-purple-500/10' : 'border-slate-200 dark:border-slate-600 hover:scale-105'}`}
                       style={{ backgroundColor: variant.color }}
                       title={`${variant.stock} available`}
                     >
@@ -277,17 +255,28 @@ export const ProductDetails: React.FC = () => {
                     </p>
                   </div>
                 )}
+              </div>
+            )}
 
-                {/* Add to Cart Button (Inside Variant Box) */}
-                <div className="mt-6">
-                  <Button
-                    size="lg"
-                    onClick={() => addToCart(product, selectedVariant || undefined)}
-                    disabled={currentStock < 1}
-                    className="w-full py-4 text-lg shadow-xl shadow-purple-600/20"
-                  >
-                    {currentStock < 1 ? 'Out of Stock' : t('addToCart')}
-                  </Button>
+            {/* Custom Notification Bar */}
+            {product.customNotification && (
+              <div className="mb-8">
+                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-2xl shadow-lg flex items-center justify-center text-center">
+                  <p className="font-medium text-lg">{product.customNotification}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Related Products */}
+            {relatedProducts.length > 0 && (
+              <div className="mb-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('youMightAlsoLike')}</h2>
+                <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar snap-x">
+                  {relatedProducts.map(p => (
+                    <div key={p.id} className="min-w-[160px] sm:min-w-[180px] snap-start">
+                      <ProductCard product={p} />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -306,14 +295,6 @@ export const ProductDetails: React.FC = () => {
                     </p>
                   </div>
                 )}
-                <Button
-                  size="lg"
-                  onClick={() => addToCart(product, selectedVariant || undefined)}
-                  disabled={currentStock < 1}
-                  className="w-full py-4 text-lg shadow-xl shadow-purple-600/20"
-                >
-                  {currentStock < 1 ? 'Out of Stock' : t('addToCart')}
-                </Button>
               </div>
             )}
 
@@ -323,7 +304,17 @@ export const ProductDetails: React.FC = () => {
               {t('genericProductDesc')}
             </p>
 
-            {/* Wishlist Button (Standalone now) */}
+            {/* Rating */}
+            <div className="flex items-center mb-8">
+              <div className="flex items-center text-amber-400">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'fill-current' : 'text-slate-200 dark:text-slate-700'}`} />
+                ))}
+              </div>
+              <span className="ml-4 text-sm text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-4 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4">128 {t('reviews')}</span>
+            </div>
+
+            {/* Wishlist Button */}
             <div className="flex gap-4 mb-12">
               <Button
                 variant="outline"
@@ -338,20 +329,20 @@ export const ProductDetails: React.FC = () => {
 
             {/* Value Props */}
             <div className="border-t border-slate-200 dark:border-slate-800 pt-8 space-y-6">
-              <div className="flex items-start">
+              <div className={`flex items-start ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                 <div className="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
                   <Truck className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
-                <div className="ml-4 rtl:mr-4 rtl:ml-0">
+                <div className={`ml-4 rtl:mr-4 rtl:ml-0 ${language === 'ar' ? 'mr-4' : 'ml-4'}`}>
                   <h4 className="text-base font-semibold text-slate-900 dark:text-white">{t('fastShipping')}</h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('fastShippingDesc')}</p>
                 </div>
               </div>
-              <div className="flex items-start">
+              <div className={`flex items-start ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                 <div className="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
                   <ShieldCheck className="h-6 w-6 text-pink-600 dark:text-pink-400" />
                 </div>
-                <div className="ml-4 rtl:mr-4 rtl:ml-0">
+                <div className={`ml-4 rtl:mr-4 rtl:ml-0 ${language === 'ar' ? 'mr-4' : 'ml-4'}`}>
                   <h4 className="text-base font-semibold text-slate-900 dark:text-white">{t('qualityGuarantee')}</h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('qualityDesc')}</p>
                 </div>
@@ -359,21 +350,14 @@ export const ProductDetails: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-20 pt-10 border-t border-slate-200 dark:border-slate-800">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">{t('youMightAlsoLike')}</h2>
-            <div className="flex gap-4 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar snap-x">
-              {relatedProducts.map(p => (
-                <div key={p.id} className="min-w-[200px] sm:min-w-[240px] snap-start">
-                  <ProductCard product={p} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      <ProductBottomNav
+        product={product}
+        selectedVariant={selectedVariant}
+        currentStock={currentStock}
+        onAddToCart={() => addToCart(product, selectedVariant || undefined)}
+      />
     </div>
   );
 };

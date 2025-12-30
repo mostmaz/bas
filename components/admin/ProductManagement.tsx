@@ -41,7 +41,7 @@ const uploadImageFromUrl = async (url: string): Promise<string> => {
   }
 };
 
-export const ProductManagement: React.FC<{ filter?: 'low-stock' }> = ({ filter }) => {
+export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'all' | 'low-stock' }> = ({ filter, initialTab }) => {
   const { products, deleteProduct, addProduct, updateProduct, refreshProducts } = useShop();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -78,7 +78,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock' }> = ({ filter }
     }
 
     // 2. Filter by "Low Stock" mode
-    if (filter === 'low-stock') {
+    if (filter === 'low-stock' || initialTab === 'low-stock') {
       result = result.filter(p => p.stock <= 10);
     }
 

@@ -5,8 +5,10 @@ import { supabase } from '../services/supabase';
 
 export const useBrandLogic = (isSupabaseConfigured: boolean, addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void) => {
     const [brands, setBrands] = useState<Brand[]>(() => isSupabaseConfigured ? [] : INITIAL_BRANDS);
+    const [isLoading, setIsLoading] = useState(true);
 
     const refreshBrands = async () => {
+        setIsLoading(true);
         if (isSupabaseConfigured) {
             try {
                 const { data, error } = await supabase.from('brands').select('*');
@@ -16,6 +18,7 @@ export const useBrandLogic = (isSupabaseConfigured: boolean, addToast: (msg: str
                 console.error("Error loading brands:", error);
             }
         }
+        setIsLoading(false);
     };
 
     const addBrand = async (name: string, logo?: string) => {
@@ -55,5 +58,5 @@ export const useBrandLogic = (isSupabaseConfigured: boolean, addToast: (msg: str
         }
     };
 
-    return { brands, setBrands, refreshBrands, addBrand, updateBrand, deleteBrand };
+    return { brands, setBrands, refreshBrands, addBrand, updateBrand, deleteBrand, isLoading };
 };
