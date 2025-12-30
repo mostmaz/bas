@@ -6,6 +6,7 @@ import { useShop } from '../context/ShopContext';
 import { chatWithShopAssistant } from '../services/geminiService';
 import { ChatMessage } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { renderMarkdown } from '../utils/markdownUtils';
 
 export const AiAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -151,75 +152,46 @@ export const AiAssistant: React.FC = () => {
     });
   };
 
-  // Function to parse text and render links for [Text](/url) pattern as Cards or Links
   const renderMessageContent = (text: string, role: 'user' | 'model') => {
-    // Split by the markdown link regex
-    const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+    return renderMarkdown(text, {
+      role,
+      onLinkClick: (url) => navigate(url),
+      renderProductCard: (productId, label) => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return null;
 
-    return parts.map((part, index) => {
-      const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-
-      if (match) {
-        const [_, label, url] = match;
-
-        // Check if it's a product link
-        if (url.startsWith('/product/')) {
-          const productId = url.split('/').pop();
-          const product = products.find(p => p.id === productId);
-
-          if (product) {
-            const isSelected = selectedProducts.has(product.id);
-            return (
-              <div
-                key={index}
-                className={`block my-3 bg-white dark:bg-slate-900 border ${isSelected ? 'border-purple-500 ring-2 ring-purple-500/20' : 'border-slate-200 dark:border-slate-700'} rounded-xl overflow-hidden shadow-sm transition-all group max-w-[240px] relative`}
-              >
-                <div className="absolute top-2 right-2 z-10">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={(e) => {
-                      toggleProductSelection(product.id);
-                    }}
-                    className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                  />
-                </div>
-                <div className="flex p-2 gap-3 items-center text-left cursor-pointer" onClick={() => navigate(url)}>
-                  <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{product.brand}</p>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight mb-0.5 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{product.name}</h4>
-                    <p className="text-xs font-bold text-purple-600 dark:text-purple-400">IQD {product.price.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          }
-        }
-
-        // Fallback for non-product links or missing products
+        const isSelected = selectedProducts.has(product.id);
         return (
-          <button
-            key={index}
-            onClick={() => navigate(url)}
-            className={`inline-flex items-center gap-1 underline font-bold mx-1 hover:opacity-80 transition-opacity ${role === 'user'
-              ? 'text-white decoration-white'
-              : 'text-purple-600 dark:text-purple-400 decoration-purple-600 dark:decoration-purple-400'
-              }`}
+          <div
+            key={productId}
+            className={`block my-3 bg-white dark:bg-slate-900 border ${isSelected ? 'border-purple-500 ring-2 ring-purple-500/20' : 'border-slate-200 dark:border-slate-700'} rounded-xl overflow-hidden shadow-sm transition-all group max-w-[240px] relative`}
           >
-            {label}
-          </button>
+            <div className="absolute top-2 right-2 z-10">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => toggleProductSelection(product.id)}
+                className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+              />
+            </div>
+            <div className="flex p-2 gap-3 items-center text-left cursor-pointer" onClick={() => navigate(`/product/${product.id}`)}>
+              <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{product.brand}</p>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight mb-0.5 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{product.name}</h4>
+                <p className="text-xs font-bold text-purple-600 dark:text-purple-400">IQD {product.price.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
         );
       }
-
-      return <span key={index}>{part}</span>;
     });
   };
 

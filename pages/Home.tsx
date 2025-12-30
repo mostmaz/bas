@@ -78,30 +78,36 @@ export const Home: React.FC = () => {
           return null;
         };
 
-        let extractedColors: string[] = [];
+        // 1. Extract from variants (New System)
+        const variantColors = product.variants ? product.variants.map(v => normalize(v.color)).filter(Boolean) : [];
+
+        // 2. Extract from colors array (Legacy System)
+        let legacyColors: (string | null)[] = [];
         if (typeof pColors === 'string') {
           try {
             const parsed = JSON.parse(pColors);
-            if (Array.isArray(parsed)) extractedColors = parsed.map(normalize).filter(Boolean) as string[];
-            else extractedColors = [normalize(parsed)].filter(Boolean) as string[];
+            if (Array.isArray(parsed)) legacyColors = parsed.map(normalize);
+            else legacyColors = [normalize(parsed)];
           } catch {
-            extractedColors = [normalize(pColors)].filter(Boolean) as string[];
+            legacyColors = [normalize(pColors)];
           }
         } else if (Array.isArray(pColors)) {
-          extractedColors = pColors.flat().map(item => {
+          legacyColors = pColors.flat().map(item => {
             if (typeof item === 'string') {
               if (item.startsWith('[') || item.startsWith('{')) {
                 try {
                   const parsed = JSON.parse(item);
-                  if (Array.isArray(parsed)) return parsed.map(normalize).filter(Boolean);
-                  return [normalize(parsed)].filter(Boolean);
-                } catch { return [normalize(item)].filter(Boolean); }
+                  if (Array.isArray(parsed)) return parsed.map(normalize);
+                  return [normalize(parsed)];
+                } catch { return [normalize(item)]; }
               }
-              return [normalize(item)].filter(Boolean);
+              return [normalize(item)];
             }
             return [];
-          }).flat() as string[];
+          }).flat();
         }
+
+        const extractedColors = [...variantColors, ...legacyColors].filter(Boolean) as string[];
 
         return filters.selectedColors.some(filterColor =>
           extractedColors.some(c => c.toLowerCase() === filterColor.toLowerCase())

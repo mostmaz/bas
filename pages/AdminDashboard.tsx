@@ -28,6 +28,7 @@ export const AdminDashboard: React.FC = () => {
   const [showSql, setShowSql] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'low-stock' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections' | 'maintenance'>('overview');
   const [copied, setCopied] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const checkHealth = async () => {
@@ -137,7 +138,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const ENCODED_PIN = 'MTUwODkzNDEyQ0Bj'; // Encoded PIN
+    const ENCODED_PIN = 'MTUwODkzNDEyQGM='; // Encoded PIN for 150893412@c
     if (btoa(pin) === ENCODED_PIN) {
       setIsAuthenticated(true);
       addToast('Access Granted', 'success');
@@ -276,6 +277,9 @@ create policy "Public Delete" on products for delete using (true);
                 autoFocus
               />
             </div>
+            <div className="text-xs text-red-500 font-mono">
+              Debug: {pin} | {btoa(pin)} | Exp: {ENCODED_PIN}
+            </div>
             <Button
               type="submit"
               className="w-full py-3 text-base font-semibold shadow-lg shadow-indigo-500/20"
@@ -291,8 +295,43 @@ create policy "Public Delete" on products for delete using (true);
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-slate-900">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 z-30">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <LayoutDashboard className="text-white h-5 w-5" />
+          </div>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Admin</h1>
+        </div>
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+        >
+          {isSidebarOpen ? <X className="h-6 w-6" /> : <Settings className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {/* Desktop Toggle Button (Floating) */}
+      <div className="hidden lg:block fixed top-6 left-6 z-[60]">
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className={`p-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl text-gray-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-300 ${isSidebarOpen ? 'translate-x-56 opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}`}
+          title={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
+        >
+          <LayoutDashboard className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Sidebar Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-slate-800 border-e border-gray-200 dark:border-slate-700 fixed inset-y-0 start-0 h-full z-20 hidden lg:flex flex-col">
+      <aside className={`w-64 bg-white dark:bg-slate-800 border-e border-gray-200 dark:border-slate-700 fixed inset-y-0 start-0 h-full z-50 flex flex-col transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
@@ -308,7 +347,7 @@ create policy "Public Delete" on products for delete using (true);
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4 mt-2">Main</div>
           <button
-            onClick={() => setActiveTab('overview')}
+            onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'overview'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
@@ -319,7 +358,7 @@ create policy "Public Delete" on products for delete using (true);
           </button>
 
           <button
-            onClick={() => setActiveTab('orders')}
+            onClick={() => { setActiveTab('orders'); setIsSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'orders'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
@@ -331,7 +370,7 @@ create policy "Public Delete" on products for delete using (true);
 
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4 mt-6">Catalog</div>
           <button
-            onClick={() => setActiveTab('inventory')}
+            onClick={() => { setActiveTab('inventory'); setIsSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'inventory' || activeTab === 'low-stock'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
@@ -342,7 +381,7 @@ create policy "Public Delete" on products for delete using (true);
           </button>
 
           <button
-            onClick={() => setActiveTab('brands')}
+            onClick={() => { setActiveTab('brands'); setIsSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'brands'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
@@ -353,7 +392,7 @@ create policy "Public Delete" on products for delete using (true);
           </button>
 
           <button
-            onClick={() => setActiveTab('devices')}
+            onClick={() => { setActiveTab('devices'); setIsSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'devices'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
@@ -364,7 +403,7 @@ create policy "Public Delete" on products for delete using (true);
           </button>
 
           <button
-            onClick={() => setActiveTab('collections')}
+            onClick={() => { setActiveTab('collections'); setIsSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'collections'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
@@ -376,7 +415,7 @@ create policy "Public Delete" on products for delete using (true);
 
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4 mt-6">Marketing</div>
           <button
-            onClick={() => setActiveTab('carousel')}
+            onClick={() => { setActiveTab('carousel'); setIsSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'carousel'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
@@ -387,7 +426,7 @@ create policy "Public Delete" on products for delete using (true);
           </button>
 
           <button
-            onClick={() => setActiveTab('discounts')}
+            onClick={() => { setActiveTab('discounts'); setIsSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'discounts'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
@@ -399,7 +438,7 @@ create policy "Public Delete" on products for delete using (true);
 
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4 mt-6">System</div>
           <button
-            onClick={() => setActiveTab('maintenance')}
+            onClick={() => { setActiveTab('maintenance'); setIsSidebarOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'maintenance'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
@@ -422,7 +461,7 @@ create policy "Public Delete" on products for delete using (true);
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ms-64 p-4 lg:p-8 overflow-y-auto h-screen">
+      <main className={`flex-1 ${isSidebarOpen ? 'lg:ms-64' : ''} p-4 lg:p-8 overflow-y-auto h-screen pt-20 lg:pt-8 transition-all duration-300`}>
         {/* Schema Error Alert */}
         {schemaError && (
           <div className="mb-6 bg-red-50 dark:bg-red-900/20 border-s-4 border-red-500 p-4 rounded-e-xl shadow-sm animate-in slide-in-from-top-2">
@@ -506,7 +545,7 @@ create policy "Public Delete" on products for delete using (true);
               </p>
               <button
                 onClick={() => setShowSql(!showSql)}
-                className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-200 dark:border-indigo-800"
+                className="bg-indigo-5 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-200 dark:border-indigo-800"
               >
                 {showSql ? 'Hide Setup Script' : 'View Database Setup Script'}
               </button>

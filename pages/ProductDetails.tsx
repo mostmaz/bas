@@ -8,6 +8,7 @@ import { ProductVariant } from '../types';
 import { ProductBottomNav } from '../components/ProductBottomNav';
 
 import { optimizeImage } from '../utils/imageUtils';
+import { renderMarkdown } from '../utils/markdownUtils';
 
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -221,7 +222,7 @@ export const ProductDetails: React.FC = () => {
           {/* Details Section */}
           <div className="flex flex-col justify-center px-4 sm:px-0">
             {/* Color/Variant Selection */}
-            {availableVariants.length > 0 && (
+            {(availableVariants.length > 0 || (product.colors && product.colors.length > 0)) && (
               <div className="mb-8 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                 <div className={`flex justify-between items-center mb-4 ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('selectColor')}</h3>
@@ -231,19 +232,29 @@ export const ProductDetails: React.FC = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  {availableVariants.map((variant) => (
-                    <button
-                      key={variant.id}
-                      onClick={() => handleVariantSelect(variant)}
-                      className={`w-8 h-8 rounded-full border-2 shadow-sm flex items-center justify-center transition-all relative ${selectedVariant?.id === variant.id ? 'border-purple-600 scale-110 ring-2 ring-purple-500/10' : 'border-slate-200 dark:border-slate-600 hover:scale-105'}`}
-                      style={{ backgroundColor: variant.color }}
-                      title={`${variant.stock} available`}
-                    >
-                      {selectedVariant?.id === variant.id && (
-                        <Check className={`h-6 w-6 drop-shadow-md ${['#FFFFFF', '#ffffff', '#fff'].includes(variant.color) ? 'text-black' : 'text-white'}`} />
-                      )}
-                    </button>
-                  ))}
+                  {availableVariants.length > 0 ? (
+                    availableVariants.map((variant) => (
+                      <button
+                        key={variant.id}
+                        onClick={() => handleVariantSelect(variant)}
+                        className={`w-8 h-8 rounded-full border-2 shadow-sm flex items-center justify-center transition-all relative ${selectedVariant?.id === variant.id ? 'border-purple-600 scale-110 ring-2 ring-purple-500/10' : 'border-slate-200 dark:border-slate-600 hover:scale-105'}`}
+                        style={{ backgroundColor: variant.color }}
+                        title={`${variant.stock} available`}
+                      >
+                        {selectedVariant?.id === variant.id && (
+                          <Check className={`h-6 w-6 drop-shadow-md ${['#FFFFFF', '#ffffff', '#fff'].includes(variant.color) ? 'text-black' : 'text-white'}`} />
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    product.colors?.map((color, idx) => (
+                      <button
+                        key={idx}
+                        className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center transition-all hover:scale-105"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))
+                  )}
                 </div>
 
                 {selectedVariant && selectedVariant.stock < 5 && (
@@ -307,11 +318,9 @@ export const ProductDetails: React.FC = () => {
               </div>
             )}
 
-            <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-10">
-              {product.description}
-              <br /><br />
-              {t('genericProductDesc')}
-            </p>
+            <div className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-10 space-y-4">
+              {renderMarkdown(product.description || '')}
+            </div>
 
             {/* Rating */}
             <div className="flex items-center mb-8">

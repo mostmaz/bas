@@ -7,6 +7,7 @@ import { ProductFormModal } from './ProductFormModal';
 import { CollectionFormModal } from './CollectionFormModal';
 import * as XLSX from 'xlsx';
 import { supabase } from '../../services/supabase';
+import { generateProductTags } from '../../services/geminiService';
 
 // Helper to upload image from URL directly to server
 const uploadImageFromUrl = async (url: string): Promise<string> => {
@@ -387,7 +388,9 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
   };
 
   const [isFixingImages, setIsFixingImages] = useState(false);
+  const [isFixingTags, setIsFixingTags] = useState(false);
   const [fixProgress, setFixProgress] = useState({ current: 0, total: 0 });
+  const [fixTagsProgress, setFixTagsProgress] = useState({ current: 0, total: 0 });
 
   const handleFixImages = async () => {
     if (!window.confirm("This will scan all products for base64 images and upload them to the server. This may take a while. Continue?")) return;
@@ -611,6 +614,17 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
 
           <Button
             variant="outline"
+            onClick={handleFixTags}
+            disabled={isFixingTags}
+            className="flex items-center gap-2 bg-white dark:bg-slate-800 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-900/20"
+            title="Generate Smart Tags for Search"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFixingTags ? 'animate-spin' : ''}`} />
+            Fix Tags
+          </Button>
+
+          <Button
+            variant="outline"
             onClick={handleFixImages}
             disabled={isFixingImages}
             className="flex items-center gap-2 bg-white dark:bg-slate-800 border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900/20"
@@ -655,8 +669,8 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
                     key={page}
                     onClick={() => setCurrentPage(page)}
                     className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                        ? 'bg-indigo-600 text-white shadow-md'
-                        : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
                       }`}
                   >
                     {page}

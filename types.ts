@@ -28,6 +28,7 @@ export interface Product {
   giftProductId?: string; // New: ID of a product to be added as a free gift
   bonusMessage?: string; // New: Message to display when a bonus product is available
   customNotification?: string; // New: Special notification message for this product
+  tags?: string[]; // New: AI-generated tags for smart search
 }
 
 export interface CartItem extends Product {

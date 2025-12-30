@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Upload, Wand2, Loader2, Trash2, Check, Plus, Image as ImageIcon } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Product, ProductVariant } from '../../types';
-import { generateProductDescription } from '../../services/geminiService';
+import { generateProductDescription, generateProductTags } from '../../services/geminiService';
 import { useShop } from '../../context/ShopContext';
 import { useToast } from '../../context/ToastContext';
 import { compressImage } from '../../utils/imageCompression';
@@ -38,6 +38,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
     const { addToast } = useToast();
     const [isGenerating, setIsGenerating] = useState(false);
     const [isProcessingImage, setIsProcessingImage] = useState(false);
+    const [isGeneratingTags, setIsGeneratingTags] = useState(false);
     const [isSaleEnabled, setIsSaleEnabled] = useState(false);
 
     // Variant Form State
@@ -58,7 +59,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         images: [] as string[],
         stock: '10',
         colors: [] as string[], // Legacy simple colors
-        variants: [] as ProductVariant[]
+        variants: [] as ProductVariant[],
+        tags: [] as string[]
     };
 
     const [formData, setFormData] = useState(defaultState);
@@ -88,7 +90,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                 images: productToUse.images && productToUse.images.length > 0 ? productToUse.images : [productToUse.image],
                 stock: productToUse.stock.toString(),
                 colors: productToUse.colors || [],
-                variants: productToUse.variants || []
+                variants: productToUse.variants || [],
+                tags: productToUse.tags || []
             });
             setIsSaleEnabled(!!productToUse.salePrice);
         } else {
@@ -223,6 +226,22 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         }));
     };
 
+    const handleGenerateTags = async () => {
+        if (!formData.name) return addToast("Please enter a product name first.", "error");
+
+        setIsGeneratingTags(true);
+        try {
+            const tags = await generateProductTags(formData.name, formData.description);
+            setFormData(prev => ({ ...prev, tags }));
+            addToast(`Generated ${tags.length} smart tags`, 'success');
+        } catch (e) {
+            console.error(e);
+            addToast("AI Tag Generation failed", 'error');
+        } finally {
+            setIsGeneratingTags(false);
+        }
+    };
+
     const handleGenerateDescription = async () => {
         if (!formData.name) return alert("Please enter a product name first.");
         if (formData.images.length === 0) return alert("Please upload an image first so the AI can see the product.");
@@ -265,7 +284,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
             images: finalImages,
             stock: parseInt(formData.stock),
             colors: formData.colors,
-            variants: formData.variants
+            variants: formData.variants,
+            tags: formData.tags
         });
     };
 
@@ -574,6 +594,51 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             placeholder="Enter description or generate one..."
+                        />
+                    </div>
+
+                    {/* Smart Search Tags */}
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">Smart Search Tags</label>
+                            <button
+                                type="button"
+                                onClick={handleGenerateTags}
+                                disabled={isGeneratingTags || !formData.name}
+                                className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 flex items-center gap-1 transition-colors disabled:opacity-50"
+                            >
+                                <Wand2 className="h-3 w-3" />
+                                {isGeneratingTags ? 'Generating...' : 'Generate Smart Tags'}
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2 p-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md min-h-[40px]">
+                            {formData.tags && formData.tags.length > 0 ? (
+                                formData.tags.map((tag, idx) => (
+                                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full border border-purple-100 dark:border-purple-800">
+                                        {tag}
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, tags: prev.tags.filter((_, i) => i !== idx) }))}>
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </span>
+                                ))
+                            ) : (
+                                <span className="text-xs text-gray-400 italic">No tags generated yet. Use the button above to generate smart tags for search.</span>
+                            )}
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Add tag manually and press Enter"
+                            className="mt-2 w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-sm dark:text-white outline-none"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const val = e.currentTarget.value.trim();
+                                    if (val && !formData.tags.includes(val)) {
+                                        setFormData(prev => ({ ...prev, tags: [...prev.tags, val] }));
+                                        e.currentTarget.value = '';
+                                    }
+                                }
+                            }}
                         />
                     </div>
 

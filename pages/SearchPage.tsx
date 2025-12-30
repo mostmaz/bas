@@ -57,7 +57,8 @@ export const SearchPage: React.FC = () => {
         (p.name || '').toLowerCase().includes(lowerTerm) ||
         (p.description || '').toLowerCase().includes(lowerTerm) ||
         (p.category || '').toLowerCase().includes(lowerTerm) ||
-        (p.brand || '').toLowerCase().includes(lowerTerm)
+        (p.brand || '').toLowerCase().includes(lowerTerm) ||
+        (p.tags || []).some(tag => tag.toLowerCase().includes(lowerTerm))
       );
     });
   });

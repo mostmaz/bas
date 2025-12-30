@@ -186,3 +186,36 @@ export const generateBrandLogo = async (brandName: string): Promise<string> => {
     return "";
   }
 };
+/**
+ * Generates relevant tags for a product for smart search.
+ */
+export const generateProductTags = async (
+  productName: string,
+  description: string = ""
+): Promise<string[]> => {
+  try {
+    const genAIInstance = getGenAI();
+    if (!genAIInstance) return [];
+
+    const model = genAIInstance.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const prompt = `Generate a list of 10-15 relevant search tags/keywords for a mobile accessory named "${productName}". 
+    Description: ${description}
+    
+    Requirements:
+    1. Include both Arabic and English terms.
+    2. Include common misspellings or variations.
+    3. Include the device name if mentioned.
+    4. Include the brand name.
+    5. Include the category (e.g., case, cover, screen protector).
+    6. Return ONLY a comma-separated list of tags. No other text.`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    return text.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean);
+  } catch (error) {
+    console.error("Gemini Tag Gen Error:", error);
+    return [];
+  }
+};

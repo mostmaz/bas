@@ -57,7 +57,6 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
 
     // Extract unique colors from products with strict validation
     const availableColors = Array.from(new Set(products.flatMap(p => {
-        let c = p.colors;
         const normalize = (col: string) => {
             if (!col || typeof col !== 'string') return null;
             const trimmed = col.trim();
@@ -68,32 +67,37 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
             return null;
         };
 
-        if (typeof c === 'string') {
+        // 1. Extract from variants (New System)
+        const variantColors = p.variants ? p.variants.map(v => normalize(v.color)).filter(Boolean) : [];
+
+        // 2. Extract from colors array (Legacy System)
+        let legacyColors: (string | null)[] = [];
+        if (typeof p.colors === 'string') {
             try {
-                const parsed = JSON.parse(c);
-                if (Array.isArray(parsed)) return parsed.map(normalize).filter(Boolean);
-                return [normalize(parsed)].filter(Boolean);
+                const parsed = JSON.parse(p.colors);
+                if (Array.isArray(parsed)) legacyColors = parsed.map(normalize);
+                else legacyColors = [normalize(parsed)];
             } catch {
-                return [normalize(c)].filter(Boolean);
+                legacyColors = [normalize(p.colors)];
             }
-        }
-        if (Array.isArray(c)) {
-            return c.flat().map(item => {
+        } else if (Array.isArray(p.colors)) {
+            legacyColors = p.colors.flat().map(item => {
                 if (typeof item === 'string') {
                     if (item.startsWith('[') || item.startsWith('{')) {
                         try {
                             const parsed = JSON.parse(item);
-                            if (Array.isArray(parsed)) return parsed.map(normalize).filter(Boolean);
-                            return [normalize(parsed)].filter(Boolean);
-                        } catch { return [normalize(item)].filter(Boolean); }
+                            if (Array.isArray(parsed)) return parsed.map(normalize);
+                            return [normalize(parsed)];
+                        } catch { return [normalize(item)]; }
                     }
-                    return [normalize(item)].filter(Boolean);
+                    return [normalize(item)];
                 }
                 return [];
             }).flat();
         }
-        return [];
-    }).flat())).filter(Boolean) as string[];
+
+        return [...variantColors, ...legacyColors].filter(Boolean) as string[];
+    }))).filter(Boolean) as string[];
 
     // console.log('Available Colors (Strict):', availableColors);
 
