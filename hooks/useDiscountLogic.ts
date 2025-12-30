@@ -12,6 +12,7 @@ const mapDiscountFromDB = (d: any): DiscountCode => ({
     minOrderAmount: d.minorderamount !== undefined ? d.minorderamount : (d.minOrderAmount || 0),
     targetProductIds: d.target_product_ids || d.targetProductIds,
     minQuantity: d.min_quantity !== undefined ? d.min_quantity : d.minQuantity,
+    excludeSaleItems: d.exclude_sale_items !== undefined ? d.exclude_sale_items : (d.excludeSaleItems || false),
     isAutomatic: d.is_automatic !== undefined ? d.is_automatic : (d.isAutomatic || false),
     name: d.name,
     isActive: d.isactive !== undefined ? d.isactive : (d.isActive !== undefined ? d.isActive : true)
@@ -41,6 +42,7 @@ export const useDiscountLogic = (isSupabaseConfigured: boolean, addToast: (msg: 
                 minOrderAmount: discount.minOrderAmount,
                 target_product_ids: discount.targetProductIds,
                 min_quantity: discount.minQuantity,
+                exclude_sale_items: discount.excludeSaleItems,
                 is_automatic: discount.isAutomatic,
                 name: discount.name,
                 isActive: discount.isActive

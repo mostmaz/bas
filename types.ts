@@ -30,7 +30,24 @@ export interface Product {
   customNotification?: string; // New: Special notification message for this product
 }
 
+export interface CartItem extends Product {
+  quantity: number;
+  selectedVariant?: ProductVariant;
+}
 
+export interface DiscountCode {
+  id?: string;
+  code: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  minOrderAmount?: number;
+  targetProductIds?: string[];
+  minQuantity?: number;
+  excludeSaleItems?: boolean;
+  isAutomatic?: boolean;
+  name?: string;
+  isActive: boolean;
+}
 
 export interface ChatMessage {
   id: string;

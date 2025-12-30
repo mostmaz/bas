@@ -320,4 +320,11 @@ export const IRAQI_GOVERNORATES = [
     { value: 'Halabja', labelKey: 'halabja' }
 ];
 
+export const EMAILJS_CONFIG = {
+    SERVICE_ID: '320254',
+    TEMPLATE_ID: 'template_l5a9ibb',
+    PUBLIC_KEY: 't87f32aAOSQ9bpd22',
+    TARGET_EMAIL: 'mostmaz73@gmail.com'
+};
+
 export const INITIAL_ORDERS: any[] = [];

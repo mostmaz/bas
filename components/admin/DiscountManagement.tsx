@@ -14,6 +14,7 @@ export const DiscountManagement: React.FC = () => {
     minOrderAmount: '',
     targetProductIds: [] as string[],
     minQuantity: '',
+    excludeSaleItems: false,
     isAutomatic: false,
     name: ''
   });
@@ -33,11 +34,12 @@ export const DiscountManagement: React.FC = () => {
         minOrderAmount: Number(formData.minOrderAmount) || 0,
         targetProductIds: formData.targetProductIds.length > 0 ? formData.targetProductIds : undefined,
         minQuantity: Number(formData.minQuantity) || undefined,
+        excludeSaleItems: formData.excludeSaleItems,
         isAutomatic: formData.isAutomatic,
         name: formData.name,
         isActive: true
       });
-      setFormData({ code: '', type: 'percentage', value: '', minOrderAmount: '', targetProductIds: [], minQuantity: '', isAutomatic: false, name: '' });
+      setFormData({ code: '', type: 'percentage', value: '', minOrderAmount: '', targetProductIds: [], minQuantity: '', excludeSaleItems: false, isAutomatic: false, name: '' });
     } catch (error) {
       console.error(error);
       alert('Failed to add discount code');
@@ -174,6 +176,19 @@ export const DiscountManagement: React.FC = () => {
               </div>
 
               <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                    checked={formData.excludeSaleItems}
+                    onChange={e => setFormData({ ...formData, excludeSaleItems: e.target.checked })}
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Exclude Items on Sale</span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 ml-6">If checked, this discount will not apply to products that are already discounted.</p>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Target Products (Optional)</label>
                 <div className="border border-gray-300 dark:border-slate-600 rounded-lg overflow-hidden">
                   <div className="p-2 border-b border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900">
@@ -257,6 +272,7 @@ export const DiscountManagement: React.FC = () => {
                         {discount.type === 'percentage' ? `${discount.value}% Off` : `IQD ${discount.value.toLocaleString()} Off`}
                         {discount.minOrderAmount ? ` • Min Order: IQD ${discount.minOrderAmount.toLocaleString()}` : ''}
                         {discount.minQuantity ? ` • Min Qty: ${discount.minQuantity}` : ''}
+                        {discount.excludeSaleItems ? ` • Excludes Sale Items` : ''}
                         {discount.targetProductIds && discount.targetProductIds.length > 0 ? ` • ${discount.targetProductIds.length} Specific Products` : ''}
                       </div>
                     </div>

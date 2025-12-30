@@ -106,19 +106,19 @@ export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' |
     const calculateDiscountValue = (discount: DiscountCode, currentCart: CartItem[], currentTotal: number) => {
         let eligibleAmount = 0;
 
-        if (discount.targetProductIds && discount.targetProductIds.length > 0) {
-            // Only apply to specific products
-            eligibleAmount = currentCart.reduce((sum, item) => {
-                if (discount.targetProductIds!.includes(item.id)) {
-                    const price = item.salePrice || item.price;
-                    return sum + (price * item.quantity);
-                }
-                return sum;
-            }, 0);
-        } else {
-            // Apply to whole cart
-            eligibleAmount = currentTotal;
-        }
+        eligibleAmount = currentCart.reduce((sum, item) => {
+            // 1. Check Target Products
+            if (discount.targetProductIds && discount.targetProductIds.length > 0) {
+                if (!discount.targetProductIds.includes(item.id)) return sum;
+            }
+
+            // 2. Check Sale Exclusion
+            const isOnSale = (item.salePrice !== undefined && item.salePrice < item.price);
+            if (discount.excludeSaleItems && isOnSale) return sum;
+
+            const price = item.salePrice || item.price;
+            return sum + (price * item.quantity);
+        }, 0);
 
         let savings = 0;
         if (discount.type === 'percentage') {
