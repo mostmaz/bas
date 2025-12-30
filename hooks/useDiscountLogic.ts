@@ -39,13 +39,13 @@ export const useDiscountLogic = (isSupabaseConfigured: boolean, addToast: (msg: 
                 code: discount.code,
                 type: discount.type,
                 value: discount.value,
-                minOrderAmount: discount.minOrderAmount,
+                minorderamount: discount.minOrderAmount,
                 target_product_ids: discount.targetProductIds,
                 min_quantity: discount.minQuantity,
                 exclude_sale_items: discount.excludeSaleItems,
                 is_automatic: discount.isAutomatic,
                 name: discount.name,
-                isActive: discount.isActive
+                isactive: discount.isActive
             };
             const { error } = await supabase.from('discounts').insert([dbDiscount]);
             if (error) throw error;
