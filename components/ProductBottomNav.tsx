@@ -19,7 +19,7 @@ export const ProductBottomNav: React.FC<ProductBottomNavProps> = ({
 }) => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const { cart, t } = useShop();
+    const { cart, t, toggleCart } = useShop();
 
     const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -69,7 +69,7 @@ export const ProductBottomNav: React.FC<ProductBottomNavProps> = ({
                         </button>
 
                         <button
-                            onClick={() => navigate('/cart')}
+                            onClick={toggleCart}
                             className="flex-1 h-full flex flex-col items-center justify-center gap-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 relative"
                         >
                             <div className="relative">

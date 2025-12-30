@@ -30,10 +30,10 @@ export const CartDrawer: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={toggleCart} />
-      
+
       <div className="fixed inset-y-0 right-0 max-w-md w-full flex">
         <div className="w-full h-full flex flex-col bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-white/10 transform transition-transform">
-          
+
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-6 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
@@ -91,14 +91,14 @@ export const CartDrawer: React.FC = () => {
                       </div>
                       <div className="flex flex-1 items-end justify-between text-sm">
                         <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800">
-                          <button 
+                          <button
                             onClick={() => updateCartQuantity(item.id, -1)}
                             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700 rounded-l-lg transition-all"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
                           <span className="px-2 font-medium text-slate-900 dark:text-white min-w-[1.5rem] text-center">{item.quantity}</span>
-                          <button 
+                          <button
                             onClick={() => updateCartQuantity(item.id, 1)}
                             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700 rounded-r-lg transition-all"
                           >
@@ -125,17 +125,17 @@ export const CartDrawer: React.FC = () => {
           {/* Footer */}
           {cart.length > 0 && (
             <div className="border-t border-slate-200 dark:border-white/10 px-6 py-6 bg-slate-50 dark:bg-slate-900">
-              
+
               {/* Discount Code Input */}
               <div className="mb-6">
                 {appliedDiscount ? (
                   <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 rounded-xl">
                     <div className="flex items-center gap-2">
-                       <Tag className="h-4 w-4 text-green-600 dark:text-green-400" />
-                       <span className="font-bold text-green-700 dark:text-green-300">{appliedDiscount.code}</span>
-                       <span className="text-xs text-green-600 dark:text-green-400">
-                         (-{appliedDiscount.type === 'percentage' ? `${appliedDiscount.value}%` : `IQD ${appliedDiscount.value}`})
-                       </span>
+                      <Tag className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span className="font-bold text-green-700 dark:text-green-300">{appliedDiscount.code}</span>
+                      <span className="text-xs text-green-600 dark:text-green-400">
+                        (-{appliedDiscount.type === 'percentage' ? `${appliedDiscount.value}%` : `IQD ${appliedDiscount.value}`})
+                      </span>
                     </div>
                     <button onClick={removeDiscount} className="text-slate-400 hover:text-red-500 transition-colors">
                       <X className="h-4 w-4" />
@@ -143,9 +143,9 @@ export const CartDrawer: React.FC = () => {
                   </div>
                 ) : (
                   <form onSubmit={handleApplyDiscount} className="flex gap-2">
-                    <input 
-                      type="text" 
-                      placeholder="Enter discount code" 
+                    <input
+                      type="text"
+                      placeholder="Enter discount code"
                       className="flex-1 px-4 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-purple-500"
                       value={discountCode}
                       onChange={(e) => setDiscountCode(e.target.value)}
@@ -164,7 +164,15 @@ export const CartDrawer: React.FC = () => {
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-sm font-medium text-green-600 dark:text-green-400">
-                    <p className="flex items-center gap-1"><Tag className="h-3 w-3" /> Discount</p>
+                    <p className="flex items-center gap-1">
+                      <Tag className="h-3 w-3" />
+                      {t('discount')}
+                      {appliedDiscount && (
+                        <span className="text-xs ml-1 opacity-80">
+                          ({appliedDiscount.name || appliedDiscount.code})
+                        </span>
+                      )}
+                    </p>
                     <p>- IQD {discountAmount.toLocaleString()}</p>
                   </div>
                 )}
@@ -173,8 +181,8 @@ export const CartDrawer: React.FC = () => {
                   <p>IQD {shippingFee.toLocaleString()}</p>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-800 pt-3 mt-1">
-                   <p>{t('total')}</p>
-                   <p className="text-purple-600 dark:text-purple-400">IQD {finalTotalWithShipping.toLocaleString()}</p>
+                  <p>{t('total')}</p>
+                  <p className="text-purple-600 dark:text-purple-400">IQD {finalTotalWithShipping.toLocaleString()}</p>
                 </div>
               </div>
 
