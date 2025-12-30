@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ENCODED_PIN } from '../constants';
 import { DashboardOverview } from '../components/admin/DashboardOverview';
 import { ProductManagement } from '../components/admin/ProductManagement';
 import { BrandManagement } from '../components/admin/BrandManagement';
@@ -138,8 +139,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const ENCODED_PIN = 'MTUwODkzNDEyQGM='; // Encoded PIN for 150893412@c
-    if (btoa(pin) === ENCODED_PIN) {
+    if (btoa(pin.trim()) === ENCODED_PIN) {
       setIsAuthenticated(true);
       addToast('Access Granted', 'success');
     } else {
@@ -277,9 +277,7 @@ create policy "Public Delete" on products for delete using (true);
                 autoFocus
               />
             </div>
-            <div className="text-xs text-red-500 font-mono">
-              Debug: {pin} | {btoa(pin)} | Exp: {ENCODED_PIN}
-            </div>
+
             <Button
               type="submit"
               className="w-full py-3 text-base font-semibold shadow-lg shadow-indigo-500/20"
@@ -331,7 +329,7 @@ create policy "Public Delete" on products for delete using (true);
       )}
 
       {/* Sidebar */}
-      <aside className={`w-64 bg-white dark:bg-slate-800 border-e border-gray-200 dark:border-slate-700 fixed inset-y-0 start-0 h-full z-50 flex flex-col transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`w-64 bg-white dark:bg-slate-800 border-e border-gray-200 dark:border-slate-700 fixed inset-y-0 start-0 h-full z-50 flex flex-col transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'}`}>
         <div className="p-6 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">

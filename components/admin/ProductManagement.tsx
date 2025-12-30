@@ -392,6 +392,47 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
   const [fixProgress, setFixProgress] = useState({ current: 0, total: 0 });
   const [fixTagsProgress, setFixTagsProgress] = useState({ current: 0, total: 0 });
 
+  const handleFixTags = async () => {
+    if (!window.confirm("This will use AI to generate smart search tags for all products. This may take a while. Continue?")) return;
+
+    setIsFixingTags(true);
+    setFixTagsProgress({ current: 0, total: products.length });
+    let fixedCount = 0;
+
+    try {
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        setFixTagsProgress(prev => ({ ...prev, current: i + 1 }));
+
+        // Skip if tags already exist and we don't want to overwrite (optional, but let's overwrite for "Fix")
+        // Or maybe only if empty? Let's assume "Fix" means regenerate/ensure they exist.
+
+        try {
+          const tags = await generateProductTags(product.name, product.description || "");
+          if (tags && tags.length > 0) {
+            await updateProduct({
+              ...product,
+              tags: tags
+            });
+            fixedCount++;
+          }
+        } catch (e) {
+          console.error(`Failed to generate tags for ${product.name}`, e);
+        }
+      }
+
+      alert(`Tag generation complete! Updated ${fixedCount} products.`);
+      await refreshProducts();
+
+    } catch (error) {
+      console.error("Error fixing tags:", error);
+      alert("An error occurred while fixing tags. Check console for details.");
+    } finally {
+      setIsFixingTags(false);
+      setFixTagsProgress({ current: 0, total: 0 });
+    }
+  };
+
   const handleFixImages = async () => {
     if (!window.confirm("This will scan all products for base64 images and upload them to the server. This may take a while. Continue?")) return;
 
@@ -527,6 +568,44 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
         [field]: value
       }
     }));
+  };
+
+  const handleBulkPriceUpdate = async () => {
+    if (selectedProducts.size === 0) return;
+
+    const priceStr = prompt(`Enter new price for ${selectedProducts.size} selected products:`);
+    if (!priceStr) return;
+
+    const newPrice = parseFloat(priceStr);
+    if (isNaN(newPrice) || newPrice < 0) {
+      alert("Invalid price entered.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to set the price to ${newPrice} for ${selectedProducts.size} products?`)) return;
+
+    setIsSaving(true);
+    try {
+      const updates = Array.from(selectedProducts).map(async (id) => {
+        const product = products.find(p => p.id === id);
+        if (!product) return;
+
+        await updateProduct({
+          ...product,
+          price: newPrice
+        });
+      });
+
+      await Promise.all(updates);
+      await refreshProducts();
+      setSelectedProducts(new Set());
+      alert("Bulk price update successful!");
+    } catch (error) {
+      console.error("Bulk price update failed:", error);
+      alert("Failed to update prices. Check console.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSaveCollection = () => {
@@ -708,6 +787,27 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
         </div>
       )}
 
+      {isFixingTags && (
+        <div className="mb-6 bg-white dark:bg-slate-800 p-4 rounded-xl border border-purple-200 dark:border-purple-900/50 shadow-sm animate-in fade-in slide-in-from-top-2">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="font-medium text-purple-700 dark:text-purple-400">Generating Smart Tags...</span>
+            <span className="text-gray-500 dark:text-gray-400">
+              {fixTagsProgress.total > 0 ? Math.round((fixTagsProgress.current / fixTagsProgress.total) * 100) : 0}%
+              ({fixTagsProgress.current}/{fixTagsProgress.total})
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-slate-700 overflow-hidden">
+            <div
+              className="bg-purple-500 h-2.5 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${fixTagsProgress.total > 0 ? (fixTagsProgress.current / fixTagsProgress.total) * 100 : 0}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Please do not close this page. AI is analyzing your products to improve search.
+          </p>
+        </div>
+      )}
+
       {
         selectedProducts.size > 0 && (
           <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg flex items-center justify-between animate-in slide-in-from-top-2">
@@ -738,6 +838,14 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
                     className="bg-white dark:bg-slate-800"
                   >
                     <LinkIcon className="h-4 w-4 mr-2" /> Generate Page
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleBulkPriceUpdate}
+                    className="bg-white dark:bg-slate-800 text-green-600 border border-green-200 hover:bg-green-50"
+                  >
+                    <Layers className="h-4 w-4 mr-2" /> Update Price
                   </Button>
                   <Button
                     size="sm"

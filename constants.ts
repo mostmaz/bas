@@ -411,3 +411,5 @@ export const TWILIO_CONFIG = {
 };
 
 export const INITIAL_ORDERS: any[] = [];
+
+export const ENCODED_PIN = 'MTUwODkzNDEyQ0Bj'; // Encoded PIN for 150893412C@c
