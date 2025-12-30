@@ -400,6 +400,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
 
     if (!window.confirm("This will use AI to generate smart search tags for all products. This may take a while. Continue?")) return;
 
+    console.log("Starting tag generation...");
     setIsFixingTags(true);
     setFixTagsProgress({ current: 0, total: products.length });
     let fixedCount = 0;
@@ -407,13 +408,11 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
     try {
       for (let i = 0; i < products.length; i++) {
         const product = products[i];
+        console.log(`Processing product ${i + 1}/${products.length}: ${product.name}`);
         setFixTagsProgress(prev => ({ ...prev, current: i + 1 }));
 
-        // Small delay to ensure UI updates and progress bar is visible
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        // Skip if tags already exist and we don't want to overwrite (optional, but let's overwrite for "Fix")
-        // Or maybe only if empty? Let's assume "Fix" means regenerate/ensure they exist.
+        // Increased delay to ensure UI updates and progress bar is visible
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         try {
           const tags = await generateProductTags(product.name, product.description || "");
@@ -429,6 +428,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
         }
       }
 
+      console.log("Tag generation complete.");
       alert(`Tag generation complete! Updated ${fixedCount} products.`);
       await refreshProducts();
 
