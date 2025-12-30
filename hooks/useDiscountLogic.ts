@@ -10,6 +10,10 @@ const mapDiscountFromDB = (d: any): DiscountCode => ({
     type: d.type,
     value: d.value,
     minOrderAmount: d.minorderamount !== undefined ? d.minorderamount : (d.minOrderAmount || 0),
+    targetProductIds: d.target_product_ids || d.targetProductIds,
+    minQuantity: d.min_quantity !== undefined ? d.min_quantity : d.minQuantity,
+    isAutomatic: d.is_automatic !== undefined ? d.is_automatic : (d.isAutomatic || false),
+    name: d.name,
     isActive: d.isactive !== undefined ? d.isactive : (d.isActive !== undefined ? d.isActive : true)
 });
 
@@ -35,6 +39,10 @@ export const useDiscountLogic = (isSupabaseConfigured: boolean, addToast: (msg: 
                 type: discount.type,
                 value: discount.value,
                 minOrderAmount: discount.minOrderAmount,
+                target_product_ids: discount.targetProductIds,
+                min_quantity: discount.minQuantity,
+                is_automatic: discount.isAutomatic,
+                name: discount.name,
                 isActive: discount.isActive
             };
             const { error } = await supabase.from('discounts').insert([dbDiscount]);

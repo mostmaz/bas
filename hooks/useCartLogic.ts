@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CartItem, Product, ProductVariant, DiscountCode } from '../types';
 
-export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void, products: Product[]) => {
+export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void, products: Product[], availableDiscounts: DiscountCode[] = []) => {
     const [cart, setCart] = useState<CartItem[]>(() => {
         try {
             const saved = localStorage.getItem('cart');
@@ -102,25 +102,124 @@ export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' |
         return sum + (price * item.quantity);
     }, 0);
 
+    // Helper to calculate discount amount for a specific discount code
+    const calculateDiscountValue = (discount: DiscountCode, currentCart: CartItem[], currentTotal: number) => {
+        let eligibleAmount = 0;
+
+        if (discount.targetProductIds && discount.targetProductIds.length > 0) {
+            // Only apply to specific products
+            eligibleAmount = currentCart.reduce((sum, item) => {
+                if (discount.targetProductIds!.includes(item.id)) {
+                    const price = item.salePrice || item.price;
+                    return sum + (price * item.quantity);
+                }
+                return sum;
+            }, 0);
+        } else {
+            // Apply to whole cart
+            eligibleAmount = currentTotal;
+        }
+
+        let savings = 0;
+        if (discount.type === 'percentage') {
+            savings = eligibleAmount * (discount.value / 100);
+        } else {
+            savings = discount.value;
+        }
+
+        return Math.min(savings, currentTotal);
+    };
+
+    const calculateBestDiscount = (currentCart: CartItem[], currentTotal: number, discounts: DiscountCode[]): DiscountCode | null => {
+        const automaticDiscounts = discounts.filter(d => d.isActive && d.isAutomatic);
+        let bestDiscount: DiscountCode | null = null;
+        let maxSavings = 0;
+
+        for (const discount of automaticDiscounts) {
+            // Check conditions
+            if (discount.minOrderAmount && currentTotal < discount.minOrderAmount) continue;
+
+            const totalQuantity = currentCart.reduce((sum, item) => sum + item.quantity, 0);
+            if (discount.minQuantity && totalQuantity < discount.minQuantity) continue;
+
+            if (discount.targetProductIds && discount.targetProductIds.length > 0) {
+                const hasTargetProduct = currentCart.some(item => discount.targetProductIds!.includes(item.id));
+                if (!hasTargetProduct) continue;
+            }
+
+            const savings = calculateDiscountValue(discount, currentCart, currentTotal);
+
+            if (savings > maxSavings) {
+                maxSavings = savings;
+                bestDiscount = discount;
+            }
+        }
+
+        return bestDiscount;
+    };
+
+    // Validate discount on total change or cart change, and check for automatic discounts
+    useEffect(() => {
+        // 1. If a manual discount is applied, validate it
+        if (appliedDiscount && !appliedDiscount.isAutomatic) {
+            let isValid = true;
+            let reason = '';
+
+            // Check Min Order Amount
+            if (appliedDiscount.minOrderAmount && totalAmount < appliedDiscount.minOrderAmount) {
+                isValid = false;
+                reason = `Minimum spend of ${appliedDiscount.minOrderAmount} not met`;
+            }
+
+            // Check Min Quantity
+            const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+            if (isValid && appliedDiscount.minQuantity && totalQuantity < appliedDiscount.minQuantity) {
+                isValid = false;
+                reason = `Minimum quantity of ${appliedDiscount.minQuantity} items not met`;
+            }
+
+            // Check Target Products (if they were removed)
+            if (isValid && appliedDiscount.targetProductIds && appliedDiscount.targetProductIds.length > 0) {
+                const hasTargetProduct = cart.some(item => appliedDiscount.targetProductIds!.includes(item.id));
+                if (!hasTargetProduct) {
+                    isValid = false;
+                    reason = 'Required products for this discount are no longer in cart';
+                }
+            }
+
+            if (!isValid) {
+                setAppliedDiscount(null);
+                addToast(`Discount removed: ${reason}`, 'warning');
+            }
+        } else {
+            // 2. If no manual discount (or current is automatic), try to find the best automatic discount
+            const bestDiscount = calculateBestDiscount(cart, totalAmount, availableDiscounts);
+
+            if (bestDiscount) {
+                // If we found a best discount, and it's different from current, apply it
+                if (!appliedDiscount || appliedDiscount.id !== bestDiscount.id) {
+                    setAppliedDiscount(bestDiscount);
+                    // Only toast if it's a new application to avoid spam
+                    if (!appliedDiscount || appliedDiscount.id !== bestDiscount.id) {
+                        // Optional: Toast
+                    }
+                }
+            } else {
+                // If no automatic discount applies, and we had an automatic one, remove it
+                if (appliedDiscount && appliedDiscount.isAutomatic) {
+                    setAppliedDiscount(null);
+                }
+            }
+        }
+    }, [totalAmount, cart, appliedDiscount, addToast, availableDiscounts]);
+
+    // Calculate final discount amount for render
     let discountAmount = 0;
     if (appliedDiscount) {
-        if (appliedDiscount.type === 'percentage') {
-            discountAmount = totalAmount * (appliedDiscount.value / 100);
-        } else {
-            discountAmount = appliedDiscount.value;
-        }
-        if (discountAmount > totalAmount) discountAmount = totalAmount;
+        discountAmount = calculateDiscountValue(appliedDiscount, cart, totalAmount);
     }
 
     const finalTotal = Math.max(0, totalAmount - discountAmount);
-
-    // Validate discount on total change
-    useEffect(() => {
-        if (appliedDiscount && appliedDiscount.minOrderAmount && totalAmount < appliedDiscount.minOrderAmount) {
-            setAppliedDiscount(null);
-            addToast('Discount removed: Minimum spend not met', 'warning');
-        }
-    }, [totalAmount, appliedDiscount, addToast]);
 
     const applyDiscount = (code: string, discounts: DiscountCode[]) => {
         const discount = discounts.find(d => d.code === code && d.isActive);
@@ -128,6 +227,22 @@ export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' |
             if (discount.minOrderAmount && totalAmount < discount.minOrderAmount) {
                 addToast(`Minimum order amount of ${discount.minOrderAmount} not met`, 'error');
                 return;
+            }
+
+            // Check Min Quantity
+            const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+            if (discount.minQuantity && totalQuantity < discount.minQuantity) {
+                addToast(`Minimum quantity of ${discount.minQuantity} items not met`, 'error');
+                return;
+            }
+
+            // Check Target Products
+            if (discount.targetProductIds && discount.targetProductIds.length > 0) {
+                const hasTargetProduct = cart.some(item => discount.targetProductIds!.includes(item.id));
+                if (!hasTargetProduct) {
+                    addToast('This discount applies to specific products only', 'error');
+                    return;
+                }
             }
             setAppliedDiscount(discount);
             addToast('Discount applied', 'success');

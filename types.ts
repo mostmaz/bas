@@ -30,20 +30,7 @@ export interface Product {
   customNotification?: string; // New: Special notification message for this product
 }
 
-export interface DiscountCode {
-  id?: string;
-  code: string;
-  type: 'percentage' | 'fixed';
-  value: number;
-  minOrderAmount?: number;
-  isActive: boolean;
-}
 
-export interface CartItem extends Product {
-  quantity: number;
-  selectedVariant?: ProductVariant; // Track which variant was added
-  isGift?: boolean; // New: Flag to indicate if this item is a free gift
-}
 
 export interface ChatMessage {
   id: string;

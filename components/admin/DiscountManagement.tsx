@@ -1,22 +1,28 @@
 
 import React, { useState } from 'react';
-import { Plus, Trash2, Tag, Check, X } from 'lucide-react';
+import { Plus, Trash2, Tag, Check, X, Search } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 
 export const DiscountManagement: React.FC = () => {
-  const { discounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useShop();
+  const { discounts, addDiscount, deleteDiscount, toggleDiscountStatus, products } = useShop();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     code: '',
     type: 'percentage' as 'percentage' | 'fixed',
     value: '',
-    minOrderAmount: ''
+    minOrderAmount: '',
+    targetProductIds: [] as string[],
+    minQuantity: '',
+    isAutomatic: false,
+    name: ''
   });
+  const [productSearch, setProductSearch] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.code || !formData.value) return;
+    if (!formData.code && !formData.isAutomatic) return;
+    if (!formData.value) return;
 
     setIsSubmitting(true);
     try {
@@ -25,9 +31,13 @@ export const DiscountManagement: React.FC = () => {
         type: formData.type,
         value: Number(formData.value),
         minOrderAmount: Number(formData.minOrderAmount) || 0,
+        targetProductIds: formData.targetProductIds.length > 0 ? formData.targetProductIds : undefined,
+        minQuantity: Number(formData.minQuantity) || undefined,
+        isAutomatic: formData.isAutomatic,
+        name: formData.name,
         isActive: true
       });
-      setFormData({ code: '', type: 'percentage', value: '', minOrderAmount: '' });
+      setFormData({ code: '', type: 'percentage', value: '', minOrderAmount: '', targetProductIds: [], minQuantity: '', isAutomatic: false, name: '' });
     } catch (error) {
       console.error(error);
       alert('Failed to add discount code');
@@ -48,6 +58,22 @@ export const DiscountManagement: React.FC = () => {
     }
   };
 
+  const toggleProductSelection = (productId: string) => {
+    setFormData(prev => {
+      const current = prev.targetProductIds;
+      if (current.includes(productId)) {
+        return { ...prev, targetProductIds: current.filter(id => id !== productId) };
+      } else {
+        return { ...prev, targetProductIds: [...current, productId] };
+      }
+    });
+  };
+
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+    p.category.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
   return (
     <div className="animate-in fade-in duration-500">
       <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6">Discount Codes</h2>
@@ -61,15 +87,41 @@ export const DiscountManagement: React.FC = () => {
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Code</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. SUMMER2024"
-                  className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
-                  value={formData.code}
-                  onChange={e => setFormData({ ...formData, code: e.target.value })}
-                />
+                <label className="flex items-center gap-2 mb-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                    checked={formData.isAutomatic}
+                    onChange={e => setFormData({ ...formData, isAutomatic: e.target.checked })}
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Automatic Discount</span>
+                </label>
+
+                {formData.isAutomatic ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Discount Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Bulk Buy Special"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Code</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. SUMMER2024"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
+                      value={formData.code}
+                      onChange={e => setFormData({ ...formData, code: e.target.value })}
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -109,6 +161,62 @@ export const DiscountManagement: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Min. Quantity (Optional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 3"
+                  className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none"
+                  value={formData.minQuantity}
+                  onChange={e => setFormData({ ...formData, minQuantity: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Target Products (Optional)</label>
+                <div className="border border-gray-300 dark:border-slate-600 rounded-lg overflow-hidden">
+                  <div className="p-2 border-b border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search products..."
+                        className="w-full pl-8 pr-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 dark:text-white outline-none"
+                        value={productSearch}
+                        onChange={e => setProductSearch(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto p-2 space-y-1 bg-white dark:bg-slate-800">
+                    {filteredProducts.map(product => (
+                      <label key={product.id} className="flex items-center gap-2 p-1.5 hover:bg-gray-50 dark:hover:bg-slate-700 rounded cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                          checked={formData.targetProductIds.includes(product.id)}
+                          onChange={() => toggleProductSelection(product.id)}
+                        />
+                        <div className="h-8 w-8 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden flex-shrink-0">
+                          <img src={product.image} alt="" className="h-full w-full object-cover" />
+                        </div>
+                        <span className="text-sm text-gray-700 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white truncate">
+                          {product.name}
+                        </span>
+                      </label>
+                    ))}
+                    {filteredProducts.length === 0 && (
+                      <p className="text-xs text-gray-500 text-center py-2">No products found</p>
+                    )}
+                  </div>
+                </div>
+                {formData.targetProductIds.length > 0 && (
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
+                    {formData.targetProductIds.length} product(s) selected
+                  </p>
+                )}
+              </div>
+
               <Button type="submit" className="w-full" disabled={isSubmitting} isLoading={isSubmitting}>
                 Create Discount
               </Button>
@@ -133,17 +241,26 @@ export const DiscountManagement: React.FC = () => {
                   <div key={discount.id || discount.code} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
-                         <span className={`font-bold text-lg ${discount.isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 line-through'}`}>{discount.code}</span>
-                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${discount.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-                           {discount.isActive ? 'Active' : 'Inactive'}
-                         </span>
+                        <span className={`font-bold text-lg ${discount.isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 line-through'}`}>
+                          {discount.isAutomatic ? (discount.name || 'Automatic') : discount.code}
+                        </span>
+                        {discount.isAutomatic && (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                            Auto
+                          </span>
+                        )}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${discount.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+                          {discount.isActive ? 'Active' : 'Inactive'}
+                        </span>
                       </div>
                       <div className="text-sm text-gray-600 dark:text-slate-300 mt-1">
                         {discount.type === 'percentage' ? `${discount.value}% Off` : `IQD ${discount.value.toLocaleString()} Off`}
                         {discount.minOrderAmount ? ` • Min Order: IQD ${discount.minOrderAmount.toLocaleString()}` : ''}
+                        {discount.minQuantity ? ` • Min Qty: ${discount.minQuantity}` : ''}
+                        {discount.targetProductIds && discount.targetProductIds.length > 0 ? ` • ${discount.targetProductIds.length} Specific Products` : ''}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       {/* Toggle Button */}
                       <button
@@ -153,20 +270,20 @@ export const DiscountManagement: React.FC = () => {
                         disabled={!discount.id}
                         title={discount.isActive ? 'Deactivate' : 'Activate'}
                       >
-                         <span className="sr-only">Use setting</span>
-                         <span
-                           aria-hidden="true"
-                           className={`pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${discount.isActive ? 'translate-x-5' : 'translate-x-0'}`}
-                         >
-                           {discount.isActive ? (
-                             <Check className="h-3 w-3 text-indigo-600 absolute top-1 left-1" strokeWidth={3} />
-                           ) : (
-                             <X className="h-3 w-3 text-gray-400 absolute top-1 left-1" strokeWidth={3} />
-                           )}
-                         </span>
+                        <span className="sr-only">Use setting</span>
+                        <span
+                          aria-hidden="true"
+                          className={`pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${discount.isActive ? 'translate-x-5' : 'translate-x-0'}`}
+                        >
+                          {discount.isActive ? (
+                            <Check className="h-3 w-3 text-indigo-600 absolute top-1 left-1" strokeWidth={3} />
+                          ) : (
+                            <X className="h-3 w-3 text-gray-400 absolute top-1 left-1" strokeWidth={3} />
+                          )}
+                        </span>
                       </button>
 
-                      <button 
+                      <button
                         type="button"
                         onClick={() => discount.id && handleDelete(discount.id)}
                         className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-2"
