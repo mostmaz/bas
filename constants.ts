@@ -161,7 +161,25 @@ export const TRANSLATIONS = {
         fastShippingDesc: 'Get your order delivered within 24 hours.',
         qualityGuarantee: 'Quality Guarantee',
         qualityDesc: 'We ensure the best quality for all our products.',
-        inStock: 'In Stock'
+        inStock: 'In Stock',
+        baghdad: 'Baghdad',
+        basra: 'Basra',
+        nineveh: 'Nineveh',
+        erbil: 'Erbil',
+        duhok: 'Duhok',
+        sulaymaniyah: 'Sulaymaniyah',
+        kirkuk: 'Kirkuk',
+        diyala: 'Diyala',
+        anbar: 'Anbar',
+        babil: 'Babil',
+        karbala: 'Karbala',
+        najaf: 'Najaf',
+        qadisiyah: 'Al-Qadisiyah',
+        muthanna: 'Al-Muthanna',
+        wasit: 'Wasit',
+        maysan: 'Maysan',
+        saladin: 'Saladin',
+        halabja: 'Halabja'
     },
     ar: {
         home: 'الرئيسية',
@@ -254,13 +272,52 @@ export const TRANSLATIONS = {
         fastShippingDesc: 'احصل على طلبك خلال 24 ساعة.',
         qualityGuarantee: 'ضمان الجودة',
         qualityDesc: 'نحن نضمن أفضل جودة لجميع منتجاتنا.',
-        inStock: 'متوفر'
+        inStock: 'متوفر',
+        baghdad: 'بغداد',
+        basra: 'البصرة',
+        nineveh: 'نينوى',
+        erbil: 'أربيل',
+        duhok: 'دهوك',
+        sulaymaniyah: 'السليمانية',
+        kirkuk: 'كركوك',
+        diyala: 'ديالى',
+        anbar: 'الأنبار',
+        babil: 'بابل',
+        karbala: 'كربلاء',
+        najaf: 'النجف',
+        qadisiyah: 'القادسية',
+        muthanna: 'المثنى',
+        wasit: 'واسط',
+        maysan: 'ميسان',
+        saladin: 'صلاح الدين',
+        halabja: 'حلبجة'
     }
 };
 
 export const INITIAL_DISCOUNTS: DiscountCode[] = [
     { id: '1', code: 'WELCOME10', type: 'percentage', value: 10, minOrderAmount: 0, isActive: true },
     { id: '2', code: 'FREESHIP', type: 'fixed', value: 5000, minOrderAmount: 50000, isActive: true }
+];
+
+export const IRAQI_GOVERNORATES = [
+    { value: 'Baghdad', labelKey: 'baghdad' },
+    { value: 'Basra', labelKey: 'basra' },
+    { value: 'Nineveh', labelKey: 'nineveh' },
+    { value: 'Erbil', labelKey: 'erbil' },
+    { value: 'Duhok', labelKey: 'duhok' },
+    { value: 'Sulaymaniyah', labelKey: 'sulaymaniyah' },
+    { value: 'Kirkuk', labelKey: 'kirkuk' },
+    { value: 'Diyala', labelKey: 'diyala' },
+    { value: 'Anbar', labelKey: 'anbar' },
+    { value: 'Babil', labelKey: 'babil' },
+    { value: 'Karbala', labelKey: 'karbala' },
+    { value: 'Najaf', labelKey: 'najaf' },
+    { value: 'Qadisiyah', labelKey: 'qadisiyah' },
+    { value: 'Muthanna', labelKey: 'muthanna' },
+    { value: 'Wasit', labelKey: 'wasit' },
+    { value: 'Maysan', labelKey: 'maysan' },
+    { value: 'Saladin', labelKey: 'saladin' },
+    { value: 'Halabja', labelKey: 'halabja' }
 ];
 
 export const INITIAL_ORDERS: any[] = [];
