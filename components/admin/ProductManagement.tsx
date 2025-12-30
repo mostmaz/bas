@@ -855,15 +855,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
                     onClick={handleBulkPriceUpdate}
                     className="bg-white dark:bg-slate-800 text-green-600 border border-green-200 hover:bg-green-50"
                   >
-                    <Layers className="h-4 w-4 mr-2" /> Update Price
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={handleBulkPriceUpdate}
-                    className="bg-white dark:bg-slate-800 text-green-600 border border-green-200 hover:bg-green-50"
-                  >
-                    <Layers className="h-4 w-4 mr-2" /> Update Price
+                    <Layers className="h-4 w-4 mr-2" /> Set Price
                   </Button>
                   <Button
                     size="sm"
