@@ -409,6 +409,9 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
         const product = products[i];
         setFixTagsProgress(prev => ({ ...prev, current: i + 1 }));
 
+        // Small delay to ensure UI updates and progress bar is visible
+        await new Promise(resolve => setTimeout(resolve, 50));
+
         // Skip if tags already exist and we don't want to overwrite (optional, but let's overwrite for "Fix")
         // Or maybe only if empty? Let's assume "Fix" means regenerate/ensure they exist.
 
@@ -613,43 +616,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
     }
   };
 
-  const handleBulkPriceUpdate = async () => {
-    if (selectedProducts.size === 0) return;
 
-    const priceStr = prompt(`Enter new price for ${selectedProducts.size} selected products:`);
-    if (!priceStr) return;
-
-    const newPrice = parseFloat(priceStr);
-    if (isNaN(newPrice) || newPrice < 0) {
-      alert("Invalid price entered.");
-      return;
-    }
-
-    if (!window.confirm(`Are you sure you want to set the price to ${newPrice} for ${selectedProducts.size} products?`)) return;
-
-    setIsSaving(true);
-    try {
-      const updates = Array.from(selectedProducts).map(async (id) => {
-        const product = products.find(p => p.id === id);
-        if (!product) return;
-
-        await updateProduct({
-          ...product,
-          price: newPrice
-        });
-      });
-
-      await Promise.all(updates);
-      await refreshProducts();
-      setSelectedProducts(new Set());
-      alert("Bulk price update successful!");
-    } catch (error) {
-      console.error("Bulk price update failed:", error);
-      alert("Failed to update prices. Check console.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleSaveCollection = () => {
     if (selectedProducts.size < 2) {
