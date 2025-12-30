@@ -181,7 +181,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
         }
     };
 
-    const updateProduct = async (product: Product) => {
+    const updateProduct = async (product: Product, silent = false) => {
         if (isSupabaseConfigured) {
             const dbProduct = {
                 name: product.name,
@@ -209,10 +209,10 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 throw error;
             }
             setProducts(prev => prev.map(p => p.id === product.id ? product : p));
-            addToast('Product updated successfully', 'success');
+            if (!silent) addToast('Product updated successfully', 'success');
         } else {
             setProducts(prev => prev.map(p => p.id === product.id ? product : p));
-            addToast('Product updated locally (Demo)', 'success');
+            if (!silent) addToast('Product updated locally (Demo)', 'success');
         }
     };
 

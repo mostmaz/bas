@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, CheckSquare, Link as LinkIcon, Square, Layers, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Filter, Download, Upload, CheckSquare, Link as LinkIcon, Square, Layers, AlertTriangle, X } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 import { Product } from '../../types';
@@ -7,7 +7,7 @@ import { ProductFormModal } from './ProductFormModal';
 import { CollectionFormModal } from './CollectionFormModal';
 import * as XLSX from 'xlsx';
 import { supabase } from '../../services/supabase';
-import { generateProductTags } from '../../services/geminiService';
+import { generateProductTags, checkAIConnection } from '../../services/geminiService';
 
 // Helper to upload image from URL directly to server
 const uploadImageFromUrl = async (url: string): Promise<string> => {
@@ -58,6 +58,11 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
 
   // File Input Ref for Bulk Upload
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Bulk Price Update State
+  const [isSettingPrice, setIsSettingPrice] = useState(false);
+  const [bulkPriceValue, setBulkPriceValue] = useState('');
+  const [showFixTagsConfirm, setShowFixTagsConfirm] = useState(false);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -342,8 +347,30 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
           rating: editingProduct.rating,
         });
       } else {
+        let finalProductData = { ...productData };
+
+        // Auto-generate tags if missing for new products
+        if ((!finalProductData.tags || finalProductData.tags.length === 0) && checkAIConnection()) {
+          try {
+            console.log("Auto-generating tags for new product...");
+            const tags = await generateProductTags(
+              finalProductData.name,
+              finalProductData.description || "",
+              finalProductData.category,
+              finalProductData.brand,
+              finalProductData.device
+            );
+            if (tags && tags.length > 0) {
+              finalProductData.tags = tags;
+              console.log("Tags generated:", tags);
+            }
+          } catch (e) {
+            console.error("Auto-tag generation failed:", e);
+          }
+        }
+
         await addProduct({
-          ...productData,
+          ...finalProductData,
           id: Date.now().toString(),
           rating: 5.0,
         });
@@ -392,40 +419,69 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
   const [fixProgress, setFixProgress] = useState({ current: 0, total: 0 });
   const [fixTagsProgress, setFixTagsProgress] = useState({ current: 0, total: 0 });
 
-  const handleFixTags = async () => {
+  const handleFixTagsClick = () => {
     if (products.length === 0) {
       alert("No products to process.");
       return;
     }
+    setShowFixTagsConfirm(true);
+  };
 
-    if (!window.confirm("This will use AI to generate smart search tags for all products. This may take a while. Continue?")) return;
+  const startFixTags = async () => {
+    setShowFixTagsConfirm(false);
+    console.log("startFixTags: Function called");
+    console.log("startFixTags: Total products:", products.length);
 
-    console.log("Starting tag generation...");
+    try {
+      console.log("startFixTags: Checking AI connection...");
+      const isConnected = checkAIConnection();
+      console.log("startFixTags: AI Connection status:", isConnected);
+
+      if (!isConnected) {
+        console.error("startFixTags: AI Connection failed (Missing API Key)");
+        alert("Gemini API Key is missing or invalid. Please check your configuration.");
+        return;
+      }
+    } catch (err) {
+      console.error("startFixTags: Error checking AI connection:", err);
+      alert("Error checking AI connection. See console.");
+      return;
+    }
+
+    console.log("startFixTags: Starting tag generation...");
     setIsFixingTags(true);
     setFixTagsProgress({ current: 0, total: products.length });
     let fixedCount = 0;
 
     try {
-      for (let i = 0; i < products.length; i++) {
-        const product = products[i];
-        console.log(`Processing product ${i + 1}/${products.length}: ${product.name}`);
-        setFixTagsProgress(prev => ({ ...prev, current: i + 1 }));
-
-        // Increased delay to ensure UI updates and progress bar is visible
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        try {
-          const tags = await generateProductTags(product.name, product.description || "");
-          if (tags && tags.length > 0) {
-            await updateProduct({
-              ...product,
-              tags: tags
-            });
-            fixedCount++;
+      // Process in batches of 5 to avoid rate limits
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < products.length; i += BATCH_SIZE) {
+        const batch = products.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch.map(async (product) => {
+          try {
+            const tags = await generateProductTags(
+              product.name,
+              product.description || "",
+              product.category,
+              product.brand,
+              product.device
+            );
+            if (tags && tags.length > 0) {
+              await updateProduct({
+                ...product,
+                tags: tags
+              }, true); // Silent update
+              fixedCount++;
+            }
+          } catch (e) {
+            console.error(`Failed to generate tags for ${product.name}`, e);
+          } finally {
+            setFixTagsProgress(prev => ({ ...prev, current: Math.min(prev.current + 1, products.length) }));
           }
-        } catch (e) {
-          console.error(`Failed to generate tags for ${product.name}`, e);
-        }
+        }));
+        // Small delay between batches
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       console.log("Tag generation complete.");
@@ -578,35 +634,48 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
     }));
   };
 
-  const handleBulkPriceUpdate = async () => {
-    if (selectedProducts.size === 0) return;
+  const handleBulkPriceUpdateClick = () => {
+    if (selectedProducts.size === 0) {
+      alert("No products selected");
+      return;
+    }
+    setIsSettingPrice(true);
+    setBulkPriceValue('');
+  };
 
-    const priceStr = prompt(`Enter new price for ${selectedProducts.size} selected products:`);
-    if (!priceStr) return;
-
-    const newPrice = parseFloat(priceStr);
+  const confirmBulkPriceUpdate = async () => {
+    const newPrice = parseFloat(bulkPriceValue);
     if (isNaN(newPrice) || newPrice < 0) {
       alert("Invalid price entered.");
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to set the price to ${newPrice} for ${selectedProducts.size} products?`)) return;
+    // Removed redundant window.confirm as the button itself is the confirmation
+    // if (!window.confirm(`Are you sure you want to set the price to ${newPrice} for ${selectedProducts.size} products?`)) return;
 
     setIsSaving(true);
     try {
+      console.log("Starting bulk update...");
       const updates = Array.from(selectedProducts).map(async (id) => {
         const product = products.find(p => p.id === id);
-        if (!product) return;
+        if (!product) {
+          console.warn(`Product not found for ID: ${id}`);
+          return;
+        }
 
+        console.log(`Updating product ${product.name} (${id}) to price ${newPrice}`);
         await updateProduct({
           ...product,
           price: newPrice
-        });
+        }, true); // Silent update
       });
 
       await Promise.all(updates);
+      console.log("All updates completed.");
       await refreshProducts();
       setSelectedProducts(new Set());
+      setIsSettingPrice(false);
+      setBulkPriceValue('');
       alert("Bulk price update successful!");
     } catch (error) {
       console.error("Bulk price update failed:", error);
@@ -701,16 +770,36 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
             </Button>
           </div>
 
-          <Button
-            variant="outline"
-            onClick={handleFixTags}
-            disabled={isFixingTags}
-            className="flex items-center gap-2 bg-white dark:bg-slate-800 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-900/20"
-            title="Generate Smart Tags for Search"
-          >
-            <RefreshCw className={`h-4 w-4 ${isFixingTags ? 'animate-spin' : ''}`} />
-            Fix Tags
-          </Button>
+          {showFixTagsConfirm ? (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
+              <Button
+                size="sm"
+                onClick={startFixTags}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                Confirm Fix Tags
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowFixTagsConfirm(false)}
+                className="text-gray-500 hover:text-gray-700 border-transparent hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={handleFixTagsClick}
+              disabled={isFixingTags}
+              className="flex items-center gap-2 bg-white dark:bg-slate-800 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-900/20"
+              title="Generate Smart Tags for Search"
+            >
+              <RefreshCw className={`h-4 w-4 ${isFixingTags ? 'animate-spin' : ''}`} />
+              Fix Tags
+            </Button>
+          )}
 
           <Button
             variant="outline"
@@ -849,14 +938,48 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
                   >
                     <LinkIcon className="h-4 w-4 mr-2" /> Generate Page
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={handleBulkPriceUpdate}
-                    className="bg-white dark:bg-slate-800 text-green-600 border border-green-200 hover:bg-green-50"
-                  >
-                    <Layers className="h-4 w-4 mr-2" /> Set Price
-                  </Button>
+                  {isSettingPrice ? (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
+                      <input
+                        type="number"
+                        value={bulkPriceValue}
+                        onChange={(e) => setBulkPriceValue(e.target.value)}
+                        placeholder="New Price"
+                        className="w-24 px-2 py-1 text-sm border border-indigo-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') confirmBulkPriceUpdate();
+                          if (e.key === 'Escape') setIsSettingPrice(false);
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={confirmBulkPriceUpdate}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        disabled={!bulkPriceValue || isSaving}
+                        isLoading={isSaving}
+                      >
+                        Confirm
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsSettingPrice(false)}
+                        className="text-gray-500 hover:text-gray-700 border-transparent hover:bg-gray-100"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleBulkPriceUpdateClick}
+                      className="bg-white dark:bg-slate-800 text-green-600 border border-green-200 hover:bg-green-50"
+                    >
+                      <Layers className="h-4 w-4 mr-2" /> Set Price
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     onClick={handleSaveCollection}

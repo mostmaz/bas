@@ -57,7 +57,7 @@ interface ShopContextType {
   fetchProductDetails: (id: string) => Promise<void>;
   refreshDevices: () => Promise<void>;
   addProduct: (product: Omit<Product, 'id' | 'rating'> & { id?: string, rating?: number }) => Promise<void>;
-  updateProduct: (product: Product) => Promise<void>;
+  updateProduct: (product: Product, silent?: boolean) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   addBrand: (name: string, logo?: string) => Promise<void>;
   updateBrand: (id: string, name: string, logo?: string) => Promise<void>;

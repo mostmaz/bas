@@ -16,6 +16,10 @@ const getGenAI = () => {
   return genAI;
 };
 
+export const checkAIConnection = (): boolean => {
+  return !!getGenAI();
+};
+
 /**
  * Chat with the Shop Assistant.
  */
@@ -191,7 +195,10 @@ export const generateBrandLogo = async (brandName: string): Promise<string> => {
  */
 export const generateProductTags = async (
   productName: string,
-  description: string = ""
+  description: string = "",
+  category: string = "",
+  brand: string = "",
+  device: string = ""
 ): Promise<string[]> => {
   try {
     const genAIInstance = getGenAI();
@@ -199,15 +206,19 @@ export const generateProductTags = async (
 
     const model = genAIInstance.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const prompt = `Generate a list of 10-15 relevant search tags/keywords for a mobile accessory named "${productName}". 
+    const prompt = `Generate a list of 10-15 relevant search tags/keywords for a mobile accessory.
+    Product Name: "${productName}"
+    Category: "${category}"
+    Brand: "${brand}"
+    Device: "${device}"
     Description: ${description}
     
     Requirements:
     1. Include both Arabic and English terms.
     2. Include common misspellings or variations.
-    3. Include the device name if mentioned.
-    4. Include the brand name.
-    5. Include the category (e.g., case, cover, screen protector).
+    3. Include the device name (${device}).
+    4. Include the brand name (${brand}).
+    5. Include the category (${category}).
     6. Return ONLY a comma-separated list of tags. No other text.`;
 
     const result = await model.generateContent(prompt);
