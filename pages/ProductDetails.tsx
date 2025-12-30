@@ -88,6 +88,15 @@ export const ProductDetails: React.FC = () => {
 
   const addImage = (img: string) => {
     if (!img) return;
+
+    // Optimization: Skip normalization for base64 images to prevent performance issues
+    if (img.startsWith('data:')) {
+      if (!uniqueImages.has(img)) {
+        uniqueImages.add(img);
+      }
+      return;
+    }
+
     try {
       const normalized = decodeURIComponent(img).split('?')[0].split('#')[0].trim().toLowerCase();
       if (!normalizedImages.has(normalized)) {

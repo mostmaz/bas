@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
@@ -204,26 +203,35 @@ export const Checkout: React.FC = () => {
                   })}
                 </ul>
 
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-6 space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="text-slate-600 dark:text-slate-400">{t('subtotal')}</p>
-                    <p className="font-medium text-slate-900 dark:text-white">IQD {totalAmount.toLocaleString()}</p>
+                <div className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-6">
+                  <div className="flex justify-between text-sm font-medium text-slate-900 dark:text-white">
+                    <p className="text-slate-500 dark:text-slate-400">{t('subtotal')}</p>
+                    <p>IQD {totalAmount.toLocaleString()}</p>
                   </div>
+
                   {discountAmount > 0 && (
-                    <div className="flex items-center justify-between text-sm text-green-600 dark:text-green-400">
-                      <p className="flex items-center gap-1"><Tag className="h-3 w-3" /> Discount {appliedDiscount && `(${appliedDiscount.code})`}</p>
+                    <div className="flex justify-between text-sm font-medium text-green-600 dark:text-green-400">
+                      <p className="flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        {t('discount')}
+                        {appliedDiscount && (
+                          <span className="text-xs ml-1 opacity-80">
+                            ({appliedDiscount.name || (appliedDiscount.isAutomatic ? t('discount') : appliedDiscount.code)})
+                          </span>
+                        )}
+                      </p>
                       <p>- IQD {discountAmount.toLocaleString()}</p>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="text-slate-600 dark:text-slate-400 flex items-center">
-                      <Truck className="h-4 w-4 mr-1 rtl:ml-1 rtl:mr-0 text-slate-400" /> {t('shipping')}
-                    </p>
-                    <p className="font-medium text-slate-900 dark:text-white">IQD {shippingFee.toLocaleString()}</p>
+
+                  <div className="flex justify-between text-sm font-medium text-slate-900 dark:text-white">
+                    <p className="text-slate-500 dark:text-slate-400">{t('shipping')}</p>
+                    <p>IQD {shippingFee.toLocaleString()}</p>
                   </div>
-                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <p className="text-base font-bold text-slate-900 dark:text-white">{t('total')}</p>
-                    <p className="text-xl font-bold text-purple-600 dark:text-purple-400">IQD {finalTotalWithShipping.toLocaleString()}</p>
+
+                  <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-800 pt-3 mt-3">
+                    <p>{t('total')}</p>
+                    <p className="text-purple-600 dark:text-purple-400">IQD {finalTotalWithShipping.toLocaleString()}</p>
                   </div>
                 </div>
               </div>

@@ -11,6 +11,9 @@
 export const optimizeImage = (url: string, width: number = 800, quality: number = 80): string => {
     if (!url) return '';
 
+    // Optimization: Return base64 images immediately
+    if (url.startsWith('data:')) return url;
+
     // Check if it's a Supabase URL
     if (url.includes('supabase.co/storage/v1/object/public')) {
         // If it already has query params, append, otherwise start query

@@ -129,18 +129,7 @@ export const CartDrawer: React.FC = () => {
               {/* Discount Code Input */}
               <div className="mb-6">
                 {appliedDiscount ? (
-                  <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 rounded-xl">
-                    <div className="flex items-center gap-2">
-                      <Tag className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <span className="font-bold text-green-700 dark:text-green-300">{appliedDiscount.code}</span>
-                      <span className="text-xs text-green-600 dark:text-green-400">
-                        (-{appliedDiscount.type === 'percentage' ? `${appliedDiscount.value}%` : `IQD ${appliedDiscount.value}`})
-                      </span>
-                    </div>
-                    <button onClick={removeDiscount} className="text-slate-400 hover:text-red-500 transition-colors">
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <div className="hidden"></div>
                 ) : (
                   <form onSubmit={handleApplyDiscount} className="flex gap-2">
                     <input
@@ -169,7 +158,7 @@ export const CartDrawer: React.FC = () => {
                       {t('discount')}
                       {appliedDiscount && (
                         <span className="text-xs ml-1 opacity-80">
-                          ({appliedDiscount.name || appliedDiscount.code})
+                          ({appliedDiscount.name || (appliedDiscount.isAutomatic ? t('discount') : appliedDiscount.code)})
                         </span>
                       )}
                     </p>

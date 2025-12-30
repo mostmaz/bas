@@ -183,7 +183,14 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       }
     };
     fetchSettings();
+    fetchSettings();
   }, []);
+
+  // Update Document Direction
+  useEffect(() => {
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+  }, [language]);
 
   // --- ACTIONS (Settings & UI) ---
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');

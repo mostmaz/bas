@@ -28,7 +28,7 @@ export const DiscountManagement: React.FC = () => {
     setIsSubmitting(true);
     try {
       await addDiscount({
-        code: formData.code.toUpperCase().trim(),
+        code: formData.isAutomatic ? `AUTO_${Date.now()}_${Math.floor(Math.random() * 1000)}` : formData.code.toUpperCase().trim(),
         type: formData.type,
         value: Number(formData.value),
         minOrderAmount: Number(formData.minOrderAmount) || 0,
@@ -40,9 +40,13 @@ export const DiscountManagement: React.FC = () => {
         isActive: true
       });
       setFormData({ code: '', type: 'percentage', value: '', minOrderAmount: '', targetProductIds: [], minQuantity: '', excludeSaleItems: false, isAutomatic: false, name: '' });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Failed to add discount code');
+      if (error.message?.includes('duplicate key') || error.code === '23505') {
+        alert('This discount code already exists. Please use a unique code.');
+      } else {
+        alert('Failed to add discount code: ' + (error.message || 'Unknown error'));
+      }
     } finally {
       setIsSubmitting(false);
     }
