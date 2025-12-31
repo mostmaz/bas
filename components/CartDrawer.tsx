@@ -12,14 +12,14 @@ export const CartDrawer: React.FC = () => {
 
   const handleCheckout = () => {
     // Facebook Pixel: InitiateCheckout
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', 'InitiateCheckout', {
+    import('../utils/pixel').then(({ event }) => {
+      event('InitiateCheckout', {
         value: finalTotal + shippingFee,
         currency: 'IQD',
         num_items: cart.reduce((acc, item) => acc + item.quantity, 0),
         content_ids: cart.map(item => item.id)
       });
-    }
+    });
 
     toggleCart();
     navigate('/checkout');

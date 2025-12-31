@@ -217,14 +217,17 @@ export const TRANSLATIONS = {
         results: 'results',
         noMatches: 'No matches found',
         popularSearches: 'Popular Searches',
-        noDeviceMatch: 'No products found for this device'
+
+        aiIntro: "Hello! I'm {name}, your personal shopping assistant. How can I help you today?",
+        askStyles: "Ask about styles, products, or compatibility...",
+        alwaysHelp: "I'm here to help you find the perfect accessory!"
     },
     ar: {
         home: 'الرئيسية',
         back: 'رجوع',
         search: 'بحث',
         cart: 'السلة',
-        checkout: 'الدفع',
+        checkout: 'اكمال الطلب',
         addToCart: 'أضف للسلة',
         buyNow: 'اشتر الآن',
         description: 'الوصف',
@@ -234,7 +237,7 @@ export const TRANSLATIONS = {
         selectColor: 'اختر اللون',
         selectDevice: 'اختر الجهاز',
         total: 'المجموع',
-        subtotal: 'المجموع الفرعي',
+        subtotal: 'سعر المنتجات',
         shipping: 'الشحن',
         free: 'مجاني',
         placeOrder: 'تأكيد الطلب',
@@ -366,7 +369,10 @@ export const TRANSLATIONS = {
         results: 'نتائج',
         noMatches: 'لم يتم العثور على نتائج',
         popularSearches: 'عمليات البحث الشائعة',
-        noDeviceMatch: 'لم يتم العثور على منتجات لهذا الجهاز'
+
+        aiIntro: "مرحباً! أنا {name}، مساعدتك الشخصية للتسوق. كيف يمكنني مساعدتك اليوم؟",
+        askStyles: "اسأل عن الموديلات، المنتجات، أو التوافق...",
+        alwaysHelp: "أنا هنا لمساعدتك في العثور على الإكسسوار المثالي!"
     }
 };
 

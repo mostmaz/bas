@@ -74,15 +74,15 @@ export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' |
         }
 
         // Facebook Pixel: AddToCart
-        if (typeof window !== 'undefined' && (window as any).fbq) {
-            (window as any).fbq('track', 'AddToCart', {
+        import('../utils/pixel').then(({ event }) => {
+            event('AddToCart', {
                 content_name: product.name,
                 content_ids: [product.id],
                 content_type: 'product',
                 value: product.salePrice || product.price,
                 currency: 'IQD'
             });
-        }
+        });
     };
 
     const removeFromCart = (id: string) => {
