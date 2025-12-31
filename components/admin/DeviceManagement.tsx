@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Trash2, Loader2, Plus, RefreshCw, Smartphone } from 'lucide-react';
+import { Trash2, Loader2, Plus, RefreshCw, Smartphone, Pencil } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
+import { Device } from '../../types';
 
 export const DeviceManagement: React.FC = () => {
-    const { devices, addDevice, deleteDevice, refreshDevices } = useShop();
+    const { devices, addDevice, updateDevice, deleteDevice, refreshDevices } = useShop();
     const [newDeviceName, setNewDeviceName] = useState('');
+    const [editingDevice, setEditingDevice] = useState<Device | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -16,11 +18,16 @@ export const DeviceManagement: React.FC = () => {
 
         setIsSubmitting(true);
         try {
-            await addDevice(newDeviceName.trim());
+            if (editingDevice) {
+                await updateDevice(editingDevice.id, newDeviceName.trim());
+                setEditingDevice(null);
+            } else {
+                await addDevice(newDeviceName.trim());
+            }
             setNewDeviceName('');
         } catch (error) {
-            console.error("Error adding device:", error);
-            alert("Failed to add device.");
+            console.error("Error saving device:", error);
+            alert("Failed to save device.");
         } finally {
             setIsSubmitting(false);
         }
@@ -38,6 +45,11 @@ export const DeviceManagement: React.FC = () => {
                 setDeletingId(null);
             }
         }
+    };
+
+    const handleEditDevice = (device: Device) => {
+        setEditingDevice(device);
+        setNewDeviceName(device.name);
     };
 
     const handleRefresh = async () => {
@@ -63,9 +75,11 @@ export const DeviceManagement: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Add Device Card */}
+                {/* Add/Edit Device Card */}
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 h-fit">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Add New Device</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                        {editingDevice ? 'Edit Device' : 'Add New Device'}
+                    </h3>
                     <form onSubmit={handleAddDevice} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Device Name</label>
@@ -88,8 +102,21 @@ export const DeviceManagement: React.FC = () => {
                             isLoading={isSubmitting}
                         >
                             <Plus className="h-4 w-4 mr-2" />
-                            Add Device
+                            {editingDevice ? 'Update Device' : 'Add Device'}
                         </Button>
+                        {editingDevice && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setEditingDevice(null);
+                                    setNewDeviceName('');
+                                }}
+                                className="w-full"
+                            >
+                                Cancel Edit
+                            </Button>
+                        )}
                     </form>
                 </div>
 
@@ -116,18 +143,27 @@ export const DeviceManagement: React.FC = () => {
                                             <span className="text-[10px] text-gray-400 font-mono">{device.id}</span>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleDeleteDevice(device.id)}
-                                        disabled={deletingId === device.id}
-                                        className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
-                                        title="Delete Device"
-                                    >
-                                        {deletingId === device.id ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Trash2 className="h-4 w-4" />
-                                        )}
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleEditDevice(device)}
+                                            className="text-gray-400 hover:text-indigo-600 p-2 rounded-full hover:bg-indigo-50 dark:hover:bg-slate-700 transition-colors"
+                                            title="Edit Device"
+                                        >
+                                            <Pencil className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteDevice(device.id)}
+                                            disabled={deletingId === device.id}
+                                            className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                                            title="Delete Device"
+                                        >
+                                            {deletingId === device.id ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="h-4 w-4" />
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
                             ))
                         )}

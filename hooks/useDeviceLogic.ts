@@ -57,5 +57,22 @@ export const useDeviceLogic = (isSupabaseConfigured: boolean, addToast: (msg: st
         }
     };
 
-    return { devices, setDevices, refreshDevices, addDevice, deleteDevice };
+    const updateDevice = async (id: string, name: string) => {
+        if (isSupabaseConfigured) {
+            const { error } = await supabase.from('devices').update({ name }).eq('id', id);
+            if (error) {
+                console.error("Failed to update device in DB:", error);
+                setDevices(prev => prev.map(d => d.id === id ? { ...d, name } : d));
+                addToast('Device updated locally (DB error)', 'warning');
+            } else {
+                await refreshDevices();
+                addToast('Device updated successfully', 'success');
+            }
+        } else {
+            setDevices(prev => prev.map(d => d.id === id ? { ...d, name } : d));
+            addToast('Device updated locally', 'success');
+        }
+    };
+
+    return { devices, setDevices, refreshDevices, addDevice, updateDevice, deleteDevice };
 };

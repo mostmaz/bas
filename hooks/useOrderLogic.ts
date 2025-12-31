@@ -106,6 +106,18 @@ export const useOrderLogic = (
             sendTwilioWhatsAppNotification(optimisticOrder, 'admin');
             sendTwilioWhatsAppNotification(optimisticOrder, 'customer');
 
+            // Facebook Pixel: Purchase
+            if (typeof window !== 'undefined' && (window as any).fbq) {
+                (window as any).fbq('track', 'Purchase', {
+                    value: newOrder.totalamount,
+                    currency: 'IQD',
+                    content_ids: newOrder.items.map((i: any) => i.id),
+                    content_type: 'product',
+                    num_items: newOrder.items.reduce((acc: number, item: any) => acc + item.quantity, 0),
+                    order_id: optimisticOrder.id
+                });
+            }
+
             // Optimistic Update: Update product stock in state without re-fetching all products
             setProducts(prev => prev.map(p => {
                 const item = orderData.items.find(i => i.id === p.id);
@@ -145,6 +157,18 @@ export const useOrderLogic = (
             sendWhatsAppNotification(localOrder);
             sendTwilioWhatsAppNotification(localOrder, 'admin');
             sendTwilioWhatsAppNotification(localOrder, 'customer');
+
+            // Facebook Pixel: Purchase
+            if (typeof window !== 'undefined' && (window as any).fbq) {
+                (window as any).fbq('track', 'Purchase', {
+                    value: localOrder.totalAmount,
+                    currency: 'IQD',
+                    content_ids: localOrder.items.map(i => i.id),
+                    content_type: 'product',
+                    num_items: localOrder.items.reduce((acc, item) => acc + item.quantity, 0),
+                    order_id: localOrder.id
+                });
+            }
 
             setProducts(prev => prev.map(p => {
                 const item = orderData.items.find(i => i.id === p.id);

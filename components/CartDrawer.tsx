@@ -11,6 +11,16 @@ export const CartDrawer: React.FC = () => {
   const [discountCode, setDiscountCode] = useState('');
 
   const handleCheckout = () => {
+    // Facebook Pixel: InitiateCheckout
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'InitiateCheckout', {
+        value: finalTotal + shippingFee,
+        currency: 'IQD',
+        num_items: cart.reduce((acc, item) => acc + item.quantity, 0),
+        content_ids: cart.map(item => item.id)
+      });
+    }
+
     toggleCart();
     navigate('/checkout');
   };

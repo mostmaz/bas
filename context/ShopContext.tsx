@@ -63,6 +63,7 @@ interface ShopContextType {
   updateBrand: (id: string, name: string, logo?: string) => Promise<void>;
   deleteBrand: (id: string) => Promise<void>;
   addDevice: (name: string) => Promise<void>;
+  updateDevice: (id: string, name: string) => Promise<void>;
   deleteDevice: (id: string) => Promise<void>;
   addSlide: (slide: CarouselSlide) => Promise<void>;
   updateSlide: (slide: CarouselSlide) => Promise<void>;
@@ -147,7 +148,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
 
   // --- HOOKS ---
   const { brands, setBrands, refreshBrands, addBrand, updateBrand, deleteBrand, isLoading: isBrandsLoading } = useBrandLogic(isSupabaseConfigured, addToast);
-  const { devices, setDevices, refreshDevices, addDevice, deleteDevice } = useDeviceLogic(isSupabaseConfigured, addToast);
+  const { devices, setDevices, refreshDevices, addDevice, updateDevice, deleteDevice } = useDeviceLogic(isSupabaseConfigured, addToast);
   const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides, isLoading: isSlidesLoading } = useSlideLogic(isSupabaseConfigured, addToast);
 
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
@@ -322,7 +323,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       refreshBrands, refreshProducts, refreshDevices,
       addProduct, updateProduct, deleteProduct, fetchProductDetails,
       addBrand, updateBrand, deleteBrand,
-      addDevice, deleteDevice,
+      addDevice, updateDevice, deleteDevice,
       addSlide, updateSlide, deleteSlide, refreshSlides,
       placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone,
       addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
