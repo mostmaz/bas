@@ -217,6 +217,7 @@ export const TRANSLATIONS = {
         results: 'results',
         noMatches: 'No matches found',
         popularSearches: 'Popular Searches',
+        noDeviceMatch: 'No products found for this device',
 
         aiIntro: "Hello! I'm {name}, your personal shopping assistant. How can I help you today?",
         askStyles: "Ask about styles, products, or compatibility...",
@@ -369,6 +370,7 @@ export const TRANSLATIONS = {
         results: 'نتائج',
         noMatches: 'لم يتم العثور على نتائج',
         popularSearches: 'عمليات البحث الشائعة',
+        noDeviceMatch: 'لم يتم العثور على منتجات لهذا الجهاز',
 
         aiIntro: "مرحباً! أنا {name}، مساعدتك الشخصية للتسوق. كيف يمكنني مساعدتك اليوم؟",
         askStyles: "اسأل عن الموديلات، المنتجات، أو التوافق...",

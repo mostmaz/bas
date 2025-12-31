@@ -12,6 +12,7 @@ export const Home: React.FC = () => {
   const navigate = useNavigate();
   const [selectedBrandFilter, setSelectedBrandFilter] = useState('All');
   const [selectedDevice, setSelectedDevice] = useState<string>('');
+  const [isDeviceDropdownOpen, setIsDeviceDropdownOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     priceRange: [0, 1000000],
@@ -27,13 +28,9 @@ export const Home: React.FC = () => {
     }
   };
 
-  const handleDeviceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const device = e.target.value;
-    if (device) {
-      navigate(`/filtered-products?device=${encodeURIComponent(device)}`);
-      // Reset selection after navigation so when they come back it's clean, or keep it?
-      // Keeping it might be confusing if they come back and it's still selected but showing Home content.
-      // But `value={selectedDevice}` is controlled.
+  const handleDeviceSelect = (deviceName: string) => {
+    if (deviceName) {
+      navigate(`/filtered-products?device=${encodeURIComponent(deviceName)}`);
       setSelectedDevice('');
     }
   };
@@ -146,23 +143,46 @@ export const Home: React.FC = () => {
       <div className="px-6 mt-6 flex gap-4">
         {/* Device Selector Dropdown */}
         <div className="flex-1 relative group">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
             <Smartphone className="h-5 w-5 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
           </div>
           <div className="relative">
-            <select
-              value={selectedDevice}
-              onChange={handleDeviceSelect}
-              className="block w-full pl-11 pr-10 py-3.5 bg-white dark:bg-slate-800 border-none rounded-2xl text-slate-900 dark:text-white appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 shadow-sm shadow-slate-200/50 dark:shadow-none transition-all cursor-pointer"
+            <button
+              onClick={() => setIsDeviceDropdownOpen(!isDeviceDropdownOpen)}
+              className="block w-full text-left pl-11 pr-10 py-3.5 bg-white dark:bg-slate-800 border-none rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 shadow-sm shadow-slate-200/50 dark:shadow-none transition-all cursor-pointer"
             >
-              <option value="">{t('selectDevice')}</option>
-              {devices.map(device => (
-                <option key={device.id} value={device.name}>{device.name}</option>
-              ))}
-            </select>
+              {selectedDevice || t('selectDevice')}
+            </button>
             <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-              <ChevronDown className="h-5 w-5 text-slate-400" />
+              <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform ${isDeviceDropdownOpen ? 'rotate-180' : ''}`} />
             </div>
+
+            {/* Dropdown Menu */}
+            {isDeviceDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsDeviceDropdownOpen(false)}
+                ></div>
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl z-50 max-h-60 overflow-y-auto border border-slate-100 dark:border-slate-700">
+                  <button
+                    onClick={() => { handleDeviceSelect(''); setIsDeviceDropdownOpen(false); }}
+                    className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white"
+                  >
+                    {t('selectDevice')}
+                  </button>
+                  {devices.map(device => (
+                    <button
+                      key={device.id}
+                      onClick={() => { handleDeviceSelect(device.name); setIsDeviceDropdownOpen(false); }}
+                      className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white border-t border-slate-100 dark:border-slate-700"
+                    >
+                      {device.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
