@@ -9,7 +9,6 @@ import { CartDrawer } from './components/CartDrawer';
 import { AiAssistant } from './components/AiAssistant';
 import { Footer } from './components/Footer';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
-import FacebookPixel from './components/FacebookPixel';
 
 // Lazy Load Pages
 const Home = React.lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
@@ -93,7 +92,6 @@ const AppContent: React.FC = () => {
 
   return (
     <div className={`min-h-screen w-full overflow-x-hidden flex flex-col font-sans antialiased selection:bg-purple-500 selection:text-white transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-50' : 'bg-[#FFF8F0] text-slate-900'}`}>
-      <FacebookPixel />
       <Navbar />
       <CartDrawer />
       <main className="flex-grow pb-20"> {/* Added padding-bottom for fixed footer */}
