@@ -140,12 +140,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 <>
                   <p className="text-[10px] sm:text-xs text-slate-400 line-through mb-0.5">IQD {product.price.toLocaleString()}</p>
                   <p className="self-start text-[10px] sm:text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg border border-red-100 dark:border-red-900/20 whitespace-nowrap">
-                    IQD {product.salePrice.toLocaleString()}
+                    <span className="mr-1">IQD</span>
+                    <span className="product-price">{product.salePrice.toLocaleString()}</span>
                   </p>
                 </>
               ) : (
                 <p className="self-start text-[10px] sm:text-sm font-bold text-slate-900 dark:text-white bg-amber-100 dark:bg-amber-500/10 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg border border-amber-200 dark:border-amber-500/20 whitespace-nowrap">
-                  IQD {product.price.toLocaleString()}
+                  <span className="mr-1">IQD</span>
+                  <span className="product-price">{product.price.toLocaleString()}</span>
                 </p>
               )}
             </div>

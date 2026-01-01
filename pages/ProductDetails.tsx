@@ -204,7 +204,8 @@ export const ProductDetails: React.FC = () => {
                 {product.salePrice ? (
                   <div className="flex flex-col items-end">
                     <div className="text-2xl font-bold text-red-600 dark:text-red-500">
-                      IQD {product.salePrice.toLocaleString()}
+                      <span className="text-sm align-top mr-1">IQD</span>
+                      <span className="product-price">{product.salePrice.toLocaleString()}</span>
                     </div>
                     <div className="text-sm text-slate-400 line-through decoration-slate-400/50">
                       IQD {product.price.toLocaleString()}
@@ -212,7 +213,8 @@ export const ProductDetails: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-2xl font-bold text-purple-700 dark:text-white">
-                    IQD {product.price.toLocaleString()}
+                    <span className="text-sm align-top mr-1">IQD</span>
+                    <span className="product-price">{product.price.toLocaleString()}</span>
                   </div>
                 )}
               </div>
