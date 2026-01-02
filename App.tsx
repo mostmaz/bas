@@ -1,7 +1,7 @@
 
 
 import React, { useEffect, Suspense } from 'react';
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ShopProvider, useShop } from './context/ShopContext';
 import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
@@ -116,15 +116,19 @@ const AppContent: React.FC = () => {
   );
 }
 
+import { HelmetProvider } from 'react-helmet-async';
+
 const App: React.FC = () => {
   return (
-    <ToastProvider>
-      <ShopProvider>
-        <HashRouter>
-          <AppContent />
-        </HashRouter>
-      </ShopProvider>
-    </ToastProvider>
+    <HelmetProvider>
+      <ToastProvider>
+        <ShopProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </ShopProvider>
+      </ToastProvider>
+    </HelmetProvider>
   );
 };
 

@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag, Gift, Loader2 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '../components/Button';
 import { ProductCard } from '../components/ProductCard';
 import { ProductVariant } from '../types';
@@ -127,6 +128,10 @@ export const ProductDetails: React.FC = () => {
 
   return (
     <div key={id} className="pt-0 pb-32">
+      <Helmet>
+        <title>{product.name} | BasCavarat</title>
+        <meta name="description" content={product.description?.slice(0, 160) || `Buy ${product.name} at BasCavarat. Premium mobile accessories.`} />
+      </Helmet>
       <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Image Section */}
@@ -198,14 +203,14 @@ export const ProductDetails: React.FC = () => {
 
             {/* Product Name & Price */}
             <div className="mx-4 sm:mx-0 mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-row-reverse rtl:flex-row justify-between items-center gap-4">
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight text-right flex-1">{product.name}</h1>
+              <h1 id="product-name" className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight text-right flex-1">{product.name}</h1>
 
               <div className="flex flex-col items-end shrink-0">
                 {product.salePrice ? (
                   <div className="flex flex-col items-end">
                     <div className="text-2xl font-bold text-red-600 dark:text-red-500">
                       <span className="text-sm align-top mr-1">IQD</span>
-                      <span className="product-price">{product.salePrice.toLocaleString()}</span>
+                      <span id="product-price" className="product-price">{product.salePrice.toLocaleString()}</span>
                     </div>
                     <div className="text-sm text-slate-400 line-through decoration-slate-400/50">
                       IQD {product.price.toLocaleString()}
@@ -214,7 +219,7 @@ export const ProductDetails: React.FC = () => {
                 ) : (
                   <div className="text-2xl font-bold text-purple-700 dark:text-white">
                     <span className="text-sm align-top mr-1">IQD</span>
-                    <span className="product-price">{product.price.toLocaleString()}</span>
+                    <span id="product-price" className="product-price">{product.price.toLocaleString()}</span>
                   </div>
                 )}
               </div>

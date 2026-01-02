@@ -35,6 +35,7 @@ export const ProductBottomNav: React.FC<ProductBottomNavProps> = ({
                         className={`absolute inset-0 transition-transform duration-300 ${isMenuOpen ? '-translate-y-full' : 'translate-y-0'}`}
                     >
                         <button
+                            id="sticky-add-to-cart"
                             onClick={onAddToCart}
                             disabled={currentStock < 1}
                             className={`w-full h-full flex items-center justify-center gap-2 font-bold text-lg transition-colors

@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Plus, Eye, Heart } from 'lucide-react';
 import { Product } from '../types';
 import { useShop } from '../context/ShopContext';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ProductQuickViewModal } from './ProductQuickViewModal';
 
 import { optimizeImage } from '../utils/imageUtils';
@@ -14,13 +13,9 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart, wishlist, toggleWishlist } = useShop();
-  const navigate = useNavigate();
+  // navigate hook no longer needed for card click
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-
-  const handleNavigate = () => {
-    navigate(`/product/${product.id}`);
-  };
 
   const isWishlisted = wishlist.includes(product.id);
 
@@ -40,7 +35,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <>
       <div className="group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-lg transition-all duration-300 hover:shadow-2xl hover:shadow-pink-500/10 hover:border-pink-500/30 hover:-translate-y-1">
-        <div onClick={handleNavigate} className="block relative cursor-pointer">
+        <Link to={`/product/${product.id}`} className="block relative cursor-pointer">
           <div className="aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
             <img
               src={optimizeImage(product.image, 400)}
@@ -64,7 +59,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               </div>
             )}
           </div>
-        </div>
+        </Link>
 
         {/* Quick Actions */}
         <div className="absolute top-[55%] right-2 sm:right-4 z-10 flex flex-col gap-2 sm:gap-3 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
@@ -110,11 +105,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
             <div className="w-full">
               <p className="text-xs sm:text-sm font-bold text-purple-600 dark:text-purple-400 mb-0.5 sm:mb-1 line-clamp-1">{product.device}</p>
-              <div onClick={handleNavigate} className="cursor-pointer">
+              <Link to={`/product/${product.id}`} className="cursor-pointer">
                 <h3 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors line-clamp-1 leading-tight">
                   {product.name}
                 </h3>
-              </div>
+              </Link>
 
               {/* Color Indicators */}
               {uniqueDisplayColors.length > 0 && (

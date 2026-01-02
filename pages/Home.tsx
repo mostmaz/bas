@@ -6,6 +6,9 @@ import { FilterModal, FilterState } from '../components/FilterModal';
 import { OffersCarousel } from '../components/OffersCarousel';
 import { useNavigate } from 'react-router-dom';
 import { Filter, ChevronDown, Smartphone } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+
+import { useProductFiltering } from '../hooks/useProductFiltering';
 
 export const Home: React.FC = () => {
   const { products, devices, brands, isProductsLoading, t, notificationMessage, isBrandsLoading } = useShop();
@@ -51,76 +54,12 @@ export const Home: React.FC = () => {
     ...brands
   ];
 
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    return products.filter(product => {
-      // Brand Filter (Top Bar)
-      const matchesBrandFilter = selectedBrandFilter === 'All' || (product.brand && product.brand.toLowerCase() === selectedBrandFilter.toLowerCase());
-
-      // Device Filter (from Dropdown)
-      const matchesDevice = selectedDevice ? product.device === selectedDevice : true;
-
-      // Advanced Filters
-      const matchesPrice = product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1];
-      const matchesBrand = filters.selectedBrands.length === 0 || filters.selectedBrands.some(b => b.toLowerCase() === (product.brand || '').toLowerCase());
-
-      // Safe Color Filter
-      const matchesColor = filters.selectedColors.length === 0 || (product.colors && (function () {
-        const pColors = product.colors;
-        const normalize = (col: string) => {
-          if (!col || typeof col !== 'string') return null;
-          const trimmed = col.trim();
-          if (/^#([0-9A-F]{3}){1,2}$/i.test(trimmed)) return trimmed;
-          if (/^[a-zA-Z]+$/.test(trimmed) && trimmed.length > 2) return trimmed;
-          return null;
-        };
-
-        // 1. Extract from variants (New System)
-        const variantColors = product.variants ? product.variants.map(v => normalize(v.color)).filter(Boolean) : [];
-
-        // 2. Extract from colors array (Legacy System)
-        let legacyColors: (string | null)[] = [];
-        if (typeof pColors === 'string') {
-          try {
-            const parsed = JSON.parse(pColors);
-            if (Array.isArray(parsed)) legacyColors = parsed.map(normalize);
-            else legacyColors = [normalize(parsed)];
-          } catch {
-            legacyColors = [normalize(pColors)];
-          }
-        } else if (Array.isArray(pColors)) {
-          legacyColors = pColors.flat().map(item => {
-            if (typeof item === 'string') {
-              if (item.startsWith('[') || item.startsWith('{')) {
-                try {
-                  const parsed = JSON.parse(item);
-                  if (Array.isArray(parsed)) return parsed.map(normalize);
-                  return [normalize(parsed)];
-                } catch { return [normalize(item)]; }
-              }
-              return [normalize(item)];
-            }
-            return [];
-          }).flat();
-        }
-
-        const extractedColors = [...variantColors, ...legacyColors].filter(Boolean) as string[];
-
-        return filters.selectedColors.some(filterColor =>
-          extractedColors.some(c => c.toLowerCase() === filterColor.toLowerCase())
-        );
-      })());
-
-      if (filters.selectedColors.length > 0 && !matchesColor) {
-        // console.log(`Filtered out ${product.name} due to color. Product Colors:`, product.colors, "Selected:", filters.selectedColors);
-      }
-
-      // Hidden Filter
-      const isVisible = !product.isHidden;
-
-      return matchesBrandFilter && matchesDevice && matchesPrice && matchesBrand && matchesColor && isVisible;
-    });
-  }, [products, selectedBrandFilter, selectedDevice, filters]);
+  const filteredProducts = useProductFiltering({
+    products,
+    selectedBrandFilter,
+    selectedDevice,
+    filters
+  });
 
   const bestSellers = useMemo(() => {
     return [...filteredProducts].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 6);
@@ -138,6 +77,11 @@ export const Home: React.FC = () => {
         onApply={handleFilterApply}
         initialFilters={filters}
       />
+
+      <Helmet>
+        <title>BasCavarat | Premium Mobile Accessories</title>
+        <meta name="description" content="Discover premium mobile accessories, cases, and gadgets at BasCavarat." />
+      </Helmet>
 
       {/* Search & Filter Section */}
       <div className="px-6 mt-6 flex gap-4">
