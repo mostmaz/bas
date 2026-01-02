@@ -126,11 +126,29 @@ export const ProductDetails: React.FC = () => {
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "description": product.description?.slice(0, 160) || `Buy ${product.name}`,
+    "image": product.image,
+    "sku": product.id,
+    "offers": {
+      "@type": "Offer",
+      "price": product.salePrice || product.price,
+      "priceCurrency": "IQD",
+      "availability": currentStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+    }
+  };
+
   return (
-    <div key={id} className="pt-0 pb-32">
+    <div key={id} className="pt-0 pb-32" itemScope itemType="https://schema.org/Product">
       <Helmet>
         <title>{product.name} | BasCavarat</title>
         <meta name="description" content={product.description?.slice(0, 160) || `Buy ${product.name} at BasCavarat. Premium mobile accessories.`} />
+        <script type="application/ld+json">
+          {JSON.stringify(jsonLd)}
+        </script>
       </Helmet>
       <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
@@ -142,6 +160,7 @@ export const ProductDetails: React.FC = () => {
                 <Loader2 className="w-10 h-10 text-purple-600 animate-spin" />
               </div>
               <img
+                itemProp="image"
                 key={activeImage}
                 src={optimizeImage(activeImage || product.image, 800)}
                 alt={product.name}
@@ -203,14 +222,15 @@ export const ProductDetails: React.FC = () => {
 
             {/* Product Name & Price */}
             <div className="mx-4 sm:mx-0 mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-row-reverse rtl:flex-row justify-between items-center gap-4">
-              <h1 id="product-name" className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight text-right flex-1">{product.name}</h1>
+              <h1 id="product-name" itemProp="name" className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight text-right flex-1">{product.name}</h1>
 
-              <div className="flex flex-col items-end shrink-0">
+              <div className="flex flex-col items-end shrink-0" ItemProp="offers" itemScope itemType="https://schema.org/Offer">
+                <meta itemProp="priceCurrency" content="IQD" />
                 {product.salePrice ? (
                   <div className="flex flex-col items-end">
                     <div className="text-2xl font-bold text-red-600 dark:text-red-500">
                       <span className="text-sm align-top mr-1">IQD</span>
-                      <span id="product-price" className="product-price">{product.salePrice.toLocaleString()}</span>
+                      <span id="product-price" itemProp="price" content={`${product.salePrice}`} className="product-price">{product.salePrice.toLocaleString()}</span>
                     </div>
                     <div className="text-sm text-slate-400 line-through decoration-slate-400/50">
                       IQD {product.price.toLocaleString()}
@@ -219,9 +239,10 @@ export const ProductDetails: React.FC = () => {
                 ) : (
                   <div className="text-2xl font-bold text-purple-700 dark:text-white">
                     <span className="text-sm align-top mr-1">IQD</span>
-                    <span id="product-price" className="product-price">{product.price.toLocaleString()}</span>
+                    <span id="product-price" itemProp="price" content={`${product.price}`} className="product-price">{product.price.toLocaleString()}</span>
                   </div>
                 )}
+                <link itemProp="availability" href={currentStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"} />
               </div>
             </div>
           </div>
