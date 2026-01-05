@@ -12,6 +12,7 @@ import { ReviewsSection } from '../components/ReviewsSection';
 
 import { optimizeImage } from '../utils/imageUtils';
 import { renderMarkdown } from '../utils/markdownUtils';
+import { supabase } from '../services/supabase';
 
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,8 +45,10 @@ export const ProductDetails: React.FC = () => {
   }, [product, id, fetchProductDetails]);
 
   // Facebook Pixel ViewContent Event
+  // Facebook Pixel ViewContent Event & View Counting
   useEffect(() => {
     if (product) {
+      // Pixel Tracking
       window.fbq('track', 'ViewContent', {
         content_name: product.name,
         content_id: product.id,
@@ -54,6 +57,32 @@ export const ProductDetails: React.FC = () => {
         currency: 'IQD',
         content_type: 'product'
       });
+
+      // Increment View Count (Debounced per session)
+      const viewedKey = `viewed_${product.id}`;
+      if (!sessionStorage.getItem(viewedKey)) {
+        const incrementView = async () => {
+          try {
+            // First get current views to ensure we have a base
+            const { data: current, error: fetchError } = await useShop().supabase
+              .from('products')
+              .select('views')
+              .eq('id', product.id)
+              .single();
+
+            if (!fetchError) {
+              await useShop().supabase
+                .from('products')
+                .update({ views: (current?.views || 0) + 1 })
+                .eq('id', product.id);
+              sessionStorage.setItem(viewedKey, 'true');
+            }
+          } catch (err) {
+            console.error('Error incrementing views:', err);
+          }
+        };
+        incrementView();
+      }
     }
   }, [product]);
 

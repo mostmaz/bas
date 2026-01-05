@@ -72,6 +72,10 @@ export const Home: React.FC = () => {
     return shuffleArray([...filteredProducts]).slice(0, 6);
   }, [filteredProducts]);
 
+  const popularProducts = useMemo(() => {
+    return [...filteredProducts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6);
+  }, [filteredProducts]);
+
   return (
     <div className="pb-24">
       <FilterModal
@@ -272,7 +276,7 @@ export const Home: React.FC = () => {
                 </div>
               ))
             ) : (
-              filteredProducts.slice(0, 6).map(product => (
+              popularProducts.map(product => (
                 <div key={product.id} className="min-w-[160px] w-[160px] sm:w-[200px]">
                   <ProductCard product={product} />
                 </div>
