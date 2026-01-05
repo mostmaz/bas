@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Product } from "../types";
+import { expandSearchQuery, fuzzyMatch } from "../utils/searchUtils";
 
 // Lazy initialization to prevent app crash if API_KEY is missing
 let genAI: GoogleGenerativeAI | null = null;
@@ -31,20 +32,37 @@ export const chatWithShopAssistant = async (
   try {
     const lowerMsg = userMessage.toLowerCase();
 
+    // 1. Expand query with synonyms (e.g. "galaxy" -> "samsung", "case" -> "cover")
+    const searchTerms = expandSearchQuery(lowerMsg);
+
+    // 2. Filter products using fuzzy matching (same logic as SearchPage)
     let relevantProducts = allProducts.filter(p => {
-      const keywords = [
-        p.name.toLowerCase(),
-        p.category.toLowerCase(),
-        p.brand.toLowerCase(),
-        p.device.toLowerCase(),
-        ...p.name.toLowerCase().split(" ")
-      ];
-      return keywords.some(k => k.length > 2 && lowerMsg.includes(k));
+      return searchTerms.some(term => {
+        // Fuzzy match name and brand
+        const nameMatch = fuzzyMatch(p.name, term);
+        const brandMatch = fuzzyMatch(p.brand, term);
+
+        // Strict match for device to ensure accuracy (e.g. "iPhone 13" shouldn't match "iPhone 14")
+        const deviceMatch = p.device.toLowerCase().includes(term);
+
+        // Check tags if available
+        const tagMatch = (p.tags || []).some(tag => tag.toLowerCase().includes(term));
+
+        return nameMatch || brandMatch || deviceMatch || tagMatch;
+      });
     });
 
+    // 3. Fallback if no specific matches found
     if (relevantProducts.length === 0) {
       relevantProducts = allProducts.slice(0, 15);
     } else {
+      // Prioritize exact device matches if possible
+      relevantProducts.sort((a, b) => {
+        const aDeviceMatch = searchTerms.some(t => a.device.toLowerCase().includes(t));
+        const bDeviceMatch = searchTerms.some(t => b.device.toLowerCase().includes(t));
+        return (bDeviceMatch ? 1 : 0) - (aDeviceMatch ? 1 : 0);
+      });
+
       relevantProducts = relevantProducts.slice(0, 20);
     }
 
@@ -57,6 +75,11 @@ export const chatWithShopAssistant = async (
 
     const systemInstruction = `
 You are "${assistantName}", a helpful and stylish sales assistant for a mobile accessories shop in Iraq.
+
+User Context:
+The user is asking about: "${userMessage}".
+Based on their search terms (${searchTerms.join(', ')}), I have filtered the inventory below.
+Pay special attention to the device model they mentioned (e.g. iPhone 15, S24). ONLY recommend products that fit their device.
 
 Inventory Context:
 ${productContext}
