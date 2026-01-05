@@ -42,6 +42,11 @@ export const Home: React.FC = () => {
         });
       }
 
+      // Track Device Selection (Database)
+      // Fire and forget - don't await to avoid blocking navigation
+      // @ts-ignore
+      useShop().supabase.rpc('track_visitor_device', { device_name_input: deviceName });
+
       navigate(`/filtered-products?device=${encodeURIComponent(deviceName)}`);
       setSelectedDevice('');
     }
