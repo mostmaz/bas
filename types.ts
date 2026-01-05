@@ -55,7 +55,6 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   timestamp: number;
-  timestamp: number;
 }
 
 export interface CarouselSlide {
@@ -117,4 +116,20 @@ declare global {
   interface Window {
     fbq: any;
   }
+}
+
+export interface Review {
+  id: string;
+  product_id: string;
+  user_name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+}
+
+export interface SearchTerm {
+  id: string;
+  term: string;
+  count: number;
+  last_searched_at: string;
 }

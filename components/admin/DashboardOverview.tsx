@@ -1,12 +1,13 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon } from 'lucide-react';
+import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon, Search } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
+import { supabase } from '../../services/supabase';
 
 // Mock Data for Revenue (keep static for demo)
 const REVENUE_DATA = [
@@ -27,6 +28,7 @@ export const DashboardOverview: React.FC = () => {
   const [tempThreshold, setTempThreshold] = useState(freeShippingThreshold.toString());
   const [tempNotificationMessage, setTempNotificationMessage] = useState(notificationMessage || '');
   const lowStockProducts = products.filter(p => p.stock < 10);
+  const [topSearches, setTopSearches] = useState<any[]>([]);
 
   // Sync local state with context values when they change (e.g. after fetch)
   React.useEffect(() => {
@@ -34,6 +36,18 @@ export const DashboardOverview: React.FC = () => {
     setTempThreshold(freeShippingThreshold.toString());
     setTempNotificationMessage(notificationMessage || '');
   }, [baseShippingFee, freeShippingThreshold, notificationMessage]);
+
+  useEffect(() => {
+    const fetchTopSearches = async () => {
+      const { data } = await supabase
+        .from('search_terms')
+        .select('*')
+        .order('count', { ascending: false })
+        .limit(5);
+      if (data) setTopSearches(data);
+    };
+    fetchTopSearches();
+  }, []);
 
   // Dynamic Revenue Calculation (Excluding Cancelled)
   const totalRevenue = useMemo(() => {
@@ -340,6 +354,32 @@ export const DashboardOverview: React.FC = () => {
             ) : (
               <p className="text-sm text-gray-500 dark:text-slate-400">All inventory levels are healthy.</p>
             )}
+          </div>
+
+          {/* Search Analysis */}
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
+              <Search className="h-5 w-5 mr-2 text-gray-500" /> Top Searches
+            </h3>
+            <div className="space-y-3">
+              {topSearches.length > 0 ? (
+                topSearches.map((term, idx) => (
+                  <div key={term.id} className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 flex items-center justify-center bg-slate-100 dark:bg-slate-700 rounded-full text-xs font-bold text-slate-500">
+                        {idx + 1}
+                      </span>
+                      <span className="text-gray-700 dark:text-slate-300">{term.term}</span>
+                    </div>
+                    <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full text-xs font-medium">
+                      {term.count}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-4">No search data yet.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

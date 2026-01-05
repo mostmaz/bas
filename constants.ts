@@ -221,9 +221,19 @@ export const TRANSLATIONS = {
 
         aiIntro: "Hello! I'm {name}, your personal shopping assistant. How can I help you today?",
         askStyles: "Ask about styles, products, or compatibility...",
-        alwaysHelp: "I'm here to help you find the perfect accessory!"
+        alwaysHelp: "I'm here to help you find the perfect accessory!",
+        verifiedReviews: 'Verified Reviews',
+        writeReview: 'Write a Review',
+        rating: 'Rating',
+        name: 'Name',
+        enterName: 'Enter your name',
+        comment: 'Comment',
+        shareExperience: 'Share your experience...',
+        submitReview: 'Submit Review',
+        noReviewsYet: 'No reviews yet. Be the first to review!'
     },
     ar: {
+
         home: 'الرئيسية',
         back: 'رجوع',
         search: 'بحث',
@@ -374,7 +384,16 @@ export const TRANSLATIONS = {
 
         aiIntro: "مرحباً! أنا {name}، مساعدتك الشخصية للتسوق. كيف يمكنني مساعدتك اليوم؟",
         askStyles: "اسأل عن الموديلات، المنتجات، أو التوافق...",
-        alwaysHelp: "أنا هنا لمساعدتك في العثور على الإكسسوار المثالي!"
+        alwaysHelp: "أنا هنا لمساعدتك في العثور على الإكسسوار المثالي!",
+        verifiedReviews: 'مراجعات موثقة',
+        writeReview: 'اكتب مراجعة',
+        rating: 'التقييم',
+        name: 'الاسم',
+        enterName: 'أدخل اسمك',
+        comment: 'التعليق',
+        shareExperience: 'شارك تجربتك...',
+        submitReview: 'إرسال المراجعة',
+        noReviewsYet: 'لا توجد مراجعات بعد. كن أول من يقيم!'
     }
 };
 

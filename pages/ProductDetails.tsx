@@ -7,6 +7,8 @@ import { Button } from '../components/Button';
 import { ProductCard } from '../components/ProductCard';
 import { ProductVariant } from '../types';
 import { ProductBottomNav } from '../components/ProductBottomNav';
+import { ReviewsSection } from '../components/ReviewsSection';
+
 
 import { optimizeImage } from '../utils/imageUtils';
 import { renderMarkdown } from '../utils/markdownUtils';
@@ -238,7 +240,7 @@ export const ProductDetails: React.FC = () => {
             <div className="mx-4 sm:mx-0 mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-row-reverse rtl:flex-row justify-between items-center gap-4">
               <h1 id="product-name" itemProp="name" className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight text-right flex-1">{product.name}</h1>
 
-              <div className="flex flex-col items-end shrink-0" ItemProp="offers" itemScope itemType="https://schema.org/Offer">
+              <div className="flex flex-col items-end shrink-0" itemProp="offers" itemScope itemType="https://schema.org/Offer">
                 <meta itemProp="priceCurrency" content="IQD" />
                 {product.salePrice ? (
                   <div className="flex flex-col items-end">
@@ -408,9 +410,13 @@ export const ProductDetails: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Reviews Section */}
+            <ReviewsSection productId={product.id} />
           </div>
         </div>
       </div>
+
 
       {!isCartOpen && (
         <ProductBottomNav

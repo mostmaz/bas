@@ -3,7 +3,8 @@ import { Search, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { ProductCard } from '../components/ProductCard';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { expandSearchQuery } from '../utils/searchUtils';
+import { expandSearchQuery, fuzzyMatch } from '../utils/searchUtils';
+import { supabase } from '../services/supabase';
 
 export const SearchPage: React.FC = () => {
   const { products, t, language } = useShop();
@@ -52,16 +53,54 @@ export const SearchPage: React.FC = () => {
     const searchTerms = expandSearchQuery(query);
 
     return searchTerms.some(term => {
+      // Use fuzzy matching for name and brand
+      const nameMatch = fuzzyMatch(p.name, term);
+      const brandMatch = fuzzyMatch(p.brand, term);
+
+      // Keep strict inclusion for other fields to avoid noise
       const lowerTerm = term.toLowerCase();
-      return (
-        (p.name || '').toLowerCase().includes(lowerTerm) ||
+      const otherMatch = (
         (p.description || '').toLowerCase().includes(lowerTerm) ||
         (p.category || '').toLowerCase().includes(lowerTerm) ||
-        (p.brand || '').toLowerCase().includes(lowerTerm) ||
         (p.tags || []).some(tag => tag.toLowerCase().includes(lowerTerm))
       );
+
+      return nameMatch || brandMatch || otherMatch;
     });
   });
+
+  // Log search terms (Debounced)
+  useEffect(() => {
+    const logSearch = async () => {
+      if (!query || query.length < 3) return;
+
+      try {
+        // Check if term exists
+        const { data: existing } = await supabase
+          .from('search_terms')
+          .select('id, count')
+          .eq('term', query.toLowerCase())
+          .single();
+
+        if (existing) {
+          await supabase
+            .from('search_terms')
+            .update({ count: existing.count + 1, last_searched_at: new Date().toISOString() })
+            .eq('id', existing.id);
+        } else {
+          await supabase
+            .from('search_terms')
+            .insert([{ term: query.toLowerCase(), count: 1 }]);
+        }
+      } catch (error) {
+        // Silent fail for analytics
+        console.error('Error logging search:', error);
+      }
+    };
+
+    const timer = setTimeout(logSearch, 2000); // Log after 2 seconds of inactivity
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const isRTL = language === 'ar';
 

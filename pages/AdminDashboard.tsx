@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ENCODED_PIN } from '../constants';
 import { DashboardOverview } from '../components/admin/DashboardOverview';
@@ -9,6 +10,7 @@ import { OrderManagement } from '../components/admin/OrderManagement';
 import { DiscountManagement } from '../components/admin/DiscountManagement';
 import { CollectionManagement } from '../components/admin/CollectionManagement';
 import { ImageScanner } from '../components/admin/ImageScanner';
+import { LowStockManagement } from '../components/admin/LowStockManagement';
 import { useShop } from '../context/ShopContext';
 import { AlertTriangle, Database, Copy, Check, X, Lock, KeyRound, LogIn, LayoutDashboard, ShoppingBag, Package, Tags, Smartphone, Image as ImageIcon, Percent, Layers, Settings } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -369,13 +371,24 @@ create policy "Public Delete" on products for delete using (true);
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4 mt-6">Catalog</div>
           <button
             onClick={() => { setActiveTab('inventory'); setIsSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'inventory' || activeTab === 'low-stock'
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'inventory'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
               }`}
           >
             <Package className="h-5 w-5" />
             <span className="font-medium">Inventory</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('low-stock'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'low-stock'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
+              }`}
+          >
+            <AlertTriangle className="h-5 w-5" />
+            <span className="font-medium">Low Stock</span>
           </button>
 
           <button
@@ -525,7 +538,8 @@ create policy "Public Delete" on products for delete using (true);
         )}
 
         {activeTab === 'overview' && <DashboardOverview />}
-        {(activeTab === 'inventory' || activeTab === 'low-stock') && <ProductManagement initialTab={activeTab === 'low-stock' ? 'low-stock' : 'all'} />}
+        {activeTab === 'inventory' && <ProductManagement />}
+        {activeTab === 'low-stock' && <LowStockManagement />}
         {activeTab === 'brands' && <BrandManagement />}
         {activeTab === 'devices' && <DeviceManagement />}
         {activeTab === 'carousel' && <CarouselManagement />}
