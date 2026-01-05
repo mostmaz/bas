@@ -77,7 +77,7 @@ Checkout Process:
 5. If confirmed, output ONLY: ORDER_CONFIRMED: {"name": "...", "city": "...", "address": "...", "mobile": "...", "total": 0}
    (Replace 0 with the calculated total).
 
-ALWAYS include a direct link for products: [Product Name](/product/ID)
+ALWAYS include a direct link for products: [Product Name](/product/ID/product-name-slugified)
 `;
 
     const genAIInstance = getGenAI();
@@ -214,12 +214,13 @@ export const generateProductTags = async (
     Description: ${description}
     
     Requirements:
-    1. Include both Arabic and English terms.
-    2. Include common misspellings or variations.
-    3. Include the device name (${device}).
-    4. Include the brand name (${brand}).
-    5. Include the category (${category}).
-    6. Return ONLY a comma-separated list of tags. No other text.`;
+    1. MUST include at least 5 tags in Arabic.
+    2. Include English terms.
+    3. Include common misspellings or variations.
+    4. Include the device name (${device}).
+    5. Include the brand name (${brand}).
+    6. Include the category (${category}).
+    7. Return ONLY a comma-separated list of tags. No other text.`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();

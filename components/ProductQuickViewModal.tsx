@@ -5,6 +5,7 @@ import { Product } from '../types';
 import { Button } from './Button';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
+import { slugify } from '../utils/slugUtils';
 
 interface ProductQuickViewModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({ is
   };
 
   const handleViewDetails = () => {
-    navigate(`/product/${product.id}`);
+    navigate(`/product/${product.id}/${slugify(product.name)}`);
     onClose();
   };
 
