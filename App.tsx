@@ -117,7 +117,7 @@ const AppContent: React.FC = () => {
         </Suspense>
       </main>
       <Footer />
-      <AiAssistant />
+      {/* <AiAssistant /> */}
     </div>
   );
 }
