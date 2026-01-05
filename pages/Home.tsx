@@ -12,7 +12,7 @@ import { useProductFiltering } from '../hooks/useProductFiltering';
 import { shuffleArray } from '../utils/arrayUtils';
 
 export const Home: React.FC = () => {
-  const { products, devices, brands, isProductsLoading, t, notificationMessage, isBrandsLoading } = useShop();
+  const { products, devices, brands, isProductsLoading, t, notificationMessage, isBrandsLoading, supabase } = useShop();
   const navigate = useNavigate();
   const [selectedBrandFilter, setSelectedBrandFilter] = useState('All');
   const [selectedDevice, setSelectedDevice] = useState<string>('');
@@ -45,7 +45,7 @@ export const Home: React.FC = () => {
       // Track Device Selection (Database)
       // Fire and forget - don't await to avoid blocking navigation
       // @ts-ignore
-      useShop().supabase.rpc('track_visitor_device', { device_name_input: deviceName });
+      supabase.rpc('track_visitor_device', { device_name_input: deviceName });
 
       navigate(`/filtered-products?device=${encodeURIComponent(deviceName)}`);
       setSelectedDevice('');
