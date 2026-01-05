@@ -55,6 +55,7 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   timestamp: number;
+  timestamp: number;
 }
 
 export interface CarouselSlide {
@@ -110,4 +111,10 @@ export enum SortOption {
   RECOMMENDED = 'Recommended',
   PRICE_LOW_HIGH = 'Price: Low to High',
   PRICE_HIGH_LOW = 'Price: High to Low',
+}
+
+declare global {
+  interface Window {
+    fbq: any;
+  }
 }

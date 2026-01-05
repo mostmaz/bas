@@ -41,6 +41,20 @@ export const ProductDetails: React.FC = () => {
     }
   }, [product, id, fetchProductDetails]);
 
+  // Facebook Pixel ViewContent Event
+  useEffect(() => {
+    if (product) {
+      window.fbq('track', 'ViewContent', {
+        content_name: product.name,
+        content_id: product.id,
+        content_category: product.category,
+        value: product.salePrice || product.price,
+        currency: 'IQD',
+        content_type: 'product'
+      });
+    }
+  }, [product]);
+
   const handleVariantSelect = (variant: ProductVariant) => {
     setSelectedVariant(variant);
     if (variant.image) {
