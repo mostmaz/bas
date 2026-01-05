@@ -68,7 +68,23 @@ export const ProductDetails: React.FC = () => {
               .rpc('increment_product_views', { product_id: product.id });
 
             if (!error) {
+              // RPC Success
               sessionStorage.setItem(viewedKey, 'true');
+
+              // Fetch updated views to update local state
+              const { data: updated } = await useShop().supabase
+                .from('products')
+                .select('views, daily_views')
+                .eq('id', product.id)
+                .single();
+
+              if (updated) {
+                updateProduct({
+                  ...product,
+                  views: updated.views,
+                  daily_views: updated.daily_views
+                }, true);
+              }
             } else {
               console.error('Error incrementing views (RPC):', error);
               // Fallback to old method if RPC fails (e.g. function not created yet)
@@ -91,35 +107,15 @@ export const ProductDetails: React.FC = () => {
 
                 await useShop().supabase.from('products').update(updateData).eq('id', product.id);
 
-                // Update local state immediately to reflect changes in Popular section
+                // Update local state immediately
                 updateProduct({
                   ...product,
                   views: updateData.views,
                   daily_views: updateData.daily_views
-                }, true); // silent update
+                }, true);
 
                 sessionStorage.setItem(viewedKey, 'true');
               }
-            } else {
-              // If RPC succeeded, we don't get the new values back easily without another fetch.
-              // But we can optimistically increment local state if we assume success.
-              // However, RPC logic is complex (daily reset). 
-              // Ideally, the RPC should return the new values.
-              // For now, let's just fetch the single product to update local state.
-              const { data: updated } = await useShop().supabase
-                .from('products')
-                .select('views, daily_views')
-                .eq('id', product.id)
-                .single();
-
-              if (updated) {
-                updateProduct({
-                  ...product,
-                  views: updated.views,
-                  daily_views: updated.daily_views
-                }, true);
-              }
-              sessionStorage.setItem(viewedKey, 'true');
             }
           } catch (err) {
             console.error('Error incrementing views:', err);
