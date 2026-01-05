@@ -63,38 +63,35 @@ export const ProductDetails: React.FC = () => {
       if (!sessionStorage.getItem(viewedKey)) {
         const incrementView = async () => {
           try {
-            // First get current views to ensure we have a base
-            const { data: current, error: fetchError } = await useShop().supabase
-              .from('products')
-              .select('views, daily_views, last_view_reset')
-              .eq('id', product.id)
-              .single();
+            // Use RPC for safe, atomic, server-side increment
+            const { error } = await useShop().supabase
+              .rpc('increment_product_views', { product_id: product.id });
 
-            if (!fetchError) {
-              const now = new Date();
-              const lastReset = current?.last_view_reset ? new Date(current.last_view_reset) : new Date(0);
-
-              // Check if it's a new day (simple check: different date string)
-              const isNewDay = now.toDateString() !== lastReset.toDateString();
-
-              const newDailyViews = isNewDay ? 1 : (current?.daily_views || 0) + 1;
-              const newTotalViews = (current?.views || 0) + 1;
-
-              const updateData: any = {
-                views: newTotalViews,
-                daily_views: newDailyViews
-              };
-
-              if (isNewDay) {
-                updateData.last_view_reset = now.toISOString();
-              }
-
-              await useShop().supabase
-                .from('products')
-                .update(updateData)
-                .eq('id', product.id);
-
+            if (!error) {
               sessionStorage.setItem(viewedKey, 'true');
+            } else {
+              console.error('Error incrementing views (RPC):', error);
+              // Fallback to old method if RPC fails (e.g. function not created yet)
+              const { data: current } = await useShop().supabase
+                .from('products')
+                .select('views, daily_views, last_view_reset')
+                .eq('id', product.id)
+                .single();
+
+              if (current) {
+                const now = new Date();
+                const lastReset = current.last_view_reset ? new Date(current.last_view_reset) : new Date(0);
+                const isNewDay = now.toDateString() !== lastReset.toDateString();
+
+                const updateData: any = {
+                  views: (current.views || 0) + 1,
+                  daily_views: isNewDay ? 1 : (current.daily_views || 0) + 1
+                };
+                if (isNewDay) updateData.last_view_reset = now.toISOString();
+
+                await useShop().supabase.from('products').update(updateData).eq('id', product.id);
+                sessionStorage.setItem(viewedKey, 'true');
+              }
             }
           } catch (err) {
             console.error('Error incrementing views:', err);
