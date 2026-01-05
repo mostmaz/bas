@@ -1,7 +1,7 @@
 
 
 import React, { useEffect, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ShopProvider, useShop } from './context/ShopContext';
 import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
@@ -129,9 +129,9 @@ const App: React.FC = () => {
     <HelmetProvider>
       <ToastProvider>
         <ShopProvider>
-          <BrowserRouter>
+          <HashRouter>
             <AppContent />
-          </BrowserRouter>
+          </HashRouter>
         </ShopProvider>
       </ToastProvider>
     </HelmetProvider>
