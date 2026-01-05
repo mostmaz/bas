@@ -73,7 +73,7 @@ export const Home: React.FC = () => {
   }, [filteredProducts]);
 
   const popularProducts = useMemo(() => {
-    return [...filteredProducts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6);
+    return [...filteredProducts].sort((a, b) => (b.daily_views || 0) - (a.daily_views || 0)).slice(0, 6);
   }, [filteredProducts]);
 
   return (

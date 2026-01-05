@@ -66,15 +66,34 @@ export const ProductDetails: React.FC = () => {
             // First get current views to ensure we have a base
             const { data: current, error: fetchError } = await useShop().supabase
               .from('products')
-              .select('views')
+              .select('views, daily_views, last_view_reset')
               .eq('id', product.id)
               .single();
 
             if (!fetchError) {
+              const now = new Date();
+              const lastReset = current?.last_view_reset ? new Date(current.last_view_reset) : new Date(0);
+
+              // Check if it's a new day (simple check: different date string)
+              const isNewDay = now.toDateString() !== lastReset.toDateString();
+
+              const newDailyViews = isNewDay ? 1 : (current?.daily_views || 0) + 1;
+              const newTotalViews = (current?.views || 0) + 1;
+
+              const updateData: any = {
+                views: newTotalViews,
+                daily_views: newDailyViews
+              };
+
+              if (isNewDay) {
+                updateData.last_view_reset = now.toISOString();
+              }
+
               await useShop().supabase
                 .from('products')
-                .update({ views: (current?.views || 0) + 1 })
+                .update(updateData)
                 .eq('id', product.id);
+
               sessionStorage.setItem(viewedKey, 'true');
             }
           } catch (err) {

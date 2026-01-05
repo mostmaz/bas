@@ -25,6 +25,7 @@ interface ShopContextType {
   refreshOrders: () => Promise<void>;
   searchOrdersByPhone: (phone: string) => Promise<Order[]>;
   discounts: DiscountCode[];
+  supabase: any;
 
   // Settings
   shippingFee: number; // Effective shipping fee
@@ -329,7 +330,8 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
       appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
       isDemoActive, toggleDemoData,
-      totalAmount, discountAmount, finalTotal
+      totalAmount, discountAmount, finalTotal,
+      supabase
     }}>
       {children}
     </ShopContext.Provider>
