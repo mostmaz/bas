@@ -9,6 +9,7 @@ import { Filter, ChevronDown, Smartphone } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 import { useProductFiltering } from '../hooks/useProductFiltering';
+import { shuffleArray } from '../utils/arrayUtils';
 
 export const Home: React.FC = () => {
   const { products, devices, brands, isProductsLoading, t, notificationMessage, isBrandsLoading } = useShop();
@@ -66,7 +67,10 @@ export const Home: React.FC = () => {
   }, [filteredProducts]);
 
   const latestProducts = useMemo(() => {
-    return filteredProducts.slice(0, 6);
+    // Take the top 12 newest products (assuming filteredProducts preserves order or we trust the input order)
+    // Then shuffle them to show a random selection of "new" items
+    const newestBatch = filteredProducts.slice(0, 12);
+    return shuffleArray(newestBatch).slice(0, 6);
   }, [filteredProducts]);
 
   return (
@@ -111,19 +115,40 @@ export const Home: React.FC = () => {
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl z-50 max-h-60 overflow-y-auto border border-slate-100 dark:border-slate-700">
                   <button
                     onClick={() => { handleDeviceSelect(''); setIsDeviceDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white"
+                    className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white font-medium"
                   >
                     {t('selectDevice')}
                   </button>
-                  {devices.map(device => (
-                    <button
-                      key={device.id}
-                      onClick={() => { handleDeviceSelect(device.name); setIsDeviceDropdownOpen(false); }}
-                      className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white border-t border-slate-100 dark:border-slate-700"
-                    >
-                      {device.name}
-                    </button>
-                  ))}
+
+                  {Object.entries(
+                    devices.reduce((acc, device) => {
+                      // Find a product with this device to infer the brand
+                      const product = products.find(p => p.device === device.name);
+                      const brand = product?.brand || 'Other';
+
+                      if (!acc[brand]) acc[brand] = [];
+                      acc[brand].push(device);
+                      return acc;
+                    }, {} as Record<string, typeof devices>)
+                  ).sort(([brandA], [brandB]) => brandA.localeCompare(brandB))
+                    .map(([brand, brandDevices]) => (
+                      <div key={brand}>
+                        <div className="px-4 py-2 bg-slate-50 dark:bg-slate-700/50 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky top-0">
+                          {brand}
+                        </div>
+                        {brandDevices
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map(device => (
+                            <button
+                              key={device.id}
+                              onClick={() => { handleDeviceSelect(device.name); setIsDeviceDropdownOpen(false); }}
+                              className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white border-t border-slate-100 dark:border-slate-700 pl-6 rtl:pr-6 rtl:pl-4"
+                            >
+                              {device.name}
+                            </button>
+                          ))}
+                      </div>
+                    ))}
                 </div>
               </>
             )}
