@@ -51,10 +51,15 @@ const SplashScreen = ({ logo }: { logo: string }) => (
   </div>
 );
 
+import { useVisitorTracking } from './hooks/useVisitorTracking';
+
 const AppContent: React.FC = () => {
   // This component is needed to access the context inside the provider
   const { theme, isAppLoading, supaConnectionError, storeLogo } = useShop();
   const { pathname } = useLocation();
+
+  // Initialize visitor tracking
+  useVisitorTracking();
 
   // Automatically scroll to top whenever the route changes
   useEffect(() => {

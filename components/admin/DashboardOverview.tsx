@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon, Search } from 'lucide-react';
+import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon, Search, Smartphone } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
 import { supabase } from '../../services/supabase';
@@ -30,6 +30,7 @@ export const DashboardOverview: React.FC = () => {
   const lowStockProducts = products.filter(p => p.stock < 10);
   const [topSearches, setTopSearches] = useState<any[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [visitorDevices, setVisitorDevices] = useState<any[]>([]);
 
   // Sync local state with context values when they change (e.g. after fetch)
   React.useEffect(() => {
@@ -39,21 +40,30 @@ export const DashboardOverview: React.FC = () => {
   }, [baseShippingFee, freeShippingThreshold, notificationMessage]);
 
   useEffect(() => {
-    const fetchTopSearches = async () => {
-      const { data, error } = await supabase
+    const fetchData = async () => {
+      // Fetch Top Searches
+      const { data: searchData, error: searchErr } = await supabase
         .from('search_terms')
         .select('*')
         .order('count', { ascending: false })
         .limit(5);
 
-      if (error) {
-        console.error('Error fetching search terms:', error);
-        setSearchError(error.message);
-      } else if (data) {
-        setTopSearches(data);
+      if (searchErr) {
+        console.error('Error fetching search terms:', searchErr);
+        setSearchError(searchErr.message);
+      } else if (searchData) {
+        setTopSearches(searchData);
       }
+
+      // Fetch Visitor Devices
+      const { data: deviceData } = await supabase
+        .from('visitor_devices')
+        .select('*')
+        .order('visit_count', { ascending: false });
+
+      if (deviceData) setVisitorDevices(deviceData);
     };
-    fetchTopSearches();
+    fetchData();
   }, []);
 
   // Dynamic Revenue Calculation (Excluding Cancelled)
@@ -396,6 +406,27 @@ export const DashboardOverview: React.FC = () => {
                 ))
               ) : (
                 <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-4">No search data yet.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Visitor Devices */}
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
+              <Smartphone className="h-5 w-5 mr-2 text-gray-500" /> Visitor Devices
+            </h3>
+            <div className="space-y-3">
+              {visitorDevices.length > 0 ? (
+                visitorDevices.map((device) => (
+                  <div key={device.id} className="flex justify-between items-center text-sm">
+                    <span className="text-gray-700 dark:text-slate-300">{device.device_name}</span>
+                    <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs font-medium">
+                      {device.visit_count} visits
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-4">No device data yet.</p>
               )}
             </div>
           </div>
