@@ -34,6 +34,14 @@ export const Home: React.FC = () => {
 
   const handleDeviceSelect = (deviceName: string) => {
     if (deviceName) {
+      // Track Device Selection
+      if (window.fbq) {
+        window.fbq('track', 'Search', {
+          search_string: deviceName,
+          content_type: 'device'
+        });
+      }
+
       navigate(`/filtered-products?device=${encodeURIComponent(deviceName)}`);
       setSelectedDevice('');
     }
