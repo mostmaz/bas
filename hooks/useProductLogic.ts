@@ -60,7 +60,9 @@ const mapProductFromDB = (p: any): Product => {
         isHidden: p.isHidden || p.ishidden || false,
         giftProductId: p.gift_product_id || p.giftProductId || undefined,
         bonusMessage: p.bonus_message || p.bonusMessage || undefined,
-        tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? JSON.parse(p.tags) : [])
+        tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? JSON.parse(p.tags) : []),
+        views: p.views || 0,
+        daily_views: p.daily_views || 0
     };
 };
 
@@ -89,7 +91,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
             try {
                 const { data, error } = await supabase
                     .from('products')
-                    .select('id, name, price, sale_price, image, images, variants, description, category, brand, device, stock, rating, colors, sku, ishidden, created_at, tags')
+                    .select('id, name, price, sale_price, image, images, variants, description, category, brand, device, stock, rating, colors, sku, ishidden, created_at, tags, views, daily_views')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
