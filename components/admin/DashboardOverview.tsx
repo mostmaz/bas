@@ -29,6 +29,7 @@ export const DashboardOverview: React.FC = () => {
   const [tempNotificationMessage, setTempNotificationMessage] = useState(notificationMessage || '');
   const lowStockProducts = products.filter(p => p.stock < 10);
   const [topSearches, setTopSearches] = useState<any[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   // Sync local state with context values when they change (e.g. after fetch)
   React.useEffect(() => {
@@ -39,12 +40,18 @@ export const DashboardOverview: React.FC = () => {
 
   useEffect(() => {
     const fetchTopSearches = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('search_terms')
         .select('*')
         .order('count', { ascending: false })
         .limit(5);
-      if (data) setTopSearches(data);
+
+      if (error) {
+        console.error('Error fetching search terms:', error);
+        setSearchError(error.message);
+      } else if (data) {
+        setTopSearches(data);
+      }
     };
     fetchTopSearches();
   }, []);
@@ -362,7 +369,18 @@ export const DashboardOverview: React.FC = () => {
               <Search className="h-5 w-5 mr-2 text-gray-500" /> Top Searches
             </h3>
             <div className="space-y-3">
-              {topSearches.length > 0 ? (
+              {searchError ? (
+                <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Error loading data</p>
+                    <p className="text-xs opacity-80">{searchError}</p>
+                    {searchError.includes('does not exist') && (
+                      <p className="text-xs mt-1 font-bold">Please run supabase/search_terms.sql</p>
+                    )}
+                  </div>
+                </div>
+              ) : topSearches.length > 0 ? (
                 topSearches.map((term, idx) => (
                   <div key={term.id} className="flex justify-between items-center text-sm">
                     <div className="flex items-center gap-2">

@@ -67,10 +67,9 @@ export const Home: React.FC = () => {
   }, [filteredProducts]);
 
   const latestProducts = useMemo(() => {
-    // Take the top 12 newest products (assuming filteredProducts preserves order or we trust the input order)
-    // Then shuffle them to show a random selection of "new" items
-    const newestBatch = filteredProducts.slice(0, 12);
-    return shuffleArray(newestBatch).slice(0, 6);
+    // Shuffle ALL filtered products first, then take 6
+    // This ensures a random selection from the entire catalog is shown as "Latest Drop"
+    return shuffleArray([...filteredProducts]).slice(0, 6);
   }, [filteredProducts]);
 
   return (

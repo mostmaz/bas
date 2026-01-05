@@ -7,14 +7,14 @@ import { Button } from '../Button';
 export const LowStockManagement: React.FC = () => {
     const { products, updateProduct } = useShop();
     const [searchTerm, setSearchTerm] = useState('');
-    const [stockThreshold, setStockThreshold] = useState(10);
+    const [stockThreshold, setStockThreshold] = useState(5);
     const [editingStock, setEditingStock] = useState<{ [key: string]: number }>({});
 
     const lowStockProducts = products.filter(p =>
         p.stock <= stockThreshold &&
         (p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.sku?.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    ).sort((a, b) => a.stock - b.stock);
 
     const handleStockChange = (id: string, value: string) => {
         const numValue = parseInt(value);
@@ -108,8 +108,8 @@ export const LowStockManagement: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.stock === 0
-                                                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+                                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                                                : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                                                 }`}>
                                                 {product.stock} units
                                             </span>
