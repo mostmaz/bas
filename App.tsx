@@ -61,9 +61,14 @@ const AppContent: React.FC = () => {
   // Initialize visitor tracking
   useVisitorTracking();
 
-  // Automatically scroll to top whenever the route changes
+  // Automatically scroll to top and track PageView whenever the route changes
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // Track PageView on route change
+    if (window.fbq) {
+      window.fbq('track', 'PageView');
+    }
   }, [pathname]);
 
   if (isAppLoading) {

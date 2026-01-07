@@ -129,7 +129,7 @@ export const ProductDetails: React.FC = () => {
         incrementView();
       }
     }
-  }, [product, supabase, updateProduct]);
+  }, [product, id, supabase, updateProduct]);
 
   const handleVariantSelect = (variant: ProductVariant) => {
     setSelectedVariant(variant);
