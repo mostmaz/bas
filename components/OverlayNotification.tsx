@@ -86,7 +86,7 @@ export const OverlayNotification: React.FC = () => {
                                 type="text"
                                 value={deviceName}
                                 onChange={(e) => setDeviceName(e.target.value)}
-                                placeholder="أدخل اسم جهازك..."
+                                placeholder="ادخل اسم جهازك لاكمال المشاهدة"
                                 className="block w-full pr-10 pl-3 py-3 border border-gray-300 dark:border-slate-600 rounded-xl leading-5 bg-white dark:bg-slate-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm dark:text-white transition-all"
                             />
                         </div>
