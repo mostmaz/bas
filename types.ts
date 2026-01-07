@@ -48,6 +48,7 @@ export interface DiscountCode {
   isAutomatic?: boolean;
   name?: string;
   isActive: boolean;
+  isUsed?: boolean; // Track if single-use code has been used
 }
 
 export interface ChatMessage {
@@ -132,4 +133,15 @@ export interface SearchTerm {
   term: string;
   count: number;
   last_searched_at: string;
+}
+
+export interface SiteSetting {
+  key: string;
+  value: any;
+}
+
+export interface OverlayConfig {
+  enabled: boolean;
+  text: string;
+  dismissible: boolean;
 }

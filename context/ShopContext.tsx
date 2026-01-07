@@ -12,6 +12,7 @@ import { useDiscountLogic } from '../hooks/useDiscountLogic';
 import { useProductLogic } from '../hooks/useProductLogic';
 import { useCartLogic } from '../hooks/useCartLogic';
 import { useOrderLogic } from '../hooks/useOrderLogic';
+import { useSettingsLogic } from '../hooks/useSettingsLogic';
 
 interface ShopContextType {
   // Shop Data
@@ -37,6 +38,8 @@ interface ShopContextType {
   updateStoreLogo: (logo: string) => Promise<void>;
   notificationMessage: string;
   updateNotificationMessage: (message: string) => Promise<void>;
+  overlayConfig: OverlayConfig;
+  updateOverlayConfig: (config: OverlayConfig) => Promise<void>;
 
   // UI State
   isCartOpen: boolean;
@@ -321,6 +324,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
       shippingFee, baseShippingFee, freeShippingThreshold, updateShippingFee, updateFreeShippingThreshold, storeLogo, updateStoreLogo,
       notificationMessage, updateNotificationMessage,
+      overlayConfig, updateOverlayConfig,
       isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading, isSlidesLoading, isBrandsLoading,
       refreshBrands, refreshProducts, refreshDevices,
       addProduct, updateProduct, deleteProduct, fetchProductDetails,

@@ -248,6 +248,24 @@ create policy "Public Read" on products for select using (true);
 create policy "Public Insert" on products for insert with check (true);
 create policy "Public Update" on products for update using (true);
 create policy "Public Delete" on products for delete using (true);
+
+-- 11. Fix Site Settings RLS (Allow anon updates for PIN-based admin)
+alter table site_settings enable row level security;
+
+-- Drop potential conflicting policies
+drop policy if exists "Admin update access" on site_settings;
+drop policy if exists "Admin insert access" on site_settings;
+drop policy if exists "Allow anon update" on site_settings;
+drop policy if exists "Allow anon insert" on site_settings;
+
+-- Create permissive policies
+create policy "Allow anon update" on site_settings for update using (true);
+create policy "Allow anon insert" on site_settings for insert with check (true);
+
+-- Grant explicit table permissions to anon role
+grant all on site_settings to anon;
+grant all on site_settings to authenticated;
+grant all on site_settings to service_role;
 `;
 
   const copySql = () => {
