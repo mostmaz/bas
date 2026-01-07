@@ -31,7 +31,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({ is
   };
 
   const handleViewDetails = () => {
-    navigate(`/product/${product.id}/${slugify(product.name)}`);
+    navigate(`/product/${product.id}/${slugify(product.device)}/${slugify(product.name)}`);
     onClose();
   };
 

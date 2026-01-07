@@ -105,6 +105,7 @@ const AppContent: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/product/:id" element={<ProductDetails key={pathname} />} />
             <Route path="/product/:id/:slug" element={<ProductDetails key={pathname} />} />
+            <Route path="/product/:id/:device/:slug" element={<ProductDetails key={pathname} />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-success" element={<OrderSuccess />} />
             <Route path="/my-orders" element={<MyOrders />} />
