@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { useToast } from '../context/ToastContext';
 import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag, Gift, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '../components/Button';
@@ -17,6 +18,7 @@ import { supabase } from '../services/supabase';
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { products, addToCart, t, wishlist, toggleWishlist, fetchProductDetails, language, isCartOpen, updateProduct, supabase } = useShop();
+  const { addToast } = useToast();
   const navigate = useNavigate();
 
   const product = products.find(p => p.id === id);
@@ -150,6 +152,32 @@ export const ProductDetails: React.FC = () => {
     }
   };
 
+  const handleShare = async () => {
+    if (!product) return;
+
+    const shareData = {
+      title: product.name,
+      text: product.description?.slice(0, 100),
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        addToast(t('linkCopied'), 'success');
+      } catch (err) {
+        console.error('Failed to copy:', err);
+        addToast(t('errorCopying'), 'error');
+      }
+    }
+  };
+
   const relatedProducts = useMemo(() => {
     if (!product) return [];
     return products
@@ -272,7 +300,10 @@ export const ProductDetails: React.FC = () => {
                 >
                   <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
                 </button>
-                <button className="p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full shadow-lg text-slate-600 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 hover:bg-white dark:hover:bg-slate-900 transition-colors border border-white/20 dark:border-white/10">
+                <button
+                  onClick={handleShare}
+                  className="p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full shadow-lg text-slate-600 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 hover:bg-white dark:hover:bg-slate-900 transition-colors border border-white/20 dark:border-white/10"
+                >
                   <Share2 className="h-5 w-5" />
                 </button>
               </div>

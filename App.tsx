@@ -103,8 +103,8 @@ const AppContent: React.FC = () => {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/product/:id/:slug" element={<ProductDetails />} />
+            <Route path="/product/:id" element={<ProductDetails key={pathname} />} />
+            <Route path="/product/:id/:slug" element={<ProductDetails key={pathname} />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-success" element={<OrderSuccess />} />
             <Route path="/my-orders" element={<MyOrders />} />

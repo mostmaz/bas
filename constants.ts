@@ -230,7 +230,9 @@ export const TRANSLATIONS = {
         comment: 'Comment',
         shareExperience: 'Share your experience...',
         submitReview: 'Submit Review',
-        noReviewsYet: 'No reviews yet. Be the first to review!'
+        noReviewsYet: 'No reviews yet. Be the first to review!',
+        linkCopied: 'Link copied to clipboard',
+        errorCopying: 'Error copying link'
     },
     ar: {
 
@@ -393,7 +395,9 @@ export const TRANSLATIONS = {
         comment: 'التعليق',
         shareExperience: 'شارك تجربتك...',
         submitReview: 'إرسال المراجعة',
-        noReviewsYet: 'لا توجد مراجعات بعد. كن أول من يقيم!'
+        noReviewsYet: 'لا توجد مراجعات بعد. كن أول من يقيم!',
+        linkCopied: 'تم نسخ الرابط',
+        errorCopying: 'خطأ في نسخ الرابط'
     }
 };
 
