@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Product, CartItem, CarouselSlide, Theme, Language, Order, Brand, ProductVariant, DiscountCode, Device } from '../types';
+import { Product, CartItem, CarouselSlide, Theme, Language, Order, Brand, ProductVariant, DiscountCode, Device, OverlayConfig } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_BRANDS, TRANSLATIONS, DEVICES } from '../constants';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { useToast } from './ToastContext';
@@ -156,6 +156,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { products, setProducts, refreshProducts, fetchProductDetails, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
   const { cart, isCartOpen, appliedDiscount, addToCart, removeFromCart, updateCartQuantity, clearCart, toggleCart, applyDiscount, removeDiscount, totalAmount, discountAmount, finalTotal } = useCartLogic(addToast, products, discounts);
   const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
+  const { overlayConfig, updateOverlayConfig } = useSettingsLogic();
 
   // Calculate Effective Shipping Fee
   const shippingFee = totalAmount >= freeShippingThreshold ? 0 : baseShippingFee;

@@ -4,6 +4,7 @@ import { ProductCard } from '../components/ProductCard';
 import { ProductSkeleton } from '../components/ProductSkeleton';
 import { FilterModal, FilterState } from '../components/FilterModal';
 import { OffersCarousel } from '../components/OffersCarousel';
+import { OverlayNotification } from '../components/OverlayNotification';
 import { useNavigate } from 'react-router-dom';
 import { Filter, ChevronDown, Smartphone } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -91,6 +92,7 @@ export const Home: React.FC = () => {
 
   return (
     <div className="pb-24">
+      <OverlayNotification />
       <FilterModal
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}

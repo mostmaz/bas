@@ -13,6 +13,7 @@ import { ImageScanner } from '../components/admin/ImageScanner';
 import { LowStockManagement } from '../components/admin/LowStockManagement';
 import { SearchAnalysis } from '../components/admin/SearchAnalysis';
 import { ReviewManagement } from '../components/admin/ReviewManagement';
+import { SettingsManagement } from '../components/admin/SettingsManagement';
 import { useShop } from '../context/ShopContext';
 import { AlertTriangle, Database, Copy, Check, X, Lock, KeyRound, LogIn, LayoutDashboard, ShoppingBag, Package, Tags, Smartphone, Image as ImageIcon, Percent, Layers, Settings, Search, MessageSquare } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -31,7 +32,7 @@ export const AdminDashboard: React.FC = () => {
   const [pin, setPin] = useState('');
   const [schemaError, setSchemaError] = useState<string | null>(null);
   const [showSql, setShowSql] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'low-stock' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections' | 'maintenance' | 'search-analysis' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'low-stock' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections' | 'maintenance' | 'search-analysis' | 'reviews' | 'settings'>('overview');
   const [copied, setCopied] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -471,6 +472,17 @@ create policy "Public Delete" on products for delete using (true);
             <span className="font-medium">Reviews</span>
           </button>
 
+          <button
+            onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'settings'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
+              }`}
+          >
+            <Settings className="h-5 w-5" />
+            <span className="font-medium">Settings</span>
+          </button>
+
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4 mt-6">System</div>
           <button
             onClick={() => { setActiveTab('maintenance'); setIsSidebarOpen(false); }}
@@ -572,6 +584,7 @@ create policy "Public Delete" on products for delete using (true);
         {activeTab === 'collections' && <CollectionManagement />}
         {activeTab === 'search-analysis' && <SearchAnalysis />}
         {activeTab === 'reviews' && <ReviewManagement />}
+        {activeTab === 'settings' && <SettingsManagement />}
         {activeTab === 'maintenance' && (
           <div className="space-y-8">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
