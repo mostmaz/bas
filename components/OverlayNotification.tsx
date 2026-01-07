@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Smartphone } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
+import { supabase } from '../services/supabase';
 
 export const OverlayNotification: React.FC = () => {
     const { overlayConfig } = useShop();
@@ -30,10 +31,20 @@ export const OverlayNotification: React.FC = () => {
         }, 300);
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!deviceName.trim()) {
             return;
         }
+
+        // Save to database
+        try {
+            await supabase.from('overlay_submissions').insert([
+                { device_name: deviceName.trim() }
+            ]);
+        } catch (error) {
+            console.error('Error saving submission:', error);
+        }
+
         handleDismiss();
     };
 
