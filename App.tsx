@@ -60,9 +60,14 @@ const AppContent: React.FC = () => {
     window.scrollTo(0, 0);
 
     // Track PageView on route change
-    if (window.fbq) {
-      window.fbq('track', 'PageView');
-    }
+    // Delay slightly to ensure window.location is updated in HashRouter
+    const timer = setTimeout(() => {
+      if (window.fbq) {
+        window.fbq('track', 'PageView');
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   if (isAppLoading) {
