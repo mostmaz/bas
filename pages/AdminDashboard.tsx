@@ -267,6 +267,24 @@ create policy "Allow anon insert" on site_settings for insert with check (true);
 grant all on site_settings to anon;
 grant all on site_settings to authenticated;
 grant all on site_settings to service_role;
+
+-- 12. Fix Orders RLS (CRITICAL for Admin Dashboard)
+alter table orders enable row level security;
+
+-- Drop potential conflicting policies
+drop policy if exists "Allow Public Insert" on orders;
+drop policy if exists "Allow Public Select" on orders;
+drop policy if exists "Allow Public Update" on orders;
+
+-- Create policies
+create policy "Allow Public Insert" on orders for insert with check (true);
+create policy "Allow Public Select" on orders for select using (true);
+create policy "Allow Public Update" on orders for update using (true);
+
+-- Grant permissions
+grant all on orders to anon;
+grant all on orders to authenticated;
+grant all on orders to service_role;
 `;
 
   const copySql = () => {
