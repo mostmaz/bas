@@ -53,22 +53,22 @@ const SplashScreen = ({ logo }: { logo: string }) => (
 const AppContent: React.FC = () => {
   // This component is needed to access the context inside the provider
   const { theme, isAppLoading, supaConnectionError, storeLogo } = useShop();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   // Automatically scroll to top and track PageView whenever the route changes
   useEffect(() => {
     window.scrollTo(0, 0);
 
     // Track PageView on route change
-    // Delay slightly to ensure window.location is updated in HashRouter
+    // Delay to ensure window.location is updated in HashRouter and DOM is ready
     const timer = setTimeout(() => {
       if (window.fbq) {
         window.fbq('track', 'PageView');
       }
-    }, 100);
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [pathname]);
+  }, [pathname, search]);
 
   if (isAppLoading) {
     return <SplashScreen logo={storeLogo} />;
