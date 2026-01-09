@@ -2,38 +2,21 @@
 
 There are two main ways to deploy your Vite application to DigitalOcean. **Option 1 (App Platform)** is recommended as it is easier, automated, and designed for static sites.
 
-## Option 1: DigitalOcean App Platform (Recommended)
-This is the easiest method. DigitalOcean will build your site from GitHub and host it globally.
-
-### Prerequisites
-1. Push your latest code to GitHub.
-2. Ensure you have your Supabase and Gemini API keys ready.
+## Option 1: DigitalOcean App Platform (Docker)
+We have switched to using a **Dockerfile** to allow for custom Nginx caching rules.
 
 ### Steps
 1. **Log in** to your DigitalOcean Control Panel.
-2. Click **Create** -> **Apps**.
-3. **Choose Source**: Select **GitHub**.
-4. **Select Repository**: Choose your `bas` repository.
-5. **Source Directory**:
-   - If your Vite app is in the root, leave it as `/`.
-   - **Important**: You have two apps in your repo (`/` and `/next-app`).
-   - To deploy the **Vite** app, ensure the Source Directory is `/`.
-6. **Auto-Detect**: DigitalOcean should detect it as a **Static Site**.
-   - If it detects it as a Web Service, change it to **Static Site** to save money (Static sites are often free or very cheap).
-7. **Build Command**: `npm run build`
-8. **Output Directory**: `dist`
-9. **Environment Variables**:
-   - Click "Edit" next to Environment Variables.
-   - Add the following keys (copy values from your `.env` file):
-     - `API_KEY`
-     - `SUPABASE_URL`
-     - `SUPABASE_KEY`
-   - *Note: Your `vite.config.ts` is configured to read these specific keys, so you don't need to rename them to `VITE_`.*
-   - *Note: Your `vite.config.ts` is configured to read these specific keys, so you don't need to rename them to `VITE_`.*
-10. **Review & Create**: Click **Create Resource**.
+2. **Create App**: Select GitHub -> `bas` repo.
+3. **Auto-Detect**: It should now detect a **Dockerfile**.
+4. **Resources**: Select **Web Service** (Basic or Pro).
+   - *Note: This is slightly more expensive than a Static Site ($5/mo vs Free/Cheap), but required for custom caching.*
+5. **Environment Variables**:
+   - Add your `SUPABASE_URL` and `SUPABASE_KEY` here. They will be injected during the build.
+6. **Deploy**.
 
 > [!NOTE]
-> **Caching on App Platform**: Static Sites have a fixed browser cache TTL of 10 seconds. You might see a warning in PageSpeed Insights about this. This is normal for this platform. Your assets are still cached on the CDN for 24 hours. To fix this warning, you would need to use **Option 2 (Droplet)** or deploy as a **Web Service** (Docker).
+> **Caching Fixed**: We are now using a custom `nginx.conf` inside the container which sets `Cache-Control: public, max-age=31536000` for all static assets. This will solve the PageSpeed Insights warning.
 
 ---
 

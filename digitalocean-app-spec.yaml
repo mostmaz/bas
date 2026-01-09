@@ -1,19 +1,18 @@
 name: bascavarat-store
 region: fra
-static_sites:
+services:
 - name: bascavarat-store
+  dockerfile_path: Dockerfile
   source_dir: /
-  build_command: npm run build
-  output_dir: dist
   github:
     branch: main
     deploy_on_push: true
     repo: mostmaz/bas
+  http_port: 80
   routes:
   - path: /
-  environment_slug: html
-  # Note: Static Sites on App Platform have fixed cache policies (10s browser, 24h CDN).
-  # To customize this, you must use a Web Service (Docker/Nginx) or a Droplet.
+  # Web Service allows custom Nginx config for caching
+
   cors:
     allow_origins:
       - "*"
