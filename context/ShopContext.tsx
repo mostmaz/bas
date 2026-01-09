@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Product, CartItem, CarouselSlide, Theme, Language, Order, Brand, ProductVariant, DiscountCode, Device } from '../types';
+import { Product, CartItem, CarouselSlide, Theme, Language, Order, Brand, ProductVariant, DiscountCode, Device, OverlayConfig } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_BRANDS, TRANSLATIONS, DEVICES } from '../constants';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { useToast } from './ToastContext';
@@ -12,6 +12,7 @@ import { useDiscountLogic } from '../hooks/useDiscountLogic';
 import { useProductLogic } from '../hooks/useProductLogic';
 import { useCartLogic } from '../hooks/useCartLogic';
 import { useOrderLogic } from '../hooks/useOrderLogic';
+import { useSettingsLogic } from '../hooks/useSettingsLogic';
 
 interface ShopContextType {
   // Shop Data
@@ -25,6 +26,7 @@ interface ShopContextType {
   refreshOrders: () => Promise<void>;
   searchOrdersByPhone: (phone: string) => Promise<Order[]>;
   discounts: DiscountCode[];
+  supabase: any;
 
   // Settings
   shippingFee: number; // Effective shipping fee
@@ -36,6 +38,8 @@ interface ShopContextType {
   updateStoreLogo: (logo: string) => Promise<void>;
   notificationMessage: string;
   updateNotificationMessage: (message: string) => Promise<void>;
+  overlayConfig: OverlayConfig;
+  updateOverlayConfig: (config: OverlayConfig) => Promise<void>;
 
   // UI State
   isCartOpen: boolean;
@@ -155,6 +159,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { products, setProducts, refreshProducts, fetchProductDetails, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
   const { cart, isCartOpen, appliedDiscount, addToCart, removeFromCart, updateCartQuantity, clearCart, toggleCart, applyDiscount, removeDiscount, totalAmount, discountAmount, finalTotal } = useCartLogic(addToast, products, discounts);
   const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
+  const { overlayConfig, updateOverlayConfig } = useSettingsLogic();
 
   // Calculate Effective Shipping Fee
   const shippingFee = totalAmount >= freeShippingThreshold ? 0 : baseShippingFee;
@@ -319,6 +324,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
       shippingFee, baseShippingFee, freeShippingThreshold, updateShippingFee, updateFreeShippingThreshold, storeLogo, updateStoreLogo,
       notificationMessage, updateNotificationMessage,
+      overlayConfig, updateOverlayConfig,
       isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading, isSlidesLoading, isBrandsLoading,
       refreshBrands, refreshProducts, refreshDevices,
       addProduct, updateProduct, deleteProduct, fetchProductDetails,
@@ -329,7 +335,8 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
       appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
       isDemoActive, toggleDemoData,
-      totalAmount, discountAmount, finalTotal
+      totalAmount, discountAmount, finalTotal,
+      supabase
     }}>
       {children}
     </ShopContext.Provider>

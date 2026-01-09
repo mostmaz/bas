@@ -152,7 +152,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
         category: "Artistic",
         device: "iPhone 14",
         brand: "UrbanArmor",
-        description: "This product has 2 variants (Red and Blue) defined in 2 rows",
+        description: "Example description for a product with variants",
         image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f",
         variantColor: "Red",
         variantStock: 10,

@@ -4,14 +4,16 @@ import { ProductCard } from '../components/ProductCard';
 import { ProductSkeleton } from '../components/ProductSkeleton';
 import { FilterModal, FilterState } from '../components/FilterModal';
 import { OffersCarousel } from '../components/OffersCarousel';
+import { OverlayNotification } from '../components/OverlayNotification';
 import { useNavigate } from 'react-router-dom';
 import { Filter, ChevronDown, Smartphone } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 import { useProductFiltering } from '../hooks/useProductFiltering';
+import { shuffleArray } from '../utils/arrayUtils';
 
 export const Home: React.FC = () => {
-  const { products, devices, brands, isProductsLoading, t, notificationMessage, isBrandsLoading } = useShop();
+  const { products, devices, brands, isProductsLoading, t, notificationMessage, isBrandsLoading, supabase } = useShop();
   const navigate = useNavigate();
   const [selectedBrandFilter, setSelectedBrandFilter] = useState('All');
   const [selectedDevice, setSelectedDevice] = useState<string>('');
@@ -33,6 +35,19 @@ export const Home: React.FC = () => {
 
   const handleDeviceSelect = (deviceName: string) => {
     if (deviceName) {
+      // Track Device Selection
+      if (window.fbq) {
+        window.fbq('track', 'Search', {
+          search_string: deviceName,
+          content_type: 'device'
+        });
+      }
+
+      // Track Device Selection (Database)
+      // Fire and forget - don't await to avoid blocking navigation
+      // @ts-ignore
+      supabase.rpc('track_visitor_device', { device_name_input: deviceName });
+
       navigate(`/filtered-products?device=${encodeURIComponent(deviceName)}`);
       setSelectedDevice('');
     }
@@ -66,11 +81,18 @@ export const Home: React.FC = () => {
   }, [filteredProducts]);
 
   const latestProducts = useMemo(() => {
-    return filteredProducts.slice(0, 6);
+    // Shuffle ALL filtered products first, then take 6
+    // This ensures a random selection from the entire catalog is shown as "Latest Drop"
+    return shuffleArray([...filteredProducts]).slice(0, 6);
+  }, [filteredProducts]);
+
+  const popularProducts = useMemo(() => {
+    return [...filteredProducts].sort((a, b) => (b.daily_views || 0) - (a.daily_views || 0)).slice(0, 6);
   }, [filteredProducts]);
 
   return (
     <div className="pb-24">
+      <OverlayNotification />
       <FilterModal
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
@@ -111,19 +133,40 @@ export const Home: React.FC = () => {
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl z-50 max-h-60 overflow-y-auto border border-slate-100 dark:border-slate-700">
                   <button
                     onClick={() => { handleDeviceSelect(''); setIsDeviceDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white"
+                    className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white font-medium"
                   >
                     {t('selectDevice')}
                   </button>
-                  {devices.map(device => (
-                    <button
-                      key={device.id}
-                      onClick={() => { handleDeviceSelect(device.name); setIsDeviceDropdownOpen(false); }}
-                      className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white border-t border-slate-100 dark:border-slate-700"
-                    >
-                      {device.name}
-                    </button>
-                  ))}
+
+                  {Object.entries(
+                    devices.reduce((acc, device) => {
+                      // Find a product with this device to infer the brand
+                      const product = products.find(p => p.device === device.name);
+                      const brand = product?.brand || 'Other';
+
+                      if (!acc[brand]) acc[brand] = [];
+                      acc[brand].push(device);
+                      return acc;
+                    }, {} as Record<string, typeof devices>)
+                  ).sort(([brandA], [brandB]) => brandA.localeCompare(brandB))
+                    .map(([brand, brandDevices]) => (
+                      <div key={brand}>
+                        <div className="px-4 py-2 bg-slate-50 dark:bg-slate-700/50 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky top-0">
+                          {brand}
+                        </div>
+                        {brandDevices
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map(device => (
+                            <button
+                              key={device.id}
+                              onClick={() => { handleDeviceSelect(device.name); setIsDeviceDropdownOpen(false); }}
+                              className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white border-t border-slate-100 dark:border-slate-700 pl-6 rtl:pr-6 rtl:pl-4"
+                            >
+                              {device.name}
+                            </button>
+                          ))}
+                      </div>
+                    ))}
                 </div>
               </>
             )}
@@ -248,7 +291,7 @@ export const Home: React.FC = () => {
                 </div>
               ))
             ) : (
-              filteredProducts.slice(0, 6).map(product => (
+              popularProducts.map(product => (
                 <div key={product.id} className="min-w-[160px] w-[160px] sm:w-[200px]">
                   <ProductCard product={product} />
                 </div>

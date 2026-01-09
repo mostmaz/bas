@@ -1,7 +1,7 @@
 
 
 import React, { useEffect, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ShopProvider, useShop } from './context/ShopContext';
 import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
@@ -51,14 +51,24 @@ const SplashScreen = ({ logo }: { logo: string }) => (
   </div>
 );
 
+import { useVisitorTracking } from './hooks/useVisitorTracking';
+
 const AppContent: React.FC = () => {
   // This component is needed to access the context inside the provider
   const { theme, isAppLoading, supaConnectionError, storeLogo } = useShop();
   const { pathname } = useLocation();
 
-  // Automatically scroll to top whenever the route changes
+  // Initialize visitor tracking
+  useVisitorTracking();
+
+  // Automatically scroll to top and track PageView whenever the route changes
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // Track PageView on route change
+    if (window.fbq) {
+      window.fbq('track', 'PageView');
+    }
   }, [pathname]);
 
   if (isAppLoading) {
@@ -98,8 +108,9 @@ const AppContent: React.FC = () => {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/product/:id/:slug" element={<ProductDetails />} />
+            <Route path="/product/:id" element={<ProductDetails key={pathname} />} />
+            <Route path="/product/:id/:slug" element={<ProductDetails key={pathname} />} />
+            <Route path="/product/:id/:device/:slug" element={<ProductDetails key={pathname} />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-success" element={<OrderSuccess />} />
             <Route path="/my-orders" element={<MyOrders />} />
@@ -112,7 +123,7 @@ const AppContent: React.FC = () => {
         </Suspense>
       </main>
       <Footer />
-      <AiAssistant />
+      {/* <AiAssistant /> */}
     </div>
   );
 }
@@ -124,9 +135,9 @@ const App: React.FC = () => {
     <HelmetProvider>
       <ToastProvider>
         <ShopProvider>
-          <BrowserRouter>
+          <HashRouter>
             <AppContent />
-          </BrowserRouter>
+          </HashRouter>
         </ShopProvider>
       </ToastProvider>
     </HelmetProvider>

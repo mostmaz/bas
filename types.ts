@@ -48,6 +48,7 @@ export interface DiscountCode {
   isAutomatic?: boolean;
   name?: string;
   isActive: boolean;
+  isUsed?: boolean; // Track if single-use code has been used
 }
 
 export interface ChatMessage {
@@ -110,4 +111,37 @@ export enum SortOption {
   RECOMMENDED = 'Recommended',
   PRICE_LOW_HIGH = 'Price: Low to High',
   PRICE_HIGH_LOW = 'Price: High to Low',
+}
+
+declare global {
+  interface Window {
+    fbq: any;
+  }
+}
+
+export interface Review {
+  id: string;
+  product_id: string;
+  user_name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+}
+
+export interface SearchTerm {
+  id: string;
+  term: string;
+  count: number;
+  last_searched_at: string;
+}
+
+export interface SiteSetting {
+  key: string;
+  value: any;
+}
+
+export interface OverlayConfig {
+  enabled: boolean;
+  text: string;
+  dismissible: boolean;
 }

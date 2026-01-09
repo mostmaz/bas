@@ -7,6 +7,7 @@ import { chatWithShopAssistant } from '../services/geminiService';
 import { ChatMessage } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { renderMarkdown } from '../utils/markdownUtils';
+import { slugify } from '../utils/slugUtils';
 
 export const AiAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -174,7 +175,7 @@ export const AiAssistant: React.FC = () => {
                 className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
               />
             </div>
-            <div className="flex p-2 gap-3 items-center text-left cursor-pointer" onClick={() => navigate(`/product/${product.id}`)}>
+            <div className="flex p-2 gap-3 items-center text-left cursor-pointer" onClick={() => navigate(`/product/${product.id}/${slugify(product.device)}/${slugify(product.name)}`)}>
               <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                 <img
                   src={product.image}

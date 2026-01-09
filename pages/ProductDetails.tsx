@@ -1,19 +1,24 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { useToast } from '../context/ToastContext';
 import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag, Gift, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '../components/Button';
 import { ProductCard } from '../components/ProductCard';
 import { ProductVariant } from '../types';
 import { ProductBottomNav } from '../components/ProductBottomNav';
+import { ReviewsSection } from '../components/ReviewsSection';
+
 
 import { optimizeImage } from '../utils/imageUtils';
 import { renderMarkdown } from '../utils/markdownUtils';
+import { supabase } from '../services/supabase';
 
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { products, addToCart, t, wishlist, toggleWishlist, fetchProductDetails, language, isCartOpen } = useShop();
+  const { products, addToCart, t, wishlist, toggleWishlist, fetchProductDetails, language, isCartOpen, updateProduct, supabase } = useShop();
+  const { addToast } = useToast();
   const navigate = useNavigate();
 
   const product = products.find(p => p.id === id);
@@ -41,6 +46,91 @@ export const ProductDetails: React.FC = () => {
     }
   }, [product, id, fetchProductDetails]);
 
+  // Facebook Pixel ViewContent Event
+  // Facebook Pixel ViewContent Event & View Counting
+  // Facebook Pixel ViewContent Event & View Counting
+  useEffect(() => {
+    if (product) {
+      // Pixel Tracking
+      if (window.fbq) {
+        window.fbq('track', 'ViewContent', {
+          content_name: product.name,
+          content_id: product.id,
+          content_category: product.category,
+          value: product.salePrice || product.price,
+          currency: 'IQD',
+          content_type: 'product'
+        });
+      }
+
+      // Increment View Count (Debounced per session)
+      const viewedKey = `viewed_${product.id}`;
+      if (!sessionStorage.getItem(viewedKey)) {
+        const incrementView = async () => {
+          try {
+            // Use RPC for safe, atomic, server-side increment
+            const { error } = await supabase
+              .rpc('increment_product_views', { product_id: product.id });
+
+            if (!error) {
+              // RPC Success
+              sessionStorage.setItem(viewedKey, 'true');
+
+              // Fetch updated views to update local state
+              const { data: updated } = await supabase
+                .from('products')
+                .select('views, daily_views')
+                .eq('id', product.id)
+                .single();
+
+              if (updated) {
+                updateProduct({
+                  ...product,
+                  views: updated.views,
+                  daily_views: updated.daily_views
+                }, true);
+              }
+            } else {
+              console.error('Error incrementing views (RPC):', error);
+              // Fallback to old method if RPC fails
+              const { data: current } = await supabase
+                .from('products')
+                .select('views, daily_views, last_view_reset')
+                .eq('id', product.id)
+                .single();
+
+              if (current) {
+                const now = new Date();
+                const lastReset = current.last_view_reset ? new Date(current.last_view_reset) : new Date(0);
+                const isNewDay = now.toDateString() !== lastReset.toDateString();
+
+                const updateData: any = {
+                  views: (current.views || 0) + 1,
+                  daily_views: isNewDay ? 1 : (current.daily_views || 0) + 1
+                };
+                if (isNewDay) updateData.last_view_reset = now.toISOString();
+
+                await supabase.from('products').update(updateData).eq('id', product.id);
+
+                // Update local state immediately
+                updateProduct({
+                  ...product,
+                  views: updateData.views,
+                  daily_views: updateData.daily_views
+                }, true);
+
+                sessionStorage.setItem(viewedKey, 'true');
+              }
+            }
+          } catch (err) {
+            console.error('Error incrementing views:', err);
+          }
+        };
+        incrementView();
+      }
+    }
+  }, [product, id, supabase, updateProduct]);
+
   const handleVariantSelect = (variant: ProductVariant) => {
     setSelectedVariant(variant);
     if (variant.image) {
@@ -58,6 +148,32 @@ export const ProductDetails: React.FC = () => {
       const matchingVariant = product.variants.find(v => v.image === img && v.stock > 0);
       if (matchingVariant) {
         setSelectedVariant(matchingVariant);
+      }
+    }
+  };
+
+  const handleShare = async () => {
+    if (!product) return;
+
+    const shareData = {
+      title: product.name,
+      text: product.description?.slice(0, 100),
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        addToast(t('linkCopied'), 'success');
+      } catch (err) {
+        console.error('Failed to copy:', err);
+        addToast(t('errorCopying'), 'error');
       }
     }
   };
@@ -184,7 +300,10 @@ export const ProductDetails: React.FC = () => {
                 >
                   <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
                 </button>
-                <button className="p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full shadow-lg text-slate-600 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 hover:bg-white dark:hover:bg-slate-900 transition-colors border border-white/20 dark:border-white/10">
+                <button
+                  onClick={handleShare}
+                  className="p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full shadow-lg text-slate-600 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 hover:bg-white dark:hover:bg-slate-900 transition-colors border border-white/20 dark:border-white/10"
+                >
                   <Share2 className="h-5 w-5" />
                 </button>
               </div>
@@ -224,7 +343,7 @@ export const ProductDetails: React.FC = () => {
             <div className="mx-4 sm:mx-0 mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-row-reverse rtl:flex-row justify-between items-center gap-4">
               <h1 id="product-name" itemProp="name" className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight text-right flex-1">{product.name}</h1>
 
-              <div className="flex flex-col items-end shrink-0" ItemProp="offers" itemScope itemType="https://schema.org/Offer">
+              <div className="flex flex-col items-end shrink-0" itemProp="offers" itemScope itemType="https://schema.org/Offer">
                 <meta itemProp="priceCurrency" content="IQD" />
                 {product.salePrice ? (
                   <div className="flex flex-col items-end">
@@ -394,9 +513,13 @@ export const ProductDetails: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Reviews Section */}
+            <ReviewsSection productId={product.id} />
           </div>
         </div>
       </div>
+
 
       {!isCartOpen && (
         <ProductBottomNav

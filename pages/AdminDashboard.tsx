@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ENCODED_PIN } from '../constants';
 import { DashboardOverview } from '../components/admin/DashboardOverview';
@@ -9,8 +10,13 @@ import { OrderManagement } from '../components/admin/OrderManagement';
 import { DiscountManagement } from '../components/admin/DiscountManagement';
 import { CollectionManagement } from '../components/admin/CollectionManagement';
 import { ImageScanner } from '../components/admin/ImageScanner';
+import { LowStockManagement } from '../components/admin/LowStockManagement';
+import { SearchAnalysis } from '../components/admin/SearchAnalysis';
+import { ReviewManagement } from '../components/admin/ReviewManagement';
+import { SettingsManagement } from '../components/admin/SettingsManagement';
+import { OverlaySubmissions } from '../components/admin/OverlaySubmissions';
 import { useShop } from '../context/ShopContext';
-import { AlertTriangle, Database, Copy, Check, X, Lock, KeyRound, LogIn, LayoutDashboard, ShoppingBag, Package, Tags, Smartphone, Image as ImageIcon, Percent, Layers, Settings } from 'lucide-react';
+import { AlertTriangle, Database, Copy, Check, X, Lock, KeyRound, LogIn, LayoutDashboard, ShoppingBag, Package, Tags, Smartphone, Image as ImageIcon, Percent, Layers, Settings, Search, MessageSquare } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { useToast } from '../context/ToastContext';
@@ -27,7 +33,7 @@ export const AdminDashboard: React.FC = () => {
   const [pin, setPin] = useState('');
   const [schemaError, setSchemaError] = useState<string | null>(null);
   const [showSql, setShowSql] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'low-stock' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections' | 'maintenance'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'low-stock' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections' | 'maintenance' | 'search-analysis' | 'reviews' | 'settings' | 'submissions'>('overview');
   const [copied, setCopied] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -243,6 +249,24 @@ create policy "Public Read" on products for select using (true);
 create policy "Public Insert" on products for insert with check (true);
 create policy "Public Update" on products for update using (true);
 create policy "Public Delete" on products for delete using (true);
+
+-- 11. Fix Site Settings RLS (Allow anon updates for PIN-based admin)
+alter table site_settings enable row level security;
+
+-- Drop potential conflicting policies
+drop policy if exists "Admin update access" on site_settings;
+drop policy if exists "Admin insert access" on site_settings;
+drop policy if exists "Allow anon update" on site_settings;
+drop policy if exists "Allow anon insert" on site_settings;
+
+-- Create permissive policies
+create policy "Allow anon update" on site_settings for update using (true);
+create policy "Allow anon insert" on site_settings for insert with check (true);
+
+-- Grant explicit table permissions to anon role
+grant all on site_settings to anon;
+grant all on site_settings to authenticated;
+grant all on site_settings to service_role;
 `;
 
   const copySql = () => {
@@ -369,13 +393,24 @@ create policy "Public Delete" on products for delete using (true);
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4 mt-6">Catalog</div>
           <button
             onClick={() => { setActiveTab('inventory'); setIsSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'inventory' || activeTab === 'low-stock'
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'inventory'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
               : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
               }`}
           >
             <Package className="h-5 w-5" />
             <span className="font-medium">Inventory</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('low-stock'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'low-stock'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
+              }`}
+          >
+            <AlertTriangle className="h-5 w-5" />
+            <span className="font-medium">Low Stock</span>
           </button>
 
           <button
@@ -432,6 +467,50 @@ create policy "Public Delete" on products for delete using (true);
           >
             <Percent className="h-5 w-5" />
             <span className="font-medium">Discounts</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('search-analysis'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'search-analysis'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
+              }`}
+          >
+            <Search className="h-5 w-5" />
+            <span className="font-medium">Search Analysis</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('submissions'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'submissions'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
+              }`}
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="font-medium">Submissions</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('reviews'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'reviews'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
+              }`}
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="font-medium">Reviews</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'settings'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
+              }`}
+          >
+            <Settings className="h-5 w-5" />
+            <span className="font-medium">Settings</span>
           </button>
 
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4 mt-6">System</div>
@@ -525,13 +604,18 @@ create policy "Public Delete" on products for delete using (true);
         )}
 
         {activeTab === 'overview' && <DashboardOverview />}
-        {(activeTab === 'inventory' || activeTab === 'low-stock') && <ProductManagement initialTab={activeTab === 'low-stock' ? 'low-stock' : 'all'} />}
+        {activeTab === 'inventory' && <ProductManagement />}
+        {activeTab === 'low-stock' && <LowStockManagement />}
         {activeTab === 'brands' && <BrandManagement />}
         {activeTab === 'devices' && <DeviceManagement />}
         {activeTab === 'carousel' && <CarouselManagement />}
         {activeTab === 'orders' && <OrderManagement />}
         {activeTab === 'discounts' && <DiscountManagement />}
         {activeTab === 'collections' && <CollectionManagement />}
+        {activeTab === 'search-analysis' && <SearchAnalysis />}
+        {activeTab === 'reviews' && <ReviewManagement />}
+        {activeTab === 'settings' && <SettingsManagement />}
+        {activeTab === 'submissions' && <OverlaySubmissions />}
         {activeTab === 'maintenance' && (
           <div className="space-y-8">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
