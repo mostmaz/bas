@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Search, Menu, X, Moon, Sun, Globe, WifiOff, Wifi, Heart } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { optimizeImage } from '../utils/imageUtils';
 
 export const Navbar: React.FC = () => {
   const { cart, toggleCart, theme, toggleTheme, language, toggleLanguage, t, isOnline, supaConnectionError, setSearchQuery, storeLogo } = useShop();
@@ -67,7 +68,7 @@ export const Navbar: React.FC = () => {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center cursor-pointer group" onClick={() => navigate('/')}>
             <img
-              src={storeLogo}
+              src={optimizeImage(storeLogo, 200)}
               alt="BasCavarat Logo"
               className={`${isProductPage ? 'w-8 h-8 mr-2 rtl:ml-2' : 'w-10 h-10 mr-3 rtl:ml-3'} rounded-xl rtl:mr-0 object-cover shadow-lg shadow-pink-500/20 group-hover:shadow-pink-500/40 transition-all duration-300`}
             />

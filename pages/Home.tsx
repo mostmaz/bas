@@ -11,6 +11,7 @@ import { Helmet } from 'react-helmet-async';
 
 import { useProductFiltering } from '../hooks/useProductFiltering';
 import { shuffleArray } from '../utils/arrayUtils';
+import { optimizeImage } from '../utils/imageUtils';
 
 export const Home: React.FC = () => {
   const { products, devices, brands, isProductsLoading, t, notificationMessage, isBrandsLoading, supabase } = useShop();
@@ -208,7 +209,7 @@ export const Home: React.FC = () => {
                   }`}
               >
                 {brand.logo && (
-                  <img src={brand.logo} alt={brand.name} className="w-5 h-5 object-contain" width={20} height={20} />
+                  <img src={optimizeImage(brand.logo, 100)} alt={brand.name} className="w-5 h-5 object-contain" width={20} height={20} />
                 )}
                 {brand.name}
               </button>

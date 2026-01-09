@@ -232,7 +232,14 @@ export const TRANSLATIONS = {
         submitReview: 'Submit Review',
         noReviewsYet: 'No reviews yet. Be the first to review!',
         linkCopied: 'Link copied to clipboard',
-        errorCopying: 'Error copying link'
+        errorCopying: 'Error copying link',
+        adminDashboard: 'Admin Dashboard',
+        online: 'Online',
+        offline: 'Offline',
+        exit: 'Exit',
+        myWishlist: 'My Wishlist',
+        status: 'Status',
+        demoMode: 'Demo Mode'
     },
     ar: {
 
@@ -397,7 +404,14 @@ export const TRANSLATIONS = {
         submitReview: 'إرسال المراجعة',
         noReviewsYet: 'لا توجد مراجعات بعد. كن أول من يقيم!',
         linkCopied: 'تم نسخ الرابط',
-        errorCopying: 'خطأ في نسخ الرابط'
+        errorCopying: 'خطأ في نسخ الرابط',
+        adminDashboard: 'لوحة المسؤول',
+        online: 'متصل',
+        offline: 'غير متصل',
+        exit: 'خروج',
+        myWishlist: 'قائمة رغباتي',
+        status: 'الحالة',
+        demoMode: 'الوضع التجريبي'
     }
 };
 

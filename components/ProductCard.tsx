@@ -41,6 +41,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
           <div className="aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
             <img
               src={optimizeImage(product.image, 800)}
+              srcSet={`${optimizeImage(product.image, 400)} 400w, ${optimizeImage(product.image, 800)} 800w`}
+              sizes="(max-width: 640px) 160px, (max-width: 1024px) 200px, 250px"
               alt={product.name}
               loading={priority ? "eager" : "lazy"}
               // @ts-ignore - fetchpriority is currently a non-standard attribute but supported by Chrome
