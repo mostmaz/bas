@@ -144,6 +144,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                     .from('product-images')
                     .upload(filename, fileToUpload, {
                         contentType: fileToUpload.type || 'image/jpeg',
+                        cacheControl: '31536000',
                         upsert: false
                     });
 

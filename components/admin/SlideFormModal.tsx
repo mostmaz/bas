@@ -38,7 +38,10 @@ export const SlideFormModal: React.FC<SlideFormModalProps> = ({ isOpen, onClose,
     try {
       const { error: uploadError } = await supabase.storage
         .from('product-images')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '31536000',
+          upsert: false
+        });
 
       if (uploadError) {
         throw uploadError;

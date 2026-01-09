@@ -1,5 +1,4 @@
 
-
 import React, { useEffect, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ShopProvider, useShop } from './context/ShopContext';
@@ -9,10 +8,10 @@ import { CartDrawer } from './components/CartDrawer';
 import { AiAssistant } from './components/AiAssistant';
 import { Footer } from './components/Footer';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { HelmetProvider } from 'react-helmet-async';
 
 // Lazy Load Pages
 const Home = React.lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
-// const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 const ProductDetails = React.lazy(() => import('./pages/ProductDetails').then(module => ({ default: module.ProductDetails })));
 const Checkout = React.lazy(() => import('./pages/Checkout').then(module => ({ default: module.Checkout })));
@@ -51,15 +50,10 @@ const SplashScreen = ({ logo }: { logo: string }) => (
   </div>
 );
 
-import { useVisitorTracking } from './hooks/useVisitorTracking';
-
 const AppContent: React.FC = () => {
   // This component is needed to access the context inside the provider
   const { theme, isAppLoading, supaConnectionError, storeLogo } = useShop();
   const { pathname } = useLocation();
-
-  // Initialize visitor tracking
-  useVisitorTracking();
 
   // Automatically scroll to top and track PageView whenever the route changes
   useEffect(() => {
@@ -127,8 +121,6 @@ const AppContent: React.FC = () => {
     </div>
   );
 }
-
-import { HelmetProvider } from 'react-helmet-async';
 
 const App: React.FC = () => {
   return (

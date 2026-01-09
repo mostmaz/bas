@@ -119,6 +119,7 @@ export const BrandManagement: React.FC = () => {
         .from('product-images') // Reuse product-images bucket
         .upload(filename, fileToUpload, {
           contentType: fileToUpload.type || 'image/jpeg',
+          cacheControl: '31536000',
           upsert: false
         });
 

@@ -26,6 +26,7 @@ const uploadImageFromUrl = async (url: string): Promise<string> => {
       .from('product-images')
       .upload(filename, blob, {
         contentType: blob.type || 'image/jpeg',
+        cacheControl: '31536000',
         upsert: false
       });
 

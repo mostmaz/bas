@@ -16,9 +16,10 @@ export const optimizeImage = (url: string, width: number = 800, quality: number 
 
     // Check if it's a Supabase URL
     if (url.includes('supabase.co/storage/v1/object/public')) {
-        // If it already has query params, append, otherwise start query
-        const separator = url.includes('?') ? '&' : '?';
-        return `${url}${separator}width=${width}&quality=${quality}&format=webp`;
+        // Switch to the render endpoint for transformations
+        const renderUrl = url.replace('/object/public/', '/render/image/public/');
+        const separator = renderUrl.includes('?') ? '&' : '?';
+        return `${renderUrl}${separator}width=${width}&quality=${quality}&format=webp`;
     }
 
     return url;
