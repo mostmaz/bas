@@ -12,8 +12,8 @@ static_sites:
   routes:
   - path: /
   environment_slug: html
-  # Enable Caching for Static Assets
-  # This fixes "Serve static assets with an efficient cache policy"
+  # Note: Static Sites on App Platform have fixed cache policies (10s browser, 24h CDN).
+  # To customize this, you must use a Web Service (Docker/Nginx) or a Droplet.
   cors:
     allow_origins:
       - "*"

@@ -29,9 +29,11 @@ This is the easiest method. DigitalOcean will build your site from GitHub and ho
      - `SUPABASE_URL`
      - `SUPABASE_KEY`
    - *Note: Your `vite.config.ts` is configured to read these specific keys, so you don't need to rename them to `VITE_`.*
+   - *Note: Your `vite.config.ts` is configured to read these specific keys, so you don't need to rename them to `VITE_`.*
 10. **Review & Create**: Click **Create Resource**.
 
-DigitalOcean will now clone your repo, run `npm install`, `npm run build`, and host the `dist` folder.
+> [!NOTE]
+> **Caching on App Platform**: Static Sites have a fixed browser cache TTL of 10 seconds. You might see a warning in PageSpeed Insights about this. This is normal for this platform. Your assets are still cached on the CDN for 24 hours. To fix this warning, you would need to use **Option 2 (Droplet)** or deploy as a **Web Service** (Docker).
 
 ---
 
