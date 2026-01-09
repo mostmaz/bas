@@ -5,7 +5,7 @@ import { ShopProvider, useShop } from './context/ShopContext';
 import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
 import { CartDrawer } from './components/CartDrawer';
-import { AiAssistant } from './components/AiAssistant';
+// import { AiAssistant } from './components/AiAssistant';
 import { Footer } from './components/Footer';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { HelmetProvider } from 'react-helmet-async';
