@@ -186,9 +186,9 @@ export const Home: React.FC = () => {
       </div>
 
       {/* Banner */}
-      {/* <div className="px-6 mt-6">
+      <div className="px-6 mt-6">
         <OffersCarousel />
-      </div> */}
+      </div>
 
       {/* Brands (formerly Categories) */}
       <div className="mt-8 px-6">
