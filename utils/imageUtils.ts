@@ -18,7 +18,7 @@ export const optimizeImage = (url: string, width: number = 800, quality: number 
     if (url.includes('supabase.co/storage/v1/object/public')) {
         // If it already has query params, append, otherwise start query
         const separator = url.includes('?') ? '&' : '?';
-        return `${url}${separator}width=${width}&quality=${quality}&format=origin`;
+        return `${url}${separator}width=${width}&quality=${quality}&format=webp`;
     }
 
     return url;

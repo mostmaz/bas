@@ -22,6 +22,14 @@ export const OffersCarousel: React.FC = () => {
 
   const isRTL = language === 'ar';
 
+  // Preload next image
+  useEffect(() => {
+    if (carouselSlides.length === 0) return;
+    const nextIndex = (current + 1) % carouselSlides.length;
+    const img = new Image();
+    img.src = optimizeImage(carouselSlides[nextIndex].image, 800);
+  }, [current, carouselSlides]);
+
   if (isSlidesLoading) {
     return (
       <div className="relative w-full rounded-2xl overflow-hidden shadow-xl h-[150px] md:h-[190px] bg-gray-200 dark:bg-slate-800 animate-pulse border border-gray-100 dark:border-white/5">
@@ -42,6 +50,8 @@ export const OffersCarousel: React.FC = () => {
             src={optimizeImage(offer.image, 800)}
             alt={offer.title || "Slide"}
             loading={idx === 0 ? "eager" : "lazy"}
+            // @ts-ignore
+            fetchPriority={idx === 0 ? "high" : "auto"}
             className="w-full h-full object-cover"
             style={{ objectPosition: offer.imagePosition || 'center' }}
           />
