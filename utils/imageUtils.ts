@@ -19,7 +19,7 @@ export const optimizeImage = (url: string, width: number = 800, quality: number 
         // Switch to the render endpoint for transformations
         const renderUrl = url.replace('/object/public/', '/render/image/public/');
         const separator = renderUrl.includes('?') ? '&' : '?';
-        return `${renderUrl}${separator}width=${width}&quality=${quality}&format=webp`;
+        return `${renderUrl}${separator}width=${width}&quality=${quality}`;
     }
 
     return url;
