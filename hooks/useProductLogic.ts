@@ -71,7 +71,10 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
     const [isProductsLoading, setIsProductsLoading] = useState(false);
 
     const refreshProducts = async (silent = false) => {
-        if (!silent) setIsAppLoading(true);
+        // Only show full app loader if we don't have cache and it's not a silent refresh
+        const hasCache = !!localStorage.getItem('products_cache');
+        if (!silent && !hasCache) setIsAppLoading(true);
+
         setIsProductsLoading(true);
 
         try {
@@ -80,6 +83,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     setProducts(parsed);
+                    // If we have cache, we don't need to block the UI
                     if (!silent) setIsAppLoading(false);
                 }
             }
@@ -89,9 +93,11 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
 
         if (isSupabaseConfigured) {
             try {
+                // Optimization: Exclude 'description' from list view fetch to reduce payload size
+                // Description is fetched on-demand in ProductDetails or ProductForm
                 const { data, error } = await supabase
                     .from('products')
-                    .select('id, name, price, sale_price, image, images, variants, description, category, brand, device, stock, rating, colors, sku, ishidden, created_at, tags, views, daily_views')
+                    .select('id, name, price, sale_price, image, images, variants, category, brand, device, stock, rating, colors, sku, ishidden, created_at, tags, views, daily_views')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;

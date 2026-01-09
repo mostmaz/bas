@@ -34,8 +34,13 @@ export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' |
                 newCart[existingIndex] = { ...newCart[existingIndex], quantity: newCart[existingIndex].quantity + 1 };
             } else {
                 const displayImage = (variant && variant.image) ? variant.image : product.image;
+                // Optimization: Sanitize product to remove large fields like description and extra images
+                // This prevents localStorage bloat and improves JSON.parse performance
+                const { description, images, ...productData } = product;
+
                 newCart.push({
-                    ...product,
+                    ...productData,
+                    images: [], // Satisfy type requirement but keep payload small
                     image: displayImage,
                     quantity: 1,
                     selectedVariant: variant

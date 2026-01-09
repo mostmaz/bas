@@ -44,9 +44,16 @@ export const useOrderLogic = (
         };
 
         if (isSupabaseConfigured) {
+            // Optimization: Sanitize items to remove large fields like description and extra images
+            // We only need the snapshot of price, name, variant, and main image.
+            const sanitizedItems = newOrder.items.map(item => {
+                const { description, images, ...rest } = item;
+                return rest;
+            });
+
             const dbPayload = {
                 ...newOrder,
-                items: newOrder.items
+                items: sanitizedItems
             };
             const { customerName, totalAmount, shippingFee, discountAmount, discountCode, orderNumber, ...cleanPayload } = dbPayload as any;
 

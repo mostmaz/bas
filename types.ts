@@ -34,6 +34,7 @@ export interface Product {
 export interface CartItem extends Product {
   quantity: number;
   selectedVariant?: ProductVariant;
+  isGift?: boolean;
 }
 
 export interface DiscountCode {
@@ -133,6 +134,7 @@ export interface SearchTerm {
   term: string;
   count: number;
   last_searched_at: string;
+
 }
 
 export interface SiteSetting {
