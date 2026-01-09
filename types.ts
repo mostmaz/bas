@@ -29,6 +29,7 @@ export interface Product {
   bonusMessage?: string; // New: Message to display when a bonus product is available
   customNotification?: string; // New: Special notification message for this product
   tags?: string[]; // New: AI-generated tags for smart search
+  daily_views?: number; // New: Track daily views for trending products
 }
 
 export interface CartItem extends Product {
@@ -57,6 +58,7 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   timestamp: number;
+  imagePrompt?: string; // Optional field for image generation prompt
 }
 
 export interface CarouselSlide {
