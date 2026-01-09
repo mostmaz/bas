@@ -1,0 +1,19 @@
+name: bascavarat-store
+region: fra
+static_sites:
+- name: bascavarat-store
+  source_dir: /
+  build_command: npm run build
+  output_dir: dist
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: mostmaz/bas
+  routes:
+  - path: /
+  environment_slug: html
+  # Enable Caching for Static Assets
+  # This fixes "Serve static assets with an efficient cache policy"
+  cors:
+    allow_origins:
+      - "*"

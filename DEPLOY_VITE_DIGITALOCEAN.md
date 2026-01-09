@@ -84,12 +84,26 @@ Since Vite is an SPA, you need to redirect all 404s to `index.html` so routing w
    }
    ```
 3. Save and exit (Ctrl+O, Enter, Ctrl+X).
+   ```
+3. Save and exit (Ctrl+O, Enter, Ctrl+X).
 4. Restart Nginx:
    ```bash
    systemctl restart nginx
    ```
 
-### 5. Environment Variables (Droplet)
+### 5. Enable Caching (Nginx)
+To fix the "Serve static assets with an efficient cache policy" warning, add this block inside your `server` block (before `location /`):
+
+```nginx
+    # Cache static assets (images, css, js) for 1 year
+    location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc|css|js)$ {
+        expires 1y;
+        access_log off;
+        add_header Cache-Control "public";
+    }
+```
+
+### 6. Environment Variables (Droplet)
 Since the build happens **locally** in this method, the environment variables must be present on your **local machine** when you run `npm run build`. The `.env` file is used during the build process to bake the values into the JavaScript files. You do **not** set them on the Nginx server.
 
 ---

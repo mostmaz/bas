@@ -208,7 +208,7 @@ export const Home: React.FC = () => {
                   }`}
               >
                 {brand.logo && (
-                  <img src={brand.logo} alt={brand.name} className="w-5 h-5 object-contain" />
+                  <img src={brand.logo} alt={brand.name} className="w-5 h-5 object-contain" width={20} height={20} />
                 )}
                 {brand.name}
               </button>
@@ -237,9 +237,9 @@ export const Home: React.FC = () => {
             </h3>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
-            {bestSellers.map(product => (
+            {bestSellers.map((product, index) => (
               <div key={product.id} className="min-w-[160px] w-[160px] sm:w-[200px]">
-                <ProductCard product={product} />
+                <ProductCard product={product} priority={index < 4} />
               </div>
             ))}
           </div>

@@ -10,9 +10,10 @@ import { slugify } from '../utils/slugUtils';
 
 interface ProductCardProps {
   product: Product;
+  priority?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = false }) => {
   const { addToCart, wishlist, toggleWishlist } = useShop();
   // navigate hook no longer needed for card click
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
@@ -41,7 +42,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <img
               src={optimizeImage(product.image, 400)}
               alt={product.name}
-              loading="lazy"
+              loading={priority ? "eager" : "lazy"}
+              // @ts-ignore - fetchpriority is currently a non-standard attribute but supported by Chrome
+              fetchpriority={priority ? "high" : "auto"}
               decoding="async"
               onLoad={() => setIsImageLoaded(true)}
               className={`h-full w-full object-cover object-center transition-all duration-700 ${isImageLoaded ? 'opacity-95 dark:opacity-90 group-hover:scale-110 group-hover:opacity-100' : 'opacity-0 scale-100'}`}
