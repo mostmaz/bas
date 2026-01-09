@@ -40,7 +40,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
         <Link to={`/product/${product.id}/${slugify(product.device)}/${slugify(product.name)}`} className="block relative cursor-pointer">
           <div className="aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
             <img
-              src={optimizeImage(product.image, 400)}
+              src={optimizeImage(product.image, 800)}
               alt={product.name}
               loading={priority ? "eager" : "lazy"}
               // @ts-ignore - fetchpriority is currently a non-standard attribute but supported by Chrome
