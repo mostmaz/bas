@@ -81,6 +81,7 @@ export interface Brand {
 export interface Device {
   id: string;
   name: string;
+  brand?: string;
 }
 
 export interface Order {

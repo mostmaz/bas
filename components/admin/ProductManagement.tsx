@@ -44,13 +44,13 @@ const uploadImageFromUrl = async (url: string): Promise<string> => {
 };
 
 export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'all' | 'low-stock' }> = ({ filter, initialTab }) => {
-  const { products, deleteProduct, addProduct, updateProduct, refreshProducts } = useShop();
+  const { products, deleteProduct, addProduct, updateProduct, refreshProducts, devices, brands } = useShop();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isBatchEditing, setIsBatchEditing] = useState(false);
-  const [batchEdits, setBatchEdits] = useState<{ [id: string]: { name: string; price: number } }>({});
+  const [batchEdits, setBatchEdits] = useState<{ [id: string]: { name: string; price: number; device: string; brand: string } }>({});
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
 
@@ -585,10 +585,10 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
   };
 
   const handleBatchEditStart = () => {
-    const initialEdits: { [id: string]: { name: string; price: number } } = {};
+    const initialEdits: { [id: string]: { name: string; price: number; device: string; brand: string } } = {};
     filteredProducts.forEach(p => {
       if (selectedProducts.has(p.id)) {
-        initialEdits[p.id] = { name: p.name, price: p.price };
+        initialEdits[p.id] = { name: p.name, price: p.price, device: p.device, brand: p.brand };
       }
     });
     setBatchEdits(initialEdits);
@@ -596,36 +596,43 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
   };
 
   const handleBatchEditSave = async () => {
-    if (!window.confirm(`Save changes for ${Object.keys(batchEdits).length} products?`)) return;
+    console.log('[ProductManagement] handleBatchEditSave clicked');
+    // window.confirm removed to unblock user
 
     setIsSaving(true);
     try {
       const updates = Object.entries(batchEdits).map(async ([id, changes]) => {
         const product = products.find(p => p.id === id);
-        if (!product) return;
+        if (!product) {
+          console.warn(`[ProductManagement] Product ${id} not found for batch update.`);
+          return;
+        }
 
         await updateProduct({
           ...product,
           name: changes.name,
-          price: changes.price
+          price: changes.price,
+          device: changes.device,
+          brand: changes.brand
         });
       });
 
       await Promise.all(updates);
       await refreshProducts();
+
       setIsBatchEditing(false);
       setBatchEdits({});
       setSelectedProducts(new Set());
       alert("Batch updates saved successfully!");
     } catch (error) {
-      console.error("Batch update failed:", error);
+      console.error("[ProductManagement] Batch update failed:", error);
       alert("Some updates failed. Check console.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleBatchInputChange = (id: string, field: 'name' | 'price', value: string | number) => {
+  const handleBatchInputChange = (id: string, field: 'name' | 'price' | 'device' | 'brand', value: string | number) => {
     setBatchEdits(prev => ({
       ...prev,
       [id]: {
@@ -650,9 +657,6 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
       alert("Invalid price entered.");
       return;
     }
-
-    // Removed redundant window.confirm as the button itself is the confirmation
-    // if (!window.confirm(`Are you sure you want to set the price to ${newPrice} for ${selectedProducts.size} products?`)) return;
 
     setIsSaving(true);
     try {
@@ -685,8 +689,6 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
       setIsSaving(false);
     }
   };
-
-
 
   const handleSaveCollection = () => {
     if (selectedProducts.size < 2) {
@@ -1084,10 +1086,31 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
                       {product.sku || '-'}
                     </td>
                     <td className="px-6 py-4 text-gray-600 dark:text-slate-300">
-                      <div className="flex flex-col text-xs">
-                        <span className="font-medium">{product.device}</span>
-                        <span className="text-gray-500 dark:text-slate-500">{product.brand}</span>
-                      </div>
+                      {isBatchEditing && batchEdits[product.id] ? (
+                        <div className="flex flex-col gap-2">
+                          <select
+                            value={batchEdits[product.id].device}
+                            onChange={(e) => handleBatchInputChange(product.id, 'device', e.target.value)}
+                            className="w-full border border-indigo-300 rounded px-2 py-1 text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                          >
+                            <option value="">Select Device</option>
+                            {devices.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                          </select>
+                          <select
+                            value={batchEdits[product.id].brand}
+                            onChange={(e) => handleBatchInputChange(product.id, 'brand', e.target.value)}
+                            className="w-full border border-indigo-300 rounded px-2 py-1 text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                          >
+                            <option value="">Select Brand</option>
+                            {brands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col text-xs">
+                          <span className="font-medium">{product.device}</span>
+                          <span className="text-gray-500 dark:text-slate-500">{product.brand}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-gray-900 dark:text-white font-medium">
                       {isBatchEditing && batchEdits[product.id] ? (
@@ -1192,6 +1215,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
         onClose={() => setIsModalOpen(false)}
         initialData={editingProduct}
         onSave={handleSaveProduct}
+        isLoading={isSaving}
       />
 
       <CollectionFormModal

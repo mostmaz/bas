@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Order, Product } from '../types';
 import { supabase } from '../services/supabase';
 import { sendOrderNotification, sendWhatsAppNotification, sendTwilioWhatsAppNotification } from '../services/emailService';
@@ -11,7 +11,17 @@ const mapOrderFromDB = (data: any): Order => ({
     city: data.city || '',
     address: data.address || '',
     // Handle items if they come back as a JSON string or already an object
-    items: typeof data.items === 'string' ? JSON.parse(data.items) : (data.items || []),
+    items: (() => {
+        if (typeof data.items === 'string') {
+            try {
+                return JSON.parse(data.items);
+            } catch (e) {
+                console.error(`Failed to parse items for order ${data.id}`, e);
+                return [];
+            }
+        }
+        return data.items || [];
+    })(),
     totalAmount: Number(data.totalAmount || data.totalamount || 0),
     shippingFee: Number(data.shippingFee || data.shippingfee || 0),
     discountAmount: Number(data.discountAmount || data.discountamount || 0),
@@ -30,7 +40,7 @@ export const useOrderLogic = (
 ) => {
     const [orders, setOrders] = useState<Order[]>([]);
 
-    const placeOrder = async (orderData: Omit<Order, 'id' | 'date' | 'status'>) => {
+    const placeOrder = useCallback(async (orderData: Omit<Order, 'id' | 'date' | 'status'>) => {
         const newOrder = {
             ...orderData,
             status: 'Processing' as const,
@@ -192,9 +202,9 @@ export const useOrderLogic = (
                 return p;
             }));
         }
-    };
+    }, [isSupabaseConfigured, products, setProducts]);
 
-    const updateOrderStatus = async (id: string, status: Order['status']) => {
+    const updateOrderStatus = useCallback(async (id: string, status: Order['status']) => {
         const order = orders.find(o => o.id === id);
         if (!order) return;
 
@@ -269,28 +279,31 @@ export const useOrderLogic = (
             }
             setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
         }
-    };
+    }, [isSupabaseConfigured, orders, products, refreshProducts, setProducts, addToast]);
 
-    const refreshOrders = async () => {
+    const refreshOrders = useCallback(async () => {
         if (!isSupabaseConfigured) return;
 
+        console.log('[useOrderLogic] refreshOrders called. Fetching last 50 orders...');
         const { data, error } = await supabase
             .from('orders')
-            .select('*')
-            .order('date', { ascending: false });
+            .select('id, customername, phone, city, address, totalamount, shippingfee, discountamount, discountcode, status, date, ordernumber') // Exclude 'items' to prevent timeout
+            .order('date', { ascending: false })
+            .limit(50);
 
         if (error) {
-            console.error('Error fetching orders:', error);
+            console.error('[useOrderLogic] Error fetching orders:', error);
             // addToast('Failed to fetch orders', 'error'); // Optional: might be too noisy on init
             return;
         }
 
         if (data) {
+            console.log(`[useOrderLogic] Successfully fetched ${data.length} orders.`);
             setOrders(data.map(mapOrderFromDB));
         }
-    };
+    }, [isSupabaseConfigured]);
 
-    const bulkUpdateOrderStatus = async (ids: string[], status: Order['status']) => {
+    const bulkUpdateOrderStatus = useCallback(async (ids: string[], status: Order['status']) => {
         console.log('bulkUpdateOrderStatus (parallel) called', { ids, status });
         if (ids.length === 0) return;
 
@@ -386,9 +399,9 @@ export const useOrderLogic = (
             setOrders(prev => prev.map(o => ids.includes(o.id) ? { ...o, status } : o));
             addToast(`${ids.length} orders updated (Local)`, 'success');
         }
-    };
+    }, [isSupabaseConfigured, orders, products, refreshProducts, setProducts, addToast, refreshOrders]);
 
-    const searchOrdersByPhone = async (phone: string): Promise<Order[]> => {
+    const searchOrdersByPhone = useCallback(async (phone: string): Promise<Order[]> => {
         if (!isSupabaseConfigured) return [];
 
         // Sanitize phone for search
@@ -407,7 +420,7 @@ export const useOrderLogic = (
         }
 
         return data ? data.map(mapOrderFromDB) : [];
-    };
+    }, [isSupabaseConfigured]);
 
     return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone };
 };

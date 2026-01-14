@@ -39,7 +39,7 @@ interface ShopContextType {
   notificationMessage: string;
   updateNotificationMessage: (message: string) => Promise<void>;
   overlayConfig: OverlayConfig;
-  updateOverlayConfig: (config: OverlayConfig) => Promise<void>;
+  updateOverlayConfig: (config: OverlayConfig) => Promise<boolean | void>;
 
   // UI State
   isCartOpen: boolean;
@@ -67,7 +67,7 @@ interface ShopContextType {
   updateBrand: (id: string, name: string, logo?: string) => Promise<void>;
   deleteBrand: (id: string) => Promise<void>;
   addDevice: (name: string) => Promise<void>;
-  updateDevice: (id: string, name: string) => Promise<void>;
+  updateDevice: (id: string, name: string, brand?: string) => Promise<void>;
   deleteDevice: (id: string) => Promise<void>;
   addSlide: (slide: CarouselSlide) => Promise<void>;
   updateSlide: (slide: CarouselSlide) => Promise<void>;
@@ -152,7 +152,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
 
   // --- HOOKS ---
   const { brands, setBrands, refreshBrands, addBrand, updateBrand, deleteBrand, isLoading: isBrandsLoading } = useBrandLogic(isSupabaseConfigured, addToast);
-  const { devices, setDevices, refreshDevices, addDevice, updateDevice, deleteDevice } = useDeviceLogic(isSupabaseConfigured, addToast);
+  const { devices, setDevices, refreshDevices, addDevice, updateDevice: originalUpdateDevice, deleteDevice } = useDeviceLogic(isSupabaseConfigured, addToast);
   const { carouselSlides, setCarouselSlides, addSlide, updateSlide, deleteSlide, refreshSlides, isLoading: isSlidesLoading } = useSlideLogic(isSupabaseConfigured, addToast);
 
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
@@ -161,10 +161,26 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
   const { overlayConfig, updateOverlayConfig } = useSettingsLogic();
 
-  // Calculate Effective Shipping Fee
-  const shippingFee = totalAmount >= freeShippingThreshold ? 0 : baseShippingFee;
+  // Calculate effective shipping fee
+  const shippingFee = finalTotal >= freeShippingThreshold ? 0 : baseShippingFee;
 
-  // --- EFFECTS ---
+  // Intercept updateDevice to update associated products
+  const updateDevice = async (id: string, name: string, brand?: string) => {
+    const oldDevice = devices.find(d => d.id === id);
+    const oldName = oldDevice?.name;
+
+    await originalUpdateDevice(id, name, brand);
+
+    if (oldName && oldName !== name) {
+      const productsToUpdate = products.filter(p => p.device === oldName);
+      if (productsToUpdate.length > 0) {
+        addToast(`Updating ${productsToUpdate.length} products associated with this device...`, 'info');
+        await Promise.all(productsToUpdate.map(p => updateProduct({ ...p, device: name }, true)));
+        addToast(`Updated products to new device name`, 'success');
+      }
+    }
+  };
+
   useEffect(() => {
     if (!isSupabaseConfigured) {
       addToast("Offline Mode: Using Demo Data", "warning");

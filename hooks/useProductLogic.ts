@@ -60,7 +60,13 @@ const mapProductFromDB = (p: any): Product => {
         isHidden: p.isHidden || p.ishidden || false,
         giftProductId: p.gift_product_id || p.giftProductId || undefined,
         bonusMessage: p.bonus_message || p.bonusMessage || undefined,
-        tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? JSON.parse(p.tags) : []),
+        tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? (() => {
+            try {
+                return JSON.parse(p.tags);
+            } catch (e) {
+                return [];
+            }
+        })() : []),
         views: p.views || 0,
         daily_views: p.daily_views || 0
     };

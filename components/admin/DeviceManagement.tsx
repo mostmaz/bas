@@ -5,8 +5,9 @@ import { Button } from '../Button';
 import { Device } from '../../types';
 
 export const DeviceManagement: React.FC = () => {
-    const { devices, addDevice, updateDevice, deleteDevice, refreshDevices } = useShop();
+    const { devices, brands, addDevice, updateDevice, deleteDevice, refreshDevices } = useShop();
     const [newDeviceName, setNewDeviceName] = useState('');
+    const [selectedBrand, setSelectedBrand] = useState('');
     const [editingDevice, setEditingDevice] = useState<Device | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -19,18 +20,25 @@ export const DeviceManagement: React.FC = () => {
         setIsSubmitting(true);
         try {
             if (editingDevice) {
-                await updateDevice(editingDevice.id, newDeviceName.trim());
+                await updateDevice(editingDevice.id, newDeviceName.trim(), selectedBrand || undefined);
                 setEditingDevice(null);
             } else {
-                await addDevice(newDeviceName.trim());
+                await addDevice(newDeviceName.trim(), selectedBrand || undefined);
             }
             setNewDeviceName('');
+            setSelectedBrand('');
         } catch (error) {
             console.error("Error saving device:", error);
-            alert("Failed to save device.");
+            alert("Failed to save device");
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleEditDevice = (device: Device) => {
+        setEditingDevice(device);
+        setNewDeviceName(device.name);
+        setSelectedBrand(device.brand || '');
     };
 
     const handleDeleteDevice = async (id: string) => {
@@ -40,16 +48,11 @@ export const DeviceManagement: React.FC = () => {
                 await deleteDevice(id);
             } catch (error) {
                 console.error("Error deleting device:", error);
-                alert("Failed to delete device.");
+                alert("Failed to delete device");
             } finally {
                 setDeletingId(null);
             }
         }
-    };
-
-    const handleEditDevice = (device: Device) => {
-        setEditingDevice(device);
-        setNewDeviceName(device.name);
     };
 
     const handleRefresh = async () => {
@@ -75,7 +78,7 @@ export const DeviceManagement: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Add/Edit Device Card */}
+                {/* Add Device Form */}
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 h-fit">
                     <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                         {editingDevice ? 'Edit Device' : 'Add New Device'}
@@ -83,40 +86,55 @@ export const DeviceManagement: React.FC = () => {
                     <form onSubmit={handleAddDevice} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Device Name</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="e.g. iPhone 16 Pro"
-                                    className="flex-1 bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    value={newDeviceName}
-                                    onChange={(e) => setNewDeviceName(e.target.value)}
-                                    disabled={isSubmitting}
-                                />
-                            </div>
+                            <input
+                                type="text"
+                                placeholder="e.g. iPhone 15 Pro"
+                                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                value={newDeviceName}
+                                onChange={(e) => setNewDeviceName(e.target.value)}
+                                disabled={isSubmitting}
+                            />
                         </div>
 
-                        <Button
-                            type="submit"
-                            disabled={!newDeviceName.trim() || isSubmitting}
-                            className="w-full"
-                            isLoading={isSubmitting}
-                        >
-                            <Plus className="h-4 w-4 mr-2" />
-                            {editingDevice ? 'Update Device' : 'Add Device'}
-                        </Button>
-                        {editingDevice && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                    setEditingDevice(null);
-                                    setNewDeviceName('');
-                                }}
-                                className="w-full"
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Brand (Optional)</label>
+                            <select
+                                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                value={selectedBrand}
+                                onChange={(e) => setSelectedBrand(e.target.value)}
+                                disabled={isSubmitting}
                             >
-                                Cancel Edit
+                                <option value="">Select Brand</option>
+                                {brands.map(brand => (
+                                    <option key={brand.id} value={brand.name}>{brand.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button
+                                type="submit"
+                                disabled={!newDeviceName.trim() || isSubmitting}
+                                className="flex-1"
+                                isLoading={isSubmitting}
+                            >
+                                <Plus className="h-4 w-4 mr-2" />
+                                {editingDevice ? 'Update Device' : 'Add Device'}
                             </Button>
-                        )}
+                            {editingDevice && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setEditingDevice(null);
+                                        setNewDeviceName('');
+                                        setSelectedBrand('');
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                            )}
+                        </div>
                     </form>
                 </div>
 
@@ -140,6 +158,11 @@ export const DeviceManagement: React.FC = () => {
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-gray-900 dark:text-white font-medium">{device.name}</span>
+                                            {device.brand && (
+                                                <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full w-fit mt-1">
+                                                    {device.brand}
+                                                </span>
+                                            )}
                                             <span className="text-[10px] text-gray-400 font-mono">{device.id}</span>
                                         </div>
                                     </div>

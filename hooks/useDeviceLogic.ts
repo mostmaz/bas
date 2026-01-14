@@ -9,7 +9,7 @@ export const useDeviceLogic = (isSupabaseConfigured: boolean, addToast: (msg: st
     const refreshDevices = async () => {
         if (isSupabaseConfigured) {
             try {
-                const { data, error } = await supabase.from('devices').select('*');
+                const { data, error } = await supabase.from('devices').select('*').order('name');
                 if (error) {
                     console.warn("Could not load devices from DB (table might be missing)", error);
                     return;
@@ -21,12 +21,12 @@ export const useDeviceLogic = (isSupabaseConfigured: boolean, addToast: (msg: st
         }
     };
 
-    const addDevice = async (name: string) => {
+    const addDevice = async (name: string, brand?: string) => {
         if (isSupabaseConfigured) {
-            const { error } = await supabase.from('devices').insert([{ name }]);
+            const { error } = await supabase.from('devices').insert([{ name, brand }]);
             if (error) {
                 console.error("Failed to add device to DB:", error);
-                const newDevice: Device = { id: Date.now().toString(), name };
+                const newDevice: Device = { id: Date.now().toString(), name, brand };
                 setDevices(prev => [...prev, newDevice]);
                 addToast('Device added locally (DB table missing?)', 'warning');
             } else {
@@ -34,7 +34,7 @@ export const useDeviceLogic = (isSupabaseConfigured: boolean, addToast: (msg: st
                 addToast('Device added successfully', 'success');
             }
         } else {
-            const newDevice: Device = { id: Date.now().toString(), name };
+            const newDevice: Device = { id: Date.now().toString(), name, brand };
             setDevices(prev => [...prev, newDevice]);
             addToast('Device added locally', 'success');
         }
@@ -57,19 +57,19 @@ export const useDeviceLogic = (isSupabaseConfigured: boolean, addToast: (msg: st
         }
     };
 
-    const updateDevice = async (id: string, name: string) => {
+    const updateDevice = async (id: string, name: string, brand?: string) => {
         if (isSupabaseConfigured) {
-            const { error } = await supabase.from('devices').update({ name }).eq('id', id);
+            const { error } = await supabase.from('devices').update({ name, brand }).eq('id', id);
             if (error) {
                 console.error("Failed to update device in DB:", error);
-                setDevices(prev => prev.map(d => d.id === id ? { ...d, name } : d));
+                setDevices(prev => prev.map(d => d.id === id ? { ...d, name, brand } : d));
                 addToast('Device updated locally (DB error)', 'warning');
             } else {
                 await refreshDevices();
                 addToast('Device updated successfully', 'success');
             }
         } else {
-            setDevices(prev => prev.map(d => d.id === id ? { ...d, name } : d));
+            setDevices(prev => prev.map(d => d.id === id ? { ...d, name, brand } : d));
             addToast('Device updated locally', 'success');
         }
     };

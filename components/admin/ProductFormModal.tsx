@@ -14,6 +14,7 @@ interface ProductFormModalProps {
     onClose: () => void;
     initialData: Product | null; // null = create mode
     onSave: (productData: Omit<Product, 'id' | 'rating'>) => void;
+    isLoading?: boolean;
 }
 
 const COLOR_OPTIONS = [
@@ -33,7 +34,7 @@ const COLOR_OPTIONS = [
     { name: 'Lime', hex: '#84cc16' },
 ];
 
-export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, initialData, onSave }) => {
+export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, initialData, onSave, isLoading = false }) => {
     const { brands, devices, products, fetchProductDetails } = useShop();
     const { addToast } = useToast();
     const [isGenerating, setIsGenerating] = useState(false);
@@ -660,8 +661,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                         <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
                             Cancel
                         </Button>
-                        <Button type="submit" className="flex-1" disabled={isProcessingImage || isGenerating}>
-                            {initialData ? 'Update Product' : 'Add Product'}
+                        <Button type="submit" className="flex-1" disabled={isProcessingImage || isGenerating || isLoading}>
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    {initialData ? 'Updating...' : 'Adding...'}
+                                </>
+                            ) : (
+                                initialData ? 'Update Product' : 'Add Product'
+                            )}
                         </Button>
                     </div>
                 </form>
