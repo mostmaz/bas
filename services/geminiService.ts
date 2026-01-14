@@ -156,7 +156,8 @@ export const generateProductDescription = async (
         } catch (fetchError) {
           console.error("Failed to fetch image for description gen:", fetchError);
           // Fallback to text-only generation if image fetch fails
-          const result = await model.generateContent(prompt);
+          const textPrompt = `Write a creative, premium, and sales-oriented product description in Arabic (max 50 words) for a phone case named "${productName}". Focus on protection, style, and quality.`;
+          const result = await model.generateContent(textPrompt);
           return result.response.text();
         }
       } else {
