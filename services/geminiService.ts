@@ -7,7 +7,7 @@ let genAI: GoogleGenerativeAI | null = null;
 
 const getGenAI = () => {
   if (!genAI) {
-    const apiKey = import.meta.env.VITE_API_KEY || process.env.API_KEY;
+    const apiKey = import.meta.env.VITE_API_KEY || process.env.VITE_API_KEY || process.env.API_KEY;
     if (!apiKey) {
       console.warn("Gemini API Key is missing. AI features will be disabled.");
       return null;
