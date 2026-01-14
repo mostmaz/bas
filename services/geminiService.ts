@@ -143,6 +143,7 @@ export const generateProductDescription = async (
       if (imageBase64.startsWith('http')) {
         try {
           const response = await fetch(imageBase64);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const blob = await response.blob();
           const reader = new FileReader();
           base64Data = await new Promise((resolve, reject) => {
