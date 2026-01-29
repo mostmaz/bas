@@ -290,6 +290,11 @@ export const ProductDetails: React.FC = () => {
                 </div>
               )}
 
+              {/* Device Name Badge */}
+              <div className="absolute bottom-6 left-6 z-10 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-sm font-medium border border-white/20 shadow-lg">
+                {product.device}
+              </div>
+
               {/* Gift Icon */}
               {product.giftIcon && (
                 <div className="absolute bottom-24 right-8 z-10 w-20 h-20 drop-shadow-xl transition-transform hover:scale-110 animate-in fade-in zoom-in duration-500 delay-300 bg-white/30 backdrop-blur-md rounded-full p-1.5 border border-yellow-400 shadow-2xl relative">
