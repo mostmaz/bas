@@ -24,8 +24,8 @@ export const ProductBottomNav: React.FC<ProductBottomNavProps> = ({
     const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 pb-6 sm:pb-8">
-            <div className="max-w-md mx-auto flex gap-0 h-16 shadow-2xl rounded-2xl overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 pb-6 sm:pb-8 pointer-events-none">
+            <div className="max-w-md mx-auto flex gap-0 h-16 shadow-2xl rounded-2xl overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 pointer-events-auto">
 
                 {/* Action Area (75% -> 3x25%) */}
                 <div className="flex-1 flex transition-all duration-300 ease-in-out relative">

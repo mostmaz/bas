@@ -383,12 +383,24 @@ export const ProductDetails: React.FC = () => {
                 <link itemProp="availability" href={currentStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"} />
               </div>
             </div>
+
+            {/* Bonus Message */}
+            {product.bonusMessage && (
+              <div className="mx-4 sm:mx-0 mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
+                <div className="p-1 bg-amber-100 dark:bg-amber-800 rounded-full shrink-0">
+                  <Gift className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  {product.bonusMessage}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Details Section */}
           <div className="flex flex-col justify-center px-4 sm:px-0">
             {/* Color/Variant Selection */}
-            {(availableVariants.length > 0 || (product.colors && product.colors.length > 0)) && (
+            {((availableVariants.length > 1) || (availableVariants.length === 0 && product.colors && product.colors.length > 1)) && (
               <div className="mb-8 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                 <div className={`flex justify-between items-center mb-4 ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('selectColor')}</h3>
@@ -432,17 +444,7 @@ export const ProductDetails: React.FC = () => {
                   </div>
                 )}
 
-                {/* Bonus Message */}
-                {product.bonusMessage && (
-                  <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
-                    <div className="p-1 bg-amber-100 dark:bg-amber-800 rounded-full shrink-0">
-                      <Gift className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                      {product.bonusMessage}
-                    </p>
-                  </div>
-                )}
+
               </div>
             )}
 
@@ -469,20 +471,18 @@ export const ProductDetails: React.FC = () => {
               </div>
             )}
 
-            {/* Add to Cart Button (Outside Variant Box - if no variants) */}
-            {availableVariants.length === 0 && (
+            {/* Add to Cart Button (Outside Variant Box - if no variants or single variant) */}
+            {(availableVariants.length === 1 || (availableVariants.length === 0 && (!product.colors || product.colors.length <= 1))) && (
               <div className="mb-8">
-                {/* Bonus Message */}
-                {product.bonusMessage && (
-                  <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
-                    <div className="p-1 bg-amber-100 dark:bg-amber-800 rounded-full shrink-0">
-                      <Gift className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                      {product.bonusMessage}
-                    </p>
+                {/* Low Stock Warning */}
+                {currentStock < 5 && currentStock > 0 && (
+                  <div className="mb-4 flex items-center text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 py-1.5 px-3 rounded-lg w-fit">
+                    <AlertCircle className="h-3 w-3 mr-1.5" />
+                    {t('hurryOnly')} {currentStock} {t('leftInStock')}
                   </div>
                 )}
+
+
               </div>
             )}
 
