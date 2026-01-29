@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { useToast } from '../context/ToastContext';
-import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag, Gift, Loader2 } from 'lucide-react';
+import { ArrowLeft, Star, Truck, ShieldCheck, Share2, Heart, Check, AlertCircle, Tag, Gift, Loader2, Plus } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '../components/Button';
 import { ProductCard } from '../components/ProductCard';
@@ -290,6 +290,20 @@ export const ProductDetails: React.FC = () => {
                 </div>
               )}
 
+              {/* Gift Icon */}
+              {product.giftIcon && (
+                <div className="absolute bottom-24 right-8 z-10 w-20 h-20 drop-shadow-xl transition-transform hover:scale-110 animate-in fade-in zoom-in duration-500 delay-300 bg-white/30 backdrop-blur-md rounded-full p-1.5 border border-yellow-400 shadow-2xl relative">
+                  <img
+                    src={product.giftIcon}
+                    alt="Gift"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                  <div className="absolute top-0 right-0 bg-yellow-400 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md border-2 border-white transform translate-x-1 -translate-y-1">
+                    <Plus className="w-4 h-4" strokeWidth={3} />
+                  </div>
+                </div>
+              )}
+
               <div className="absolute top-6 right-6 space-y-3 opacity-0 group-hover:opacity-100 transition-opacity rtl:right-auto rtl:left-6 z-10">
                 <button
                   onClick={() => toggleWishlist(product.id)}
@@ -373,9 +387,11 @@ export const ProductDetails: React.FC = () => {
               <div className="mb-8 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                 <div className={`flex justify-between items-center mb-4 ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('selectColor')}</h3>
-                  <span className={`text-xs font-bold px-2 py-1 rounded ${currentStock < 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                    {currentStock} {t('inStock')}
-                  </span>
+                  {currentStock < 5 && (
+                    <span className={`text-xs font-bold px-2 py-1 rounded ${currentStock < 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                      {currentStock} {t('inStock')}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-3">

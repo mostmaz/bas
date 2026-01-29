@@ -1,6 +1,6 @@
 // Production-ready Product Form Modal - Fixed TypeScript errors
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Wand2, Loader2, Trash2, Check, Plus, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Wand2, Loader2, Trash2, Check, Plus, Image as ImageIcon, Gift } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Product, ProductVariant } from '../../types';
 import { generateProductDescription, generateProductTags } from '../../services/geminiService';
@@ -61,7 +61,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         stock: '10',
         colors: [] as string[], // Legacy simple colors
         variants: [] as ProductVariant[],
-        tags: [] as string[]
+        tags: [] as string[],
+        giftIcon: '',
+        bonusMessage: ''
     };
 
     const [formData, setFormData] = useState(defaultState);
@@ -92,7 +94,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                 stock: productToUse.stock.toString(),
                 colors: productToUse.colors || [],
                 variants: productToUse.variants || [],
-                tags: productToUse.tags || []
+                tags: productToUse.tags || [],
+                giftIcon: productToUse.giftIcon || '',
+                bonusMessage: productToUse.bonusMessage || ''
             });
             setIsSaleEnabled(!!productToUse.salePrice);
         } else {
@@ -287,7 +291,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
             stock: parseInt(formData.stock),
             colors: formData.colors,
             variants: formData.variants,
-            tags: formData.tags
+            tags: formData.tags,
+            giftIcon: formData.giftIcon,
+            bonusMessage: formData.bonusMessage
         });
     };
 
@@ -655,6 +661,88 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
                             readOnly
                             title="Calculated from variants"
                         />
+                    </div>
+
+                    {/* Gift Icon Upload */}
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800">
+                        <h4 className="text-sm font-bold text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2">
+                            <Gift className="h-4 w-4" />
+                            Gift & Bonus Settings
+                        </h4>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Gift Icon (Optional)</label>
+                                <div className="flex items-center gap-4">
+                                    {formData.giftIcon && (
+                                        <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 group">
+                                            <img src={formData.giftIcon} alt="Gift Icon" className="object-cover w-full h-full" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, giftIcon: '' }))}
+                                                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <label className="flex-1 cursor-pointer">
+                                        <div className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-lg text-sm font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors">
+                                            <Upload className="h-4 w-4 mr-2" />
+                                            {formData.giftIcon ? 'Change Icon' : 'Upload Gift Icon'}
+                                        </div>
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+
+                                                setIsProcessingImage(true);
+                                                try {
+                                                    const filename = `gift_icon_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+                                                    const { data, error } = await supabase.storage
+                                                        .from('product-images')
+                                                        .upload(filename, file, {
+                                                            contentType: file.type || 'image/jpeg',
+                                                            cacheControl: '31536000',
+                                                            upsert: false
+                                                        });
+
+                                                    if (error) throw error;
+
+                                                    const { data: { publicUrl } } = supabase.storage
+                                                        .from('product-images')
+                                                        .getPublicUrl(filename);
+
+                                                    setFormData(prev => ({ ...prev, giftIcon: publicUrl }));
+                                                    addToast("Gift icon uploaded", 'success');
+                                                } catch (error: any) {
+                                                    console.error('Upload error:', error);
+                                                    addToast(`Upload failed: ${error.message}`, 'error');
+                                                } finally {
+                                                    setIsProcessingImage(false);
+                                                }
+                                            }}
+                                            disabled={isProcessingImage}
+                                        />
+                                    </label>
+                                </div>
+                                <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400">Upload a small icon to be displayed on the product card.</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Bonus Message</label>
+                                <input
+                                    type="text"
+                                    className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md px-3 py-2 dark:text-white outline-none"
+                                    value={formData.bonusMessage || ''}
+                                    onChange={e => setFormData({ ...formData, bonusMessage: e.target.value })}
+                                    placeholder="e.g. Free Screen Protector included!"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="pt-2 flex gap-3">

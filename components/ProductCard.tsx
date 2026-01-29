@@ -60,8 +60,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
 
             {/* Sale Badge */}
             {product.salePrice && (
-              <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+              <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full shadow-lg z-10">
                 {discountPercent}% OFF
+              </div>
+            )}
+
+            {/* Gift Icon */}
+            {product.giftIcon && (
+              <div className="absolute bottom-12 right-4 z-10 w-10 h-10 sm:w-12 sm:h-12 drop-shadow-lg transition-transform hover:scale-110 bg-white/30 backdrop-blur-md rounded-full p-1 border border-yellow-400 shadow-lg relative">
+                <img
+                  src={product.giftIcon}
+                  alt="Gift"
+                  className="w-full h-full object-cover rounded-full"
+                />
+                <div className="absolute -top-1 -right-1 bg-yellow-400 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-sm border border-white">
+                  <Plus className="w-3 h-3" strokeWidth={3} />
+                </div>
               </div>
             )}
           </div>

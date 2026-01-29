@@ -30,6 +30,7 @@ export interface Product {
   customNotification?: string; // New: Special notification message for this product
   tags?: string[]; // New: AI-generated tags for smart search
   daily_views?: number; // New: Track daily views for trending products
+  giftIcon?: string; // New: URL for custom gift icon
 }
 
 export interface CartItem extends Product {

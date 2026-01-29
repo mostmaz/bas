@@ -68,7 +68,8 @@ const mapProductFromDB = (p: any): Product => {
             }
         })() : []),
         views: p.views || 0,
-        daily_views: p.daily_views || 0
+        daily_views: p.daily_views || 0,
+        giftIcon: p.gift_icon || undefined
     };
 };
 
@@ -103,7 +104,7 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 // Description is fetched on-demand in ProductDetails or ProductForm
                 const { data, error } = await supabase
                     .from('products')
-                    .select('id, name, price, sale_price, image, images, variants, category, brand, device, stock, rating, colors, sku, ishidden, created_at, tags, views, daily_views')
+                    .select('id, name, price, sale_price, image, images, variants, category, brand, device, stock, rating, colors, sku, ishidden, created_at, tags, views, daily_views, gift_icon, bonus_message')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -174,7 +175,8 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 ishidden: product.isHidden,
                 gift_product_id: product.giftProductId || null,
                 bonus_message: product.bonusMessage || null,
-                tags: product.tags || []
+                tags: product.tags || [],
+                gift_icon: product.giftIcon || null
             };
 
             const { error } = await supabase.from('products').insert([dbProduct]);
@@ -214,7 +216,8 @@ export const useProductLogic = (isSupabaseConfigured: boolean, addToast: (msg: s
                 ishidden: product.isHidden,
                 gift_product_id: product.giftProductId || null,
                 bonus_message: product.bonusMessage || null,
-                tags: product.tags || []
+                tags: product.tags || [],
+                gift_icon: product.giftIcon || null
             };
 
             const { error } = await supabase.from('products').update(dbProduct).eq('id', product.id);
