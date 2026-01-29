@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Button } from '../components/Button';
-import { Package, Search, Phone, Calendar, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, Search, Phone, Calendar, MapPin, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { Order } from '../types';
 
 export const MyOrders: React.FC = () => {
@@ -76,7 +76,14 @@ export const MyOrders: React.FC = () => {
         </form>
       </div>
 
-      {hasSearched && (
+      {isSearching && (
+        <div className="flex flex-col items-center justify-center py-12 animate-in fade-in zoom-in duration-300">
+          <Loader2 className="h-10 w-10 text-purple-600 animate-spin mb-4" />
+          <p className="text-slate-500 dark:text-slate-400 font-medium">{t('searchingOrders')}</p>
+        </div>
+      )}
+
+      {!isSearching && hasSearched && (
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
           {foundOrders.length === 0 ? (
             <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
