@@ -50,7 +50,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
   const [isSaving, setIsSaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isBatchEditing, setIsBatchEditing] = useState(false);
-  const [batchEdits, setBatchEdits] = useState<{ [id: string]: { name: string; price: number; device: string; brand: string } }>({});
+  const [batchEdits, setBatchEdits] = useState<{ [id: string]: { name: string; price: number; device: string; brand: string; isHidden: boolean } }>({});
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
 
@@ -585,10 +585,10 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
   };
 
   const handleBatchEditStart = () => {
-    const initialEdits: { [id: string]: { name: string; price: number; device: string; brand: string } } = {};
+    const initialEdits: { [id: string]: { name: string; price: number; device: string; brand: string; isHidden: boolean } } = {};
     filteredProducts.forEach(p => {
       if (selectedProducts.has(p.id)) {
-        initialEdits[p.id] = { name: p.name, price: p.price, device: p.device, brand: p.brand };
+        initialEdits[p.id] = { name: p.name, price: p.price, device: p.device, brand: p.brand, isHidden: !!p.isHidden };
       }
     });
     setBatchEdits(initialEdits);
@@ -613,7 +613,8 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
           name: changes.name,
           price: changes.price,
           device: changes.device,
-          brand: changes.brand
+          brand: changes.brand,
+          isHidden: changes.isHidden
         });
       });
 
@@ -632,7 +633,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
     }
   };
 
-  const handleBatchInputChange = (id: string, field: 'name' | 'price' | 'device' | 'brand', value: string | number) => {
+  const handleBatchInputChange = (id: string, field: 'name' | 'price' | 'device' | 'brand' | 'isHidden', value: string | number | boolean) => {
     setBatchEdits(prev => ({
       ...prev,
       [id]: {
@@ -1036,6 +1037,7 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
                 <th className="px-6 py-3">Specs</th>
                 <th className="px-6 py-3">Price</th>
                 <th className="px-6 py-3">Stock</th>
+                <th className="px-6 py-3">Hidden</th>
                 <th className="px-6 py-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -1129,6 +1131,28 @@ export const ProductManagement: React.FC<{ filter?: 'low-stock'; initialTab?: 'a
                         }`}>
                         {product.stock} in stock
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {isBatchEditing && batchEdits[product.id] ? (
+                        <div className="flex items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={batchEdits[product.id].isHidden}
+                            onChange={(e) => handleBatchInputChange(product.id, 'isHidden', e.target.checked)}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                          />
+                        </div>
+                      ) : (
+                        product.isHidden ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                            Hidden
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                            Visible
+                          </span>
+                        )
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
