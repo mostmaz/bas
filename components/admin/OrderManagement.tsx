@@ -6,23 +6,36 @@ import { OrderDetailModal } from './OrderDetailModal';
 import { Order } from '../../types';
 
 export const OrderManagement: React.FC = () => {
-  const { orders, updateOrderStatus, bulkUpdateOrderStatus, refreshOrders } = useShop();
+  // Use state from hook for pagination
+  const { orders, updateOrderStatus, bulkUpdateOrderStatus, refreshOrders, page, totalPages } = useShop();
+  // Local state for tracking what the UI thinks is the current page, although the data drives the view
+  const [currentPage, setCurrentPage] = useState(1);
+  // Sync local current page with hook's page if needed, or just drive from hook. 
+  // Simplified: Let's assume we trigger valid page updates.
+
+  // We no longer slice orders locally because 'orders' now contains only the current page's data
+  // const startIndex = (currentPage - 1) * itemsPerPage; 
+  // const endIndex = startIndex + itemsPerPage;
+  // const paginatedOrders = orders; // Use directly
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
-
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  const totalPages = Math.ceil(orders.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedOrders = orders.slice(startIndex, endIndex);
-
-  // Confirmation Modal State
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<Order['status'] | null>(null);
+
+  // Sync local state regarding page change
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+    refreshOrders(newPage);
+  };
+
+  // Refresh on mount (load page 1)
+  React.useEffect(() => {
+    refreshOrders(1);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -89,8 +102,8 @@ export const OrderManagement: React.FC = () => {
     <div className="animate-in fade-in duration-500 relative">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Orders ({orders.length})</h2>
-          <Button variant="outline" size="sm" onClick={() => refreshOrders()}>Refresh</Button>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Orders</h2>
+          <Button variant="outline" size="sm" onClick={() => refreshOrders(currentPage)}>Refresh</Button>
         </div>
         <div className="flex gap-2">
           {selectedOrderIds.length > 0 && (
@@ -140,14 +153,14 @@ export const OrderManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-              {paginatedOrders.length === 0 ? (
+              {orders.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="px-6 py-8 text-center text-gray-500 dark:text-slate-400">
                     No orders found.
                   </td>
                 </tr>
               ) : (
-                paginatedOrders.map((order) => (
+                orders.map((order) => (
                   <tr key={order.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${selectedOrderIds.includes(order.id) ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}>
                     <td className="px-6 py-4">
                       <input
@@ -177,7 +190,36 @@ export const OrderManagement: React.FC = () => {
                       {formatDate(order.date)}
                     </td>
                     <td className="px-6 py-4 text-gray-500 dark:text-slate-400">
-                      {order.items.reduce((acc, item) => acc + item.quantity, 0)} items
+                      <div className="space-y-2 max-w-[300px]">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-sm">
+                            <div
+                              className="w-8 h-8 rounded bg-gray-100 dark:bg-slate-700 flex-shrink-0 bg-cover bg-center border border-gray-200 dark:border-slate-600"
+                              style={{ backgroundImage: `url(${item.selectedVariant?.image || item.image})` }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900 dark:text-white truncate" title={item.name}>
+                                {item.name}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-slate-400 flex flex-wrap gap-x-2">
+                                <span>{item.device}</span>
+                                {item.selectedVariant?.color && (
+                                  <span className="flex items-center gap-1">
+                                    <span
+                                      className="w-2 h-2 rounded-full border border-gray-200"
+                                      style={{ backgroundColor: item.selectedVariant.color }}
+                                    />
+                                    {item.selectedVariant.sku ? item.selectedVariant.sku : 'Variant'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-xs font-medium text-gray-500 dark:text-slate-400">
+                              x{item.quantity}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-gray-600 dark:text-slate-300">
                       <span className="text-xs">IQD</span> {order.shippingFee.toLocaleString()}
@@ -212,13 +254,13 @@ export const OrderManagement: React.FC = () => {
         {totalPages > 1 && (
           <div className="px-6 py-4 bg-gray-50 dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between">
             <div className="text-sm text-gray-500 dark:text-slate-400">
-              Showing <span className="font-medium">{startIndex + 1}</span> to <span className="font-medium">{Math.min(endIndex, orders.length)}</span> of <span className="font-medium">{orders.length}</span> orders
+              Showing page <span className="font-medium">{currentPage}</span> of <span className="font-medium">{totalPages}</span>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
                 disabled={currentPage === 1}
               >
                 Previous
@@ -227,10 +269,10 @@ export const OrderManagement: React.FC = () => {
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                   <button
                     key={page}
-                    onClick={() => setCurrentPage(page)}
+                    onClick={() => handlePageChange(page)}
                     className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                        ? 'bg-indigo-600 text-white shadow-md'
-                        : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
                       }`}
                   >
                     {page}
@@ -240,7 +282,7 @@ export const OrderManagement: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
                 disabled={currentPage === totalPages}
               >
                 Next

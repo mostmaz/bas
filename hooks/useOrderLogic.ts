@@ -39,6 +39,9 @@ export const useOrderLogic = (
     refreshProducts: (silent?: boolean) => Promise<void>
 ) => {
     const [orders, setOrders] = useState<Order[]>([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const ORDERS_PER_PAGE = 10;
 
     const placeOrder = useCallback(async (orderData: Omit<Order, 'id' | 'date' | 'status'>) => {
         const newOrder = {
@@ -281,25 +284,46 @@ export const useOrderLogic = (
         }
     }, [isSupabaseConfigured, orders, products, refreshProducts, setProducts, addToast]);
 
-    const refreshOrders = useCallback(async () => {
+    const refreshOrders = useCallback(async (pageNumber: number = 1) => {
         if (!isSupabaseConfigured) return;
 
-        console.log('[useOrderLogic] refreshOrders called. Fetching last 50 orders...');
-        const { data, error } = await supabase
-            .from('orders')
-            .select('id, customername, phone, city, address, totalamount, shippingfee, discountamount, discountcode, status, date, ordernumber') // Exclude 'items' to prevent timeout
-            .order('date', { ascending: false })
-            .limit(50);
+        console.log(`[useOrderLogic] refreshOrders called for page ${pageNumber}.`);
 
-        if (error) {
-            console.error('[useOrderLogic] Error fetching orders:', error);
-            // addToast('Failed to fetch orders', 'error'); // Optional: might be too noisy on init
-            return;
-        }
+        try {
+            // Fetch total count first
+            const countResult = await supabase
+                .from('orders')
+                .select('*', { count: 'exact', head: true }); // Head requests only the count, no data
 
-        if (data) {
-            console.log(`[useOrderLogic] Successfully fetched ${data.length} orders.`);
-            setOrders(data.map(mapOrderFromDB));
+            if (countResult.error) throw countResult.error;
+
+            const total = countResult.count || 0;
+            const computedTotalPages = Math.ceil(total / ORDERS_PER_PAGE);
+            setTotalPages(computedTotalPages);
+            setPage(pageNumber); // Update current page state
+
+            // Determine range for Supabase
+            const from = (pageNumber - 1) * ORDERS_PER_PAGE;
+            const to = from + ORDERS_PER_PAGE - 1;
+
+            const { data, error } = await supabase
+                .from('orders')
+                .select('id, customername, phone, city, address, totalamount, shippingfee, discountamount, discountcode, status, date, ordernumber, items')
+                .order('date', { ascending: false })
+                .range(from, to);
+
+            if (error) {
+                console.error('[useOrderLogic] Error fetching orders:', error);
+                throw error;
+            }
+
+            if (data) {
+                console.log(`[useOrderLogic] Successfully fetched ${data.length} orders for page ${pageNumber}.`);
+                setOrders(data.map(mapOrderFromDB));
+            }
+        } catch (err) {
+            console.error('Error refreshing orders:', err);
+            // Optional: addToast
         }
     }, [isSupabaseConfigured]);
 
@@ -422,5 +446,5 @@ export const useOrderLogic = (
         return data ? data.map(mapOrderFromDB) : [];
     }, [isSupabaseConfigured]);
 
-    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone };
+    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages };
 };
