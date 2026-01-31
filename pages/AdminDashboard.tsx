@@ -15,8 +15,9 @@ import { SearchAnalysis } from '../components/admin/SearchAnalysis';
 import { ReviewManagement } from '../components/admin/ReviewManagement';
 import { SettingsManagement } from '../components/admin/SettingsManagement';
 import { OverlaySubmissions } from '../components/admin/OverlaySubmissions';
+import { FinanceManagement } from '../components/admin/FinanceManagement';
 import { useShop } from '../context/ShopContext';
-import { AlertTriangle, Database, Copy, Check, X, Lock, KeyRound, LogIn, LayoutDashboard, ShoppingBag, Package, Tags, Smartphone, Image as ImageIcon, Percent, Layers, Settings, Search, MessageSquare } from 'lucide-react';
+import { AlertTriangle, Database, Copy, Check, X, Lock, KeyRound, LogIn, LayoutDashboard, ShoppingBag, Package, Tags, Smartphone, Image as ImageIcon, Percent, Layers, Settings, Search, MessageSquare, DollarSign } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { useToast } from '../context/ToastContext';
@@ -33,7 +34,7 @@ export const AdminDashboard: React.FC = () => {
   const [pin, setPin] = useState('');
   const [schemaError, setSchemaError] = useState<string | null>(null);
   const [showSql, setShowSql] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'low-stock' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections' | 'maintenance' | 'search-analysis' | 'reviews' | 'settings' | 'submissions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'low-stock' | 'brands' | 'devices' | 'carousel' | 'orders' | 'discounts' | 'collections' | 'maintenance' | 'search-analysis' | 'reviews' | 'settings' | 'submissions' | 'finance'>('overview');
   const [copied, setCopied] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -285,6 +286,44 @@ create policy "Allow Public Update" on orders for update using (true);
 grant all on orders to anon;
 grant all on orders to authenticated;
 grant all on orders to service_role;
+
+-- 13. Finance Module Tables
+create table if not exists income_records (
+  id uuid primary key default gen_random_uuid(),
+  source text not null, -- 'Shipping', 'Sales', etc.
+  amount numeric not null,
+  date timestamptz default now(),
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists expense_records (
+  id uuid primary key default gen_random_uuid(),
+  category text not null, -- 'Ads', 'Salaries', 'ServerCost', 'ProductCost', 'Other'
+  amount numeric not null,
+  date timestamptz default now(),
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists product_costs (
+  product_id text primary key references products(id) on delete cascade,
+  cost numeric not null default 0,
+  created_at timestamptz default now()
+);
+
+-- 14. Finance RLS
+alter table income_records enable row level security;
+alter table expense_records enable row level security;
+alter table product_costs enable row level security;
+
+create policy "Finance Public Access" on income_records for all using (true) with check (true);
+create policy "Finance Public Access Expense" on expense_records for all using (true) with check (true);
+create policy "Finance Public Access Costs" on product_costs for all using (true) with check (true);
+
+grant all on income_records to anon, authenticated, service_role;
+grant all on expense_records to anon, authenticated, service_role;
+grant all on product_costs to anon, authenticated, service_role;
 `;
 
   const copySql = () => {
@@ -406,6 +445,17 @@ grant all on orders to service_role;
           >
             <ShoppingBag className="h-5 w-5" />
             <span className="font-medium">Orders</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('finance'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'finance'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md'
+              }`}
+          >
+            <DollarSign className="h-5 w-5" />
+            <span className="font-medium">Finance</span>
           </button>
 
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4 mt-6">Catalog</div>
@@ -634,6 +684,7 @@ grant all on orders to service_role;
         {activeTab === 'reviews' && <ReviewManagement />}
         {activeTab === 'settings' && <SettingsManagement />}
         {activeTab === 'submissions' && <OverlaySubmissions />}
+        {activeTab === 'finance' && <FinanceManagement />}
         {activeTab === 'maintenance' && (
           <div className="space-y-8">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">

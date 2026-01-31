@@ -24,6 +24,7 @@ interface ShopContextType {
   carouselSlides: CarouselSlide[];
   orders: Order[];
   refreshOrders: (pageNumber?: number) => Promise<void>;
+  totalRevenue: number;
   page: number;
   totalPages: number;
   searchOrdersByPhone: (phone: string) => Promise<Order[]>;
@@ -42,6 +43,9 @@ interface ShopContextType {
   updateNotificationMessage: (message: string) => Promise<void>;
   overlayConfig: OverlayConfig;
   updateOverlayConfig: (config: OverlayConfig) => Promise<boolean | void>;
+
+  revenueResetDate: string | null;
+  resetRevenue: () => Promise<void>;
 
   // UI State
   isCartOpen: boolean;
@@ -151,6 +155,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   });
 
   const [notificationMessage, setNotificationMessage] = useState<string>('');
+  const [revenueResetDate, setRevenueResetDate] = useState<string | null>(null);
 
   // --- HOOKS ---
   const { brands, setBrands, refreshBrands, addBrand, updateBrand, deleteBrand, isLoading: isBrandsLoading } = useBrandLogic(isSupabaseConfigured, addToast);
@@ -160,7 +165,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
   const { products, setProducts, refreshProducts, fetchProductDetails, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
   const { cart, isCartOpen, appliedDiscount, addToCart, removeFromCart, updateCartQuantity, clearCart, toggleCart, applyDiscount, removeDiscount, totalAmount, discountAmount, finalTotal } = useCartLogic(addToast, products, discounts);
-  const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
+  const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
   const { overlayConfig, updateOverlayConfig } = useSettingsLogic();
 
   // Calculate effective shipping fee
@@ -191,24 +196,24 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     refreshBrands();
     refreshDiscounts();
     refreshDevices();
-    // refreshOrders(); // Deferred to Admin Dashboard or on-demand
+    refreshOrders(1, revenueResetDate); // Pass reset date
     refreshSlides();
 
     // Fetch Settings
     const fetchSettings = async () => {
       if (isSupabaseConfigured) {
-        const { data, error } = await supabase.from('store_settings').select('shipping_fee, free_shipping_threshold, logo, notification_message').limit(1);
+        const { data, error } = await supabase.from('store_settings').select('shipping_fee, free_shipping_threshold, logo, notification_message, revenue_reset_date').limit(1);
         if (data && data.length > 0) {
           if (data[0].shipping_fee !== undefined) setBaseShippingFee(data[0].shipping_fee);
           if (data[0].free_shipping_threshold !== undefined) setFreeShippingThreshold(data[0].free_shipping_threshold);
           if (data[0].logo) setStoreLogo(data[0].logo);
           if (data[0].notification_message) setNotificationMessage(data[0].notification_message);
+          if (data[0].revenue_reset_date) setRevenueResetDate(data[0].revenue_reset_date);
         }
       }
     };
     fetchSettings();
-    fetchSettings();
-  }, []);
+  }, [revenueResetDate]); // Add revenueResetDate as dependency so we refresh when it changes
 
   // Update Document Direction
   useEffect(() => {
@@ -296,6 +301,20 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     }
   };
 
+  const resetRevenue = async () => {
+    const now = new Date().toISOString();
+    setRevenueResetDate(now);
+    if (isSupabaseConfigured) {
+      const { data } = await supabase.from('store_settings').select('id').limit(1);
+      if (data && data.length > 0) {
+        await supabase.from('store_settings').update({ revenue_reset_date: now }).eq('id', data[0].id);
+      } else {
+        await supabase.from('store_settings').insert([{ revenue_reset_date: now }]);
+      }
+      addToast('Revenue calculation reset', 'success');
+    }
+  };
+
   const toggleDemoData = async () => {
     if (isDemoActive) {
       setIsDemoActive(false);
@@ -342,6 +361,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
       shippingFee, baseShippingFee, freeShippingThreshold, updateShippingFee, updateFreeShippingThreshold, storeLogo, updateStoreLogo,
       notificationMessage, updateNotificationMessage,
+      revenueResetDate, resetRevenue,
       overlayConfig, updateOverlayConfig,
       isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading, isSlidesLoading, isBrandsLoading,
       refreshBrands, refreshProducts, refreshDevices,
@@ -349,7 +369,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       addBrand, updateBrand, deleteBrand,
       addDevice, updateDevice, deleteDevice,
       addSlide, updateSlide, deleteSlide, refreshSlides,
-      placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages,
+      placeOrder, updateOrderStatus, refreshOrders: (page) => refreshOrders(page, revenueResetDate), bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue,
       addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
       appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
       isDemoActive, toggleDemoData,

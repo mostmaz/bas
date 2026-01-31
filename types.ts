@@ -151,3 +151,26 @@ export interface OverlayConfig {
   text: string;
   dismissible: boolean;
 }
+
+export interface IncomeRecord {
+  id: string;
+  source: string;
+  amount: number;
+  date: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface ExpenseRecord {
+  id: string;
+  category: string;
+  amount: number;
+  date: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface ProductCost {
+  product_id: string;
+  cost: number;
+}

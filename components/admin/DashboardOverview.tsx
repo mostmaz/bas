@@ -7,6 +7,7 @@ import {
 import { DollarSign, Package, TrendingUp, ShoppingCart, AlertTriangle, Settings, Save, Database, ToggleLeft, ToggleRight, Upload, Image as ImageIcon } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Button } from '../Button';
+import { RevenueAuditTable } from './RevenueAuditTable';
 
 // Mock Data for Revenue (keep static for demo)
 const REVENUE_DATA = [
@@ -22,7 +23,7 @@ const REVENUE_DATA = [
 const COLORS = ['#4f46e5', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
 
 export const DashboardOverview: React.FC = () => {
-  const { products, orders, baseShippingFee, updateShippingFee, freeShippingThreshold, updateFreeShippingThreshold, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo, notificationMessage, updateNotificationMessage } = useShop();
+  const { products, orders, baseShippingFee, updateShippingFee, freeShippingThreshold, updateFreeShippingThreshold, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo, notificationMessage, updateNotificationMessage, revenueResetDate, resetRevenue, totalRevenue: serverTotalRevenue } = useShop();
   const [tempShippingFee, setTempShippingFee] = useState(baseShippingFee.toString());
   const [tempThreshold, setTempThreshold] = useState(freeShippingThreshold.toString());
   const [tempNotificationMessage, setTempNotificationMessage] = useState(notificationMessage || '');
@@ -35,12 +36,7 @@ export const DashboardOverview: React.FC = () => {
     setTempNotificationMessage(notificationMessage || '');
   }, [baseShippingFee, freeShippingThreshold, notificationMessage]);
 
-  // Dynamic Revenue Calculation (Excluding Cancelled)
-  const totalRevenue = useMemo(() => {
-    return orders
-      .filter(o => o.status !== 'Cancelled')
-      .reduce((sum, o) => sum + o.totalAmount, 0);
-  }, [orders]);
+
 
   const pendingOrdersCount = orders.filter(o => o.status === 'Processing').length;
 
@@ -233,16 +229,26 @@ export const DashboardOverview: React.FC = () => {
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">IQD {totalRevenue.toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Net Revenue</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">IQD {serverTotalRevenue.toLocaleString()}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-full text-green-600">
               <DollarSign className="h-6 w-6" />
             </div>
           </div>
-          <p className="text-sm text-green-600 mt-2 flex items-center">
-            <TrendingUp className="h-3 w-3 mr-1" /> +12.5% vs last week
-          </p>
+          <div className="flex justify-between items-end mt-2">
+            <p className="text-xs text-gray-400">Excludes Shipping</p>
+            <button
+              onClick={() => {
+                if (confirm('Reset revenue counter? This will set the current revenue to 0 and start tracking from now.')) {
+                  resetRevenue();
+                }
+              }}
+              className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
+            >
+              Reset Counter
+            </button>
+          </div>
         </div>
 
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
@@ -343,6 +349,8 @@ export const DashboardOverview: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <RevenueAuditTable />
     </div>
   );
 };

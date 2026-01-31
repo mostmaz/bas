@@ -41,6 +41,7 @@ export const useOrderLogic = (
     const [orders, setOrders] = useState<Order[]>([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalRevenue, setTotalRevenue] = useState(0);
     const ORDERS_PER_PAGE = 10;
 
     const placeOrder = useCallback(async (orderData: Omit<Order, 'id' | 'date' | 'status'>) => {
@@ -284,7 +285,71 @@ export const useOrderLogic = (
         }
     }, [isSupabaseConfigured, orders, products, refreshProducts, setProducts, addToast]);
 
-    const refreshOrders = useCallback(async (pageNumber: number = 1) => {
+    const fetchTotalRevenue = useCallback(async (resetDate: string | null) => {
+        if (!isSupabaseConfigured) return;
+
+        // 1. Fetch Product Costs first
+        const { data: costsData } = await supabase
+            .from('product_costs')
+            .select('product_id, cost');
+
+        const costMap: Record<string, number> = {};
+        if (costsData) {
+            costsData.forEach((item: any) => {
+                costMap[item.product_id] = item.cost;
+            });
+        }
+
+        // 2. Fetch Orders with Items
+        let query = supabase
+            .from('orders')
+            .select('totalamount, shippingfee, date, status, items');
+
+        // Filter out Cancelled
+        query = query.neq('status', 'Cancelled');
+
+        // Apply Reset Date Filter
+        if (resetDate) {
+            query = query.gt('date', new Date(resetDate).getTime());
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('Error fetching total revenue:', error);
+            return;
+        }
+
+        if (data) {
+            const total = data.reduce((sum, order: any) => {
+                // Calculate Order Revenue (Total - Shipping)
+                const shipping = order.shippingfee || 0;
+                const orderTotal = order.totalamount || 0;
+                const orderRevenue = Math.max(0, orderTotal - shipping);
+
+                // Calculate Order Cost (Sum of items * cost)
+                let orderCost = 0;
+                let items = order.items;
+
+                if (typeof items === 'string') {
+                    try { items = JSON.parse(items); } catch (e) { items = []; }
+                }
+
+                if (Array.isArray(items)) {
+                    items.forEach((item: any) => {
+                        const unitCost = costMap[item.id] || 0;
+                        orderCost += (unitCost * (item.quantity || 1));
+                    });
+                }
+
+                const profit = orderRevenue - orderCost;
+                return sum + profit;
+            }, 0);
+            setTotalRevenue(total);
+        }
+    }, [isSupabaseConfigured]);
+
+    const refreshOrders = useCallback(async (pageNumber: number = 1, resetDate: string | null = null) => {
         if (!isSupabaseConfigured) return;
 
         console.log(`[useOrderLogic] refreshOrders called for page ${pageNumber}.`);
@@ -321,6 +386,12 @@ export const useOrderLogic = (
                 console.log(`[useOrderLogic] Successfully fetched ${data.length} orders for page ${pageNumber}.`);
                 setOrders(data.map(mapOrderFromDB));
             }
+
+            // Fetch total revenue alongside orders
+            // We pass resetDate just in case, but usually it comes from context which isn't available here directly. 
+            // Better to handle it via a separate effect or passed argument.
+            await fetchTotalRevenue(resetDate);
+
         } catch (err) {
             console.error('Error refreshing orders:', err);
             // Optional: addToast
@@ -446,5 +517,5 @@ export const useOrderLogic = (
         return data ? data.map(mapOrderFromDB) : [];
     }, [isSupabaseConfigured]);
 
-    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages };
+    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue };
 };

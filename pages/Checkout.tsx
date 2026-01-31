@@ -229,6 +229,16 @@ export const Checkout: React.FC = () => {
                     <p>IQD {shippingFee.toLocaleString()}</p>
                   </div>
 
+                  {/* Promotional Text */}
+                  <div className="py-2 space-y-1 text-center bg-blue-50 dark:bg-blue-900/10 rounded-lg">
+                    <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                      ➕ أضف قطعة ثانية واحصل على خصم 1,000 دينار
+                    </p>
+                    <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                      🚚 التوصيل مجاني للطلبات فوق 30,000 دينار
+                    </p>
+                  </div>
+
                   <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-800 pt-3 mt-3">
                     <p>{t('total')}</p>
                     <p className="text-purple-600 dark:text-purple-400">IQD {finalTotalWithShipping.toLocaleString()}</p>
