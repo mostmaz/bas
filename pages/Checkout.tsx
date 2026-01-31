@@ -231,9 +231,6 @@ export const Checkout: React.FC = () => {
 
                   {/* Promotional Text */}
                   <div className="py-2 space-y-1 text-center bg-blue-50 dark:bg-blue-900/10 rounded-lg">
-                    <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                      ➕ أضف قطعة ثانية واحصل على خصم 1,000 دينار
-                    </p>
                     <p className="text-xs font-medium text-green-600 dark:text-green-400">
                       🚚 التوصيل مجاني للطلبات فوق 30,000 دينار
                     </p>

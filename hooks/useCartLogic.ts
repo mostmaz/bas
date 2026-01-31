@@ -70,15 +70,14 @@ export const useCartLogic = (addToast: (msg: string, type: 'success' | 'error' |
 
         setIsCartOpen(true);
 
+        addToast(`${product.name} ${variant ? `(${variant.color})` : ''} added to cart`, 'success');
+
         if (product.giftProductId) {
             const giftProduct = products.find(p => p.id === product.giftProductId);
             if (giftProduct) {
                 addToast(`Free gift added: ${giftProduct.name}`, 'success');
             }
         }
-
-        // Promotional Toast
-        addToast('اضف اي منتج للسلة واحصل على 1000 دينار خصم اضافي', 'info');
 
         // Facebook Pixel: AddToCart
         import('../utils/pixel').then(({ event }) => {
