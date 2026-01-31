@@ -203,6 +203,12 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     const fetchSettings = async () => {
       if (isSupabaseConfigured) {
         const { data, error } = await supabase.from('store_settings').select('shipping_fee, free_shipping_threshold, logo, notification_message, revenue_reset_date').limit(1);
+
+        if (error) {
+          console.error('Error fetching settings:', error);
+          return;
+        }
+
         if (data && data.length > 0) {
           if (data[0].shipping_fee !== undefined) setBaseShippingFee(data[0].shipping_fee);
           if (data[0].free_shipping_threshold !== undefined) setFreeShippingThreshold(data[0].free_shipping_threshold);
@@ -213,7 +219,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
       }
     };
     fetchSettings();
-  }, [revenueResetDate]); // Add revenueResetDate as dependency so we refresh when it changes
+  }, [revenueResetDate, isSupabaseConfigured]); // Added isSupabaseConfigured to ensure we fetch when connection is ready
 
   // Update Document Direction
   useEffect(() => {
@@ -245,12 +251,22 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     setBaseShippingFee(fee);
     if (isSupabaseConfigured) {
       const { data } = await supabase.from('store_settings').select('id').limit(1);
+
+      let error;
       if (data && data.length > 0) {
-        await supabase.from('store_settings').update({ shipping_fee: fee }).eq('id', data[0].id);
+        const res = await supabase.from('store_settings').update({ shipping_fee: fee }).eq('id', data[0].id);
+        error = res.error;
       } else {
-        await supabase.from('store_settings').insert([{ shipping_fee: fee }]);
+        const res = await supabase.from('store_settings').insert([{ shipping_fee: fee }]);
+        error = res.error;
       }
-      addToast('Shipping fee updated', 'success');
+
+      if (error) {
+        console.error('Error updating shipping fee:', error);
+        addToast('Failed to save shipping fee', 'error');
+      } else {
+        addToast('Shipping fee updated', 'success');
+      }
     }
   };
 
