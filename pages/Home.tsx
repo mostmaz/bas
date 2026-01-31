@@ -5,6 +5,7 @@ import { ProductSkeleton } from '../components/ProductSkeleton';
 import { FilterModal, FilterState } from '../components/FilterModal';
 import { OffersCarousel } from '../components/OffersCarousel';
 import { OverlayNotification } from '../components/OverlayNotification';
+import { NotificationBar } from '../components/NotificationBar';
 import { useNavigate } from 'react-router-dom';
 import { Filter, ChevronDown, Smartphone } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -219,15 +220,7 @@ export const Home: React.FC = () => {
       </div>
 
       {/* Notification Bar */}
-      {notificationMessage && (
-        <div className="mt-4 px-6">
-          <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl py-1.5 px-3 text-center">
-            <p className="text-xs font-medium text-indigo-800 dark:text-indigo-200" dir="rtl">
-              {notificationMessage}
-            </p>
-          </div>
-        </div>
-      )}
+      {notificationMessage && <NotificationBar message={notificationMessage} />}
 
       {/* Best Sellers Section */}
       {bestSellers.length > 0 && (

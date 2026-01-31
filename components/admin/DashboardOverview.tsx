@@ -23,21 +23,8 @@ const REVENUE_DATA = [
 const COLORS = ['#4f46e5', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
 
 export const DashboardOverview: React.FC = () => {
-  const { products, orders, baseShippingFee, updateShippingFee, freeShippingThreshold, updateFreeShippingThreshold, isDemoActive, toggleDemoData, storeLogo, updateStoreLogo, notificationMessage, updateNotificationMessage, revenueResetDate, resetRevenue, totalRevenue: serverTotalRevenue } = useShop();
-  const [tempShippingFee, setTempShippingFee] = useState(baseShippingFee.toString());
-  const [tempThreshold, setTempThreshold] = useState(freeShippingThreshold.toString());
-  const [tempNotificationMessage, setTempNotificationMessage] = useState(notificationMessage || '');
+  const { products, orders, isDemoActive, toggleDemoData, revenueResetDate, resetRevenue, totalRevenue: serverTotalRevenue } = useShop();
   const lowStockProducts = products.filter(p => p.stock < 10);
-
-  // Sync local state with context values when they change (e.g. after fetch)
-  React.useEffect(() => {
-    setTempShippingFee(baseShippingFee.toString());
-    setTempThreshold(freeShippingThreshold.toString());
-    setTempNotificationMessage(notificationMessage || '');
-  }, [baseShippingFee, freeShippingThreshold, notificationMessage]);
-
-
-
   const pendingOrdersCount = orders.filter(o => o.status === 'Processing').length;
 
   // Calculate Brand Distribution Dynamically
@@ -53,147 +40,17 @@ export const DashboardOverview: React.FC = () => {
       .slice(0, 6); // Top 6 brands
   }, [products]);
 
-  const handleUpdateShipping = (e: React.FormEvent) => {
-    e.preventDefault();
-    const fee = parseInt(tempShippingFee);
-    const threshold = parseInt(tempThreshold);
-
-    if (!isNaN(fee) && fee >= 0) {
-      updateShippingFee(fee);
-    }
-    if (!isNaN(threshold) && threshold >= 0) {
-      updateFreeShippingThreshold(threshold);
-    }
-  };
-
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Create an image element to load the file
-      const img = new Image();
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        img.src = e.target?.result as string;
-      };
-
-      img.onload = () => {
-        // Create canvas to resize
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const maxDim = 300; // Resize to max 300px for storage efficiency
-
-        let width = img.width;
-        let height = img.height;
-
-        // Calculate new dimensions
-        if (width > height) {
-          if (width > maxDim) {
-            height *= maxDim / width;
-            width = maxDim;
-          }
-        } else {
-          if (height > maxDim) {
-            width *= maxDim / height;
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        // Draw and compress
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const base64 = canvas.toDataURL('image/webp', 0.8); // Use WebP for better compression
-          updateStoreLogo(base64);
-        }
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <div className="animate-in fade-in duration-500 space-y-8">
       {/* Settings & Demo Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Settings Card */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
-            <Settings className="h-5 w-5 mr-2 text-gray-500" /> Store Settings
-          </h3>
-
-          <div className="space-y-6">
-            {/* Shipping Settings */}
-            <form onSubmit={handleUpdateShipping} className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Shipping Fee (IQD)</label>
-                  <input
-                    type="number"
-                    value={tempShippingFee}
-                    onChange={(e) => setTempShippingFee(e.target.value)}
-                    className="w-full border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Free Shipping Over (IQD)</label>
-                  <input
-                    type="number"
-                    value={tempThreshold}
-                    onChange={(e) => setTempThreshold(e.target.value)}
-                    className="w-full border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-              <Button type="submit" variant="secondary" className="w-full">
-                <Save className="h-4 w-4 mr-2" /> Save Settings
-              </Button>
-            </form>
-
-            {/* Logo Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Store Icon / Logo</label>
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-xl overflow-hidden border border-gray-200 dark:border-slate-600 shadow-sm shrink-0 bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
-                  {storeLogo ? (
-                    <img src={storeLogo} alt="Current Logo" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageIcon className="h-6 w-6 text-gray-400" />
-                  )}
-                </div>
-                <label className="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors">
-                  <Upload className="h-4 w-4 mr-2" /> Change Icon
-                  <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-                </label>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">This image will update the App Logo, Splash Screen, and Website Favicon.</p>
-            </div>
-
-            {/* Notification Message */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Notification Bar Message (RTL)</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={tempNotificationMessage}
-                  onChange={(e) => setTempNotificationMessage(e.target.value)}
-                  placeholder="Enter notification text (e.g. Special Offer...)"
-                  className="flex-1 border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 rounded-lg px-3 py-2 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 text-right"
-                  dir="rtl"
-                />
-                <Button
-                  onClick={() => updateNotificationMessage(tempNotificationMessage)}
-                  variant="secondary"
-                  className="shrink-0"
-                >
-                  <Save className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Demo Data Control - Expanded to fill void if needed, or just kept side by side with something else? 
+            Since we removed one card, maybe we don't need a grid here or we can just leave it as is 
+            and it will take half width (which is fine) or we can make it full width. 
+            The original was grid-cols-2. If I remove one, I have one child.
+            I'll keep the grid for now, maybe in future something else goes there.
+            Actually, if I remove the settings card, the Demo card will be alone.
+        */}
 
         {/* Demo Data Control */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 flex flex-col justify-between">
