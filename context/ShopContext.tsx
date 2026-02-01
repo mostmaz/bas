@@ -23,6 +23,7 @@ interface ShopContextType {
   devices: Device[];
   carouselSlides: CarouselSlide[];
   orders: Order[];
+  isOrdersLoading: boolean;
   refreshOrders: (pageNumber?: number) => Promise<void>;
   totalRevenue: number;
   page: number;
@@ -165,8 +166,13 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
   const { products, setProducts, refreshProducts, fetchProductDetails, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
   const { cart, isCartOpen, appliedDiscount, addToCart, removeFromCart, updateCartQuantity, clearCart, toggleCart, applyDiscount, removeDiscount, totalAmount, discountAmount, finalTotal } = useCartLogic(addToast, products, discounts);
-  const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
+  const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue, isOrdersLoading: isOrdersLoadingLogic } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
   const { overlayConfig, updateOverlayConfig } = useSettingsLogic();
+
+  // Stable wrapper for refreshOrders to inject revenueResetDate
+  const contextRefreshOrders = React.useCallback(async (pageNumber?: number) => {
+    await refreshOrders(pageNumber, revenueResetDate);
+  }, [refreshOrders, revenueResetDate]);
 
   // Calculate effective shipping fee
   const shippingFee = finalTotal >= freeShippingThreshold ? 0 : baseShippingFee;
@@ -196,11 +202,13 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     refreshBrands();
     refreshDiscounts();
     refreshDevices();
-    refreshOrders(1, revenueResetDate); // Pass reset date
     refreshSlides();
+    // Verify we load orders once on mount/connect
+    refreshOrders(1);
 
     // Fetch Settings
     const fetchSettings = async () => {
+      let fetchedRevenueResetDate: string | null = null;
       if (isSupabaseConfigured) {
         const { data, error } = await supabase.from('store_settings').select('shipping_fee, free_shipping_threshold, logo, notification_message, revenue_reset_date').limit(1);
 
@@ -214,12 +222,20 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
           if (data[0].free_shipping_threshold !== undefined) setFreeShippingThreshold(data[0].free_shipping_threshold);
           if (data[0].logo) setStoreLogo(data[0].logo);
           if (data[0].notification_message) setNotificationMessage(data[0].notification_message);
-          if (data[0].revenue_reset_date) setRevenueResetDate(data[0].revenue_reset_date);
+          if (data[0].revenue_reset_date) {
+            setRevenueResetDate(data[0].revenue_reset_date);
+            fetchedRevenueResetDate = data[0].revenue_reset_date;
+          }
         }
+        // Refresh orders after settings are potentially updated
+        refreshOrders(1, fetchedRevenueResetDate);
+      } else {
+        // If not Supabase configured, still refresh orders with current state
+        refreshOrders(1, revenueResetDate);
       }
     };
     fetchSettings();
-  }, [revenueResetDate, isSupabaseConfigured]); // Added isSupabaseConfigured to ensure we fetch when connection is ready
+  }, [isSupabaseConfigured]);
 
   // Update Document Direction
   useEffect(() => {
@@ -328,6 +344,8 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
         await supabase.from('store_settings').insert([{ revenue_reset_date: now }]);
       }
       addToast('Revenue calculation reset', 'success');
+      // Refresh orders with new reset date
+      await refreshOrders(1, now);
     }
   };
 
@@ -372,26 +390,38 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     addToast('Demo data generated', 'success');
   };
 
+  // Stabilize the provider value
+  const contextValue = React.useMemo(() => ({
+    products, cart, wishlist, brands, devices, carouselSlides, orders, isOrdersLoading: isOrdersLoadingLogic, discounts,
+    shippingFee, baseShippingFee, freeShippingThreshold, updateShippingFee, updateFreeShippingThreshold, storeLogo, updateStoreLogo,
+    notificationMessage, updateNotificationMessage,
+    revenueResetDate, resetRevenue,
+    overlayConfig, updateOverlayConfig,
+    isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading, isSlidesLoading, isBrandsLoading,
+    refreshBrands, refreshProducts, refreshDevices,
+    addProduct, updateProduct, deleteProduct, fetchProductDetails,
+    addBrand, updateBrand, deleteBrand,
+    addDevice, updateDevice, deleteDevice,
+    addSlide, updateSlide, deleteSlide, refreshSlides,
+    placeOrder, updateOrderStatus, refreshOrders: contextRefreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue,
+    addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
+    appliedDiscount, applyDiscount: (code: string) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
+    isDemoActive, toggleDemoData,
+    totalAmount, discountAmount, finalTotal,
+    supabase
+  }), [
+    addDevice, updateDevice, deleteDevice,
+    addSlide, updateSlide, deleteSlide, refreshSlides,
+    placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue,
+    addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
+    appliedDiscount, applyDiscount, removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
+    isDemoActive, toggleDemoData,
+    totalAmount, discountAmount, finalTotal,
+    isSupabaseConfigured
+  ]);
+
   return (
-    <ShopContext.Provider value={{
-      products, cart, wishlist, brands, devices, carouselSlides, orders, discounts,
-      shippingFee, baseShippingFee, freeShippingThreshold, updateShippingFee, updateFreeShippingThreshold, storeLogo, updateStoreLogo,
-      notificationMessage, updateNotificationMessage,
-      revenueResetDate, resetRevenue,
-      overlayConfig, updateOverlayConfig,
-      isCartOpen, theme, language, searchQuery, setSearchQuery, t, isOnline: !!isSupabaseConfigured, supaConnectionError, isAppLoading, isProductsLoading, isSlidesLoading, isBrandsLoading,
-      refreshBrands, refreshProducts, refreshDevices,
-      addProduct, updateProduct, deleteProduct, fetchProductDetails,
-      addBrand, updateBrand, deleteBrand,
-      addDevice, updateDevice, deleteDevice,
-      addSlide, updateSlide, deleteSlide, refreshSlides,
-      placeOrder, updateOrderStatus, refreshOrders: (page) => refreshOrders(page, revenueResetDate), bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue,
-      addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
-      appliedDiscount, applyDiscount: (code) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
-      isDemoActive, toggleDemoData,
-      totalAmount, discountAmount, finalTotal,
-      supabase
-    }}>
+    <ShopContext.Provider value={contextValue}>
       {children}
     </ShopContext.Provider>
   );

@@ -42,6 +42,7 @@ export const useOrderLogic = (
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalRevenue, setTotalRevenue] = useState(0);
+    const [isOrdersLoading, setIsOrdersLoading] = useState(false);
     const ORDERS_PER_PAGE = 10;
 
     const placeOrder = useCallback(async (orderData: Omit<Order, 'id' | 'date' | 'status'>) => {
@@ -353,6 +354,7 @@ export const useOrderLogic = (
         if (!isSupabaseConfigured) return;
 
         console.log(`[useOrderLogic] refreshOrders called for page ${pageNumber}.`);
+        setIsOrdersLoading(true);
 
         try {
             // Fetch total count first
@@ -395,6 +397,8 @@ export const useOrderLogic = (
         } catch (err) {
             console.error('Error refreshing orders:', err);
             // Optional: addToast
+        } finally {
+            setIsOrdersLoading(false);
         }
     }, [isSupabaseConfigured]);
 
@@ -517,5 +521,6 @@ export const useOrderLogic = (
         return data ? data.map(mapOrderFromDB) : [];
     }, [isSupabaseConfigured]);
 
-    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue };
+
+    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue, isOrdersLoading };
 };

@@ -7,7 +7,7 @@ import { Order } from '../../types';
 
 export const OrderManagement: React.FC = () => {
   // Use state from hook for pagination
-  const { orders, updateOrderStatus, bulkUpdateOrderStatus, refreshOrders, page, totalPages } = useShop();
+  const { orders, updateOrderStatus, bulkUpdateOrderStatus, refreshOrders, page, totalPages, isOrdersLoading } = useShop();
   // Local state for tracking what the UI thinks is the current page, although the data drives the view
   const [currentPage, setCurrentPage] = useState(1);
   // Sync local current page with hook's page if needed, or just drive from hook. 
@@ -33,6 +33,8 @@ export const OrderManagement: React.FC = () => {
 
   // Refresh on mount (load page 1)
   React.useEffect(() => {
+    // We rely on context to load initial orders, but we can refresh here to be sure.
+    // If context is already looping, this wasn't the cause.
     refreshOrders(1);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -129,8 +131,16 @@ export const OrderManagement: React.FC = () => {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto relative min-h-[400px]">
+          {isOrdersLoading && (
+            <div className="absolute inset-0 z-10 bg-white/50 dark:bg-slate-800/50 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Loading orders...</span>
+              </div>
+            </div>
+          )}
+          <table className={`w-full text-left text-sm transition-opacity duration-300 ${isOrdersLoading ? 'opacity-40' : 'opacity-100'}`}>
             <thead className="bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-slate-400 font-medium border-b border-gray-200 dark:border-slate-700">
               <tr>
                 <th className="px-6 py-3 w-4">
