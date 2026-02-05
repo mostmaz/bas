@@ -24,6 +24,7 @@ interface ShopContextType {
   carouselSlides: CarouselSlide[];
   orders: Order[];
   isOrdersLoading: boolean;
+  exportOrders: (selectedIds: string[]) => Promise<void>;
   refreshOrders: (pageNumber?: number) => Promise<void>;
   totalRevenue: number;
   page: number;
@@ -166,7 +167,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
   const { discounts, setDiscounts, refreshDiscounts, addDiscount, deleteDiscount, toggleDiscountStatus } = useDiscountLogic(isSupabaseConfigured, addToast);
   const { products, setProducts, refreshProducts, fetchProductDetails, addProduct, updateProduct, deleteProduct, isProductsLoading } = useProductLogic(isSupabaseConfigured, addToast, setIsAppLoading);
   const { cart, isCartOpen, appliedDiscount, addToCart, removeFromCart, updateCartQuantity, clearCart, toggleCart, applyDiscount, removeDiscount, totalAmount, discountAmount, finalTotal } = useCartLogic(addToast, products, discounts);
-  const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue, isOrdersLoading: isOrdersLoadingLogic } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
+  const { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, exportOrders, page, totalPages, totalRevenue, isOrdersLoading: isOrdersLoadingLogic } = useOrderLogic(isSupabaseConfigured, addToast, products, setProducts, refreshProducts);
   const { overlayConfig, updateOverlayConfig } = useSettingsLogic();
 
   // Stable wrapper for refreshOrders to inject revenueResetDate
@@ -403,7 +404,7 @@ export const ShopProvider: React.FC<ShopProviderProps> = ({ children }) => {
     addBrand, updateBrand, deleteBrand,
     addDevice, updateDevice, deleteDevice,
     addSlide, updateSlide, deleteSlide, refreshSlides,
-    placeOrder, updateOrderStatus, refreshOrders: contextRefreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue,
+    placeOrder, updateOrderStatus, refreshOrders: contextRefreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, exportOrders, page, totalPages, totalRevenue,
     addToCart, removeFromCart, updateCartQuantity, toggleCart, clearCart, toggleTheme, toggleLanguage, toggleWishlist,
     appliedDiscount, applyDiscount: (code: string) => applyDiscount(code, discounts), removeDiscount, addDiscount, deleteDiscount, toggleDiscountStatus,
     isDemoActive, toggleDemoData,

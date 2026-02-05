@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, Truck, Clock, MoreHorizontal, XCircle } from 'lucide-react';
+import { CheckCircle, Truck, Clock, MoreHorizontal, XCircle, Download } from 'lucide-react';
 import { Button } from '../Button';
 import { useShop } from '../../context/ShopContext';
 import { OrderDetailModal } from './OrderDetailModal';
@@ -7,7 +7,7 @@ import { Order } from '../../types';
 
 export const OrderManagement: React.FC = () => {
   // Use state from hook for pagination
-  const { orders, updateOrderStatus, bulkUpdateOrderStatus, refreshOrders, page, totalPages, isOrdersLoading } = useShop();
+  const { orders, updateOrderStatus, bulkUpdateOrderStatus, refreshOrders, page, totalPages, isOrdersLoading, exportOrders } = useShop();
   // Local state for tracking what the UI thinks is the current page, although the data drives the view
   const [currentPage, setCurrentPage] = useState(1);
   // Sync local current page with hook's page if needed, or just drive from hook. 
@@ -69,10 +69,16 @@ export const OrderManagement: React.FC = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedOrderIds.length === orders.length) {
-      setSelectedOrderIds([]);
+    const allPageIds = orders.map(o => o.id);
+    const allSelected = allPageIds.every(id => selectedOrderIds.includes(id));
+
+    if (allSelected) {
+      // Remove current page orders from selection
+      setSelectedOrderIds(prev => prev.filter(id => !allPageIds.includes(id)));
     } else {
-      setSelectedOrderIds(orders.map(o => o.id));
+      // Add current page orders to selection (avoiding duplicates)
+      const newIds = allPageIds.filter(id => !selectedOrderIds.includes(id));
+      setSelectedOrderIds(prev => [...prev, ...newIds]);
     }
   };
 
@@ -126,7 +132,16 @@ export const OrderManagement: React.FC = () => {
               </select>
             </div>
           )}
-          <Button variant="outline" size="sm">Export CSV</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportOrders(selectedOrderIds)}
+            disabled={selectedOrderIds.length === 0}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Export Excel ({selectedOrderIds.length})
+          </Button>
         </div>
       </div>
 
@@ -146,7 +161,7 @@ export const OrderManagement: React.FC = () => {
                 <th className="px-6 py-3 w-4">
                   <input
                     type="checkbox"
-                    checked={orders.length > 0 && selectedOrderIds.length === orders.length}
+                    checked={orders.length > 0 && orders.every(o => selectedOrderIds.includes(o.id))}
                     onChange={toggleSelectAll}
                     className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />

@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import { Order, Product } from '../types';
 import { supabase } from '../services/supabase';
 import { sendOrderNotification, sendWhatsAppNotification, sendTwilioWhatsAppNotification } from '../services/emailService';
@@ -521,6 +523,110 @@ export const useOrderLogic = (
         return data ? data.map(mapOrderFromDB) : [];
     }, [isSupabaseConfigured]);
 
+    const exportOrders = useCallback(async (selectedIds: string[]) => {
+        if (!isSupabaseConfigured || selectedIds.length === 0) return;
 
-    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, page, totalPages, totalRevenue, isOrdersLoading };
+        try {
+            // 1. Fetch Orders
+            const { data: ordersData, error: ordersError } = await supabase
+                .from('orders')
+                .select('*')
+                .in('id', selectedIds);
+
+            if (ordersError) throw ordersError;
+
+            // 2. Fetch Product Costs
+            // We need costs for all products involved. Optimization: Fetch all costs or filter?
+            // Fetching all for simplicity as product count is likely manageable, or we can fetch only needed.
+            // Let's fetch all cost data to be safe and simple.
+            const { data: costsData, error: costsError } = await supabase
+                .from('product_costs')
+                .select('product_id, cost');
+
+            if (costsError) throw costsError;
+
+            const costMap: Record<string, number> = {};
+            if (costsData) {
+                costsData.forEach((item: any) => {
+                    costMap[item.product_id] = item.cost;
+                });
+            }
+
+            // 3. Process Data for Export
+            const exportRows: any[] = [];
+
+            ordersData.forEach((orderRaw: any) => {
+                const order = mapOrderFromDB(orderRaw);
+
+                // If items is empty, we still want to export the order line? 
+                // User asked for "device name, brand, total price, product costs". 
+                // This implies item-level rows.
+                if (order.items.length === 0) {
+                    exportRows.push({
+                        "Order Number": order.orderNumber,
+                        "Date": new Date(order.date).toLocaleDateString(),
+                        "Customer Name": order.customerName,
+                        "Phone": order.phone,
+                        "City": order.city,
+                        "Address": order.address,
+                        "Status": order.status,
+                        "Total Amount": order.totalAmount,
+                        "Shipping Fee": order.shippingFee,
+                        "Item Name": "N/A",
+                        "Device": "N/A",
+                        "Brand": "N/A",
+                        "Quantity": 0,
+                        "Unit Cost": 0,
+                        "Unit Price": 0,
+                        "Item Total": 0
+                    });
+                } else {
+                    order.items.forEach((item: any) => {
+                        const unitCost = costMap[item.id] || 0;
+                        const unitPrice = item.price || 0;
+                        const qty = item.quantity || 1;
+
+                        exportRows.push({
+                            "Order Number": order.orderNumber,
+                            "Date": new Date(order.date).toLocaleDateString(),
+                            "Customer Name": order.customerName,
+                            "Phone": order.phone,
+                            "City": order.city,
+                            "Address": order.address,
+                            "Status": order.status,
+                            "Total Amount": order.totalAmount,
+                            "Shipping Fee": order.shippingFee,
+                            "Item Name": item.name,
+                            "Device": item.device || "N/A",
+                            "Brand": item.brand || "N/A",
+                            "Quantity": qty,
+                            "Unit Cost": unitCost,
+                            "Unit Price": unitPrice,
+                            "Item Total": unitPrice * qty
+                        });
+                    });
+                }
+            });
+
+            // 4. Generate Excel
+            const worksheet = XLSX.utils.json_to_sheet(exportRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+
+            // Buffer
+            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const dataBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+
+            saveAs(dataBlob, `orders_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+            addToast(`Successfully exported ${selectedIds.length} orders`, 'success');
+
+        } catch (error) {
+            console.error("Export failed:", error);
+            addToast("Failed to export orders", "error");
+        }
+    }, [isSupabaseConfigured, addToast]);
+
+
+    return { orders, setOrders, placeOrder, updateOrderStatus, refreshOrders, bulkUpdateOrderStatus, searchOrdersByPhone, exportOrders, page, totalPages, totalRevenue, isOrdersLoading };
 };

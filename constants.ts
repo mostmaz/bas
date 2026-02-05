@@ -194,6 +194,7 @@ export const TRANSLATIONS = {
         maysan: 'Maysan',
         saladin: 'Saladin',
         halabja: 'Halabja',
+        diwaniya: 'Al-Diwaniyah',
         received: 'received',
         importantInfo: 'Important Information',
         estimatedDelivery: 'Estimated Delivery',
@@ -367,6 +368,7 @@ export const TRANSLATIONS = {
         maysan: 'ميسان',
         saladin: 'صلاح الدين',
         halabja: 'حلبجة',
+        diwaniya: 'الديوانية',
         received: 'استلمنا',
         importantInfo: 'معلومات مهمة',
         estimatedDelivery: 'وقت التوصيل المتوقع',
@@ -440,7 +442,8 @@ export const IRAQI_GOVERNORATES = [
     { value: 'Wasit', labelKey: 'wasit' },
     { value: 'Maysan', labelKey: 'maysan' },
     { value: 'Saladin', labelKey: 'saladin' },
-    { value: 'Halabja', labelKey: 'halabja' }
+    { value: 'Halabja', labelKey: 'halabja' },
+    { value: 'Diwaniya', labelKey: 'diwaniya' }
 ];
 
 export const EMAILJS_CONFIG = {
