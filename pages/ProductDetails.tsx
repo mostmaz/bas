@@ -486,6 +486,14 @@ export const ProductDetails: React.FC = () => {
               </div>
             )}
 
+            {/* Delivery Delay Alert */}
+            <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-sm font-bold text-amber-800 dark:text-amber-200 leading-snug">
+                {t('deliveryDelay')}
+              </p>
+            </div>
+
             <div className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-10 space-y-4">
               {renderMarkdown(product.description || '')}
             </div>
